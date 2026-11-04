@@ -1,0 +1,136 @@
+---
+title: "EC8707: High-Speed Railway Edge AI & Optical Track Defect Classification"
+code: "EC8707"
+semester: 7
+regulation: "Anna University R2021"
+department: "Department of Electronics Engineering, MIT Campus"
+credits: 4
+order: 4
+description: "Deploy quantized TinyML convolutional neural networks (MobileNet-V2 INT8) on NVIDIA Jetson Nano and ESP32-CAM edge hardware to detect rail cracks, missing fasteners, and gauge variations at high transit velocities."
+difficulty: "Apex Research"
+author: "MIT Campus Railway & Edge AI Faculty"
+publishDate: 2026-09-10
+prerequisites:
+  - "EC8701: IoT Edge Node Foundations"
+  - "Digital Image Processing & Feature Extraction (Sobel, Canny)"
+  - "Deep Learning & Neural Network Quantization (TensorFlow Lite / TensorRT)"
+learningOutcomes:
+  - "Quantize floating-point FP32 vision models to 8-bit integer (INT8) representation using Post-Training Quantization (PTQ)."
+  - "Execute real-time TensorRT and ESP-NN optimized inference pipelines exceeding 30 FPS."
+  - "Analyze and mitigate the High-Speed Rolling Shutter Optical Jitter & Track Vibration Glitch."
+  - "Integrate high-g 3-axis accelerometer telemetry (ADXL345) to cross-validate optical defects."
+hardwareKit:
+  - "NVIDIA Jetson Nano Developer Kit (128-core Maxwell GPU)"
+  - "ESP32-CAM (OV2640 2MP Camera Module)"
+  - "ADXL345 3-Axis Digital Accelerometer (I2C/SPI)"
+  - "Industrial High-Speed Global Shutter USB3 Camera (Monochrome)"
+tags:
+  - "Railway Edge AI"
+  - "Jetson Nano"
+  - "TinyML"
+  - "Track Defect Detection"
+  - "Rolling Shutter"
+  - "Anna University R2021"
+syllabusUnits:
+  - unit: 1
+    title: "Edge Computer Vision & Quantized Neural Architectures"
+    topics:
+      - "Depthwise Separable Convolutions in MobileNet-V2 and ShuffleNet"
+      - "Post-Training Integer Quantization (INT8) with Symmetric Scale and Zero-Point"
+      - "NVIDIA TensorRT Engine Optimization and CUDA Memory Pinned Buffers"
+    labHours: 6
+  - unit: 2
+    title: "High-Speed Track Inspection Optics & Vibration Physics"
+    topics:
+      - "High-G Mechanical Vibration Spectrum on Rail Bogies (10 Hz - 5 kHz)"
+      - "Rolling Shutter vs Global Shutter Optical Artifacts at 160 km/h"
+      - "Strobe Illumination Synchronization with Microsecond Exposure Controls"
+    labHours: 8
+  - unit: 3
+    title: "Multi-Modal Sensor Fusion on Edge Gateways"
+    topics:
+      - "Kalman Filter Sensor Fusion of Optical Defect Probabilities and ADXL345 G-Force"
+      - "Real-Time Telemetry Streaming via 4G/LTE Cat-M1 and MQTT over TLS 1.3"
+      - "On-Device SQLite Database Logging of Critical Geographic Coordinates"
+    labHours: 8
+ieeeReference: "IEEE Transactions on Intelligent Transportation Systems, Vol. 25, No. 4, pp. 3840-3855"
+xpReward: 500
+---
+
+# EC8707: High-Speed Railway Edge AI & Optical Track Defect Classification
+
+<div class="ieee-abstract">
+  <strong>Abstract</strong>—Automated railway track condition monitoring demands millisecond defect classification to prevent catastrophic derailments on high-speed rail corridors. This module presents an edge-deployed artificial intelligence platform combining an NVIDIA Jetson Nano edge accelerator and ESP32-CAM satellite nodes. Utilizing an 8-bit integer quantized MobileNet-V2 convolutional backbone, the system classifies surface fissures, missing elastic rail clips, and ballast irregularities at 45 frames per second. We evaluate high-speed rolling shutter shear distortions and validate vibration anomaly fusion.
+  <div class="mt-2 text-xs font-mono text-[#00F0B5]">
+    <strong>Index Terms</strong>—Railway Edge AI, TinyML, INT8 Quantization, MobileNet-V2, Rolling Shutter, Sensor Fusion.
+  </div>
+</div>
+
+---
+
+## I. TinyML Model Quantization & TensorRT Edge Pipeline
+
+Deploying convolutional models on embedded platforms requires compressing FP32 weights into 8-bit integers (INT8) to utilize SIMD vector units:
+
+$$q = \text{round}\left( \frac{r}{S} \right) + Z$$
+
+Where:
+- $r$ is the real FP32 value
+- $S$ is the positive floating-point scale factor: $S = \frac{r_{\max} - r_{\min}}{q_{\max} - q_{\min}}$
+- $Z$ is the integer zero-point offset
+
+```text
+[ OV2640 Image Sensor ]
+         |
+         v DMA Capture (RGB565 / Grayscale)
+[ Frame Buffer Queue (FreeRTOS) ]
+         |
+         v 224x224 Bilinear Resize
+[ TensorRT INT8 Engine ] ---> [ Class: Cracked Rail (98.4%) ]
+         |
+         v Trigger Telemetry
+[ LTE Cat-M1 / SQLite Logger ]
+```
+
+---
+
+## II. The Engineering Trap: Rolling Shutter Geometric Shear & Track Vibration Glitch
+
+<div class="glass-card p-5 rounded-2xl border border-red-500/40 bg-[#041026]/90 space-y-3 my-6">
+  <div class="flex items-center gap-2 text-red-400 font-mono font-bold text-sm tracking-wide">
+    <span class="text-base">⚠️</span>
+    <span>ENGINEERING TRAP: THE ROLLING SHUTTER TRACK SHEAR & JITTER SKEW TRAP</span>
+  </div>
+
+  <p class="text-xs text-slate-200 leading-relaxed font-sans">
+    When deploying standard CMOS camera modules (such as the low-cost OV2640 on ESP32-CAM) beneath a train inspection bogie moving at $120 \text{ km/h}$, students discover that the neural network's detection accuracy plummets from <strong>$96.8\%$ on the lab bench down to $12.3\%$ on live track trials</strong>.
+  </p>
+
+  <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-2">
+    <div class="text-amber-400 font-bold">1. Rolling Shutter Row Readout Lag:</div>
+    <p>
+      In a rolling shutter CMOS sensor, pixel rows are exposed and read out sequentially from top to bottom. For an image height of 1080 lines with a line readout time of $28.5 \text{ µs}$, the time delta between the top row and bottom row is $\Delta t = 30.8 \text{ ms}$. At $v = 120 \text{ km/h}$ ($33.3 \text{ m/s}$):
+    </p>
+    <div class="text-center py-1 text-red-300">
+      $$\Delta x_{\text{displacement}} = 33.3 \text{ m/s} \times 0.0308 \text{ s} \approx 1.03 \text{ meters!}$$
+    </div>
+    <p>
+      Straight, parallel steel rails are captured as curved trapezoidal hyperbolas, distorting spatial feature convolutions and yielding false negatives.
+    </p>
+
+    <div class="text-amber-400 font-bold pt-1">2. High-Frequency Bogie Jitter:</div>
+    <p>
+      Track rail joint impacts generate vertical accelerations exceeding $15 \text{ g}$ at $120 \text{ Hz}$, producing high-frequency horizontal banding across the exposed frames.
+    </p>
+  </div>
+
+  <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
+    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <ul class="list-disc list-inside space-y-1 text-slate-300">
+      <li><strong>Global Shutter Camera Mandatory:</strong> Transition from rolling shutter sensors to global shutter sensors where all pixels expose simultaneously.</li>
+      <li><strong>Pulsed LED Strobe Illumination:</strong> Deploy high-intensity 850 nm infrared LED arrays pulsed for only $15 \text{ µs}$ per frame, freezing motion blur to less than $0.5 \text{ mm}$.</li>
+      <li><strong>Inertial Sensor Gating (ADXL345):</strong> Buffer optical frames and cross-reference with acceleration peaks. If track vibration spikes, flag the image for multi-frame optical flow alignment.</li>
+    </ul>
+  </div>
+</div>
+

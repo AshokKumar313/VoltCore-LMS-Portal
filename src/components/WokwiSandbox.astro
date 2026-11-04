@@ -1,0 +1,550 @@
+---
+import WokwiSimulationController from './WokwiSimulationController.jsx';
+
+/**
+ * VoltCore Apex Academia - Zero-Latency Wokwi Hardware Simulation Sandbox
+ * Targets: ESP32 DevKit v1, MFRC522 SPI RFID Reader, SSD1306 OLED Display
+ * Tabs: Live Wokwi Iframe, Firmware Sketches, diagram.json Topologies, UART Serial Telemetry
+ */
+
+interface Props {
+  wokwiId?: string;
+  initialTab?: 'simulation' | 'sketch' | 'topology' | 'serial';
+}
+
+const {
+  wokwiId = "382755291244849153", // Standard Wokwi ESP32 Project Template
+  initialTab = "simulation"
+} = Astro.props;
+
+// Standard Wokwi Topology Schema for the ESP32 Smart Attendance Node
+const diagramJsonData = {
+  "version": 1,
+  "author": "VoltCore Silicon Architecture Team (MIT Campus)",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-rfid-rc522", "id": "rc522", "top": -40, "left": 280, "attrs": {} },
+    { "type": "board-ssd1306", "id": "oled", "top": 180, "left": 280, "attrs": { "i2cAddress": "0x3c" } },
+    { "type": "wokwi-led", "id": "led_status", "top": -80, "left": 120, "attrs": { "color": "green" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": -50, "left": 120, "attrs": { "value": "330" } },
+    { "type": "wokwi-pushbutton", "id": "btn_scan", "top": 120, "left": -120, "attrs": { "color": "blue" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "rc522:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "rc522:3V3", "red", [ "v0" ] ],
+    [ "esp:5", "rc522:SDA", "orange", [ "v0" ] ],
+    [ "esp:18", "rc522:SCK", "yellow", [ "v0" ] ],
+    [ "esp:23", "rc522:MOSI", "green", [ "v0" ] ],
+    [ "esp:19", "rc522:MISO", "blue", [ "v0" ] ],
+    [ "esp:22", "rc522:RST", "purple", [ "v0" ] ],
+    [ "esp:GND.2", "oled:GND", "black", [ "v0" ] ],
+    [ "esp:3V3", "oled:VCC", "red", [ "v0" ] ],
+    [ "esp:21", "oled:SDA", "cyan", [ "v0" ] ],
+    [ "esp:22", "oled:SCL", "magenta", [ "v0" ] ],
+    [ "esp:2", "r1:1", "green", [ "v0" ] ],
+    [ "r1:2", "led_status:A", "green", [ "v0" ] ],
+    [ "esp:GND.1", "led_status:C", "black", [ "v0" ] ],
+    [ "esp:0", "btn_scan:2.l", "blue", [ "v0" ] ],
+    [ "esp:GND.1", "btn_scan:1.l", "black", [ "v0" ] ]
+  ]
+};
+
+const diagramJsonString = JSON.stringify(diagramJsonData, null, 2);
+
+const firmwareCodeSample = `/**
+ * VoltCore Apex Academia - ESP32 Smart Attendance Node
+ * Target: ESP32-WROOM-32 | MFRC522 RFID SPI & SSD1306 I2C
+ * Anna University / MIT Campus Standards
+ */
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* WIFI_SSID     = "Wokwi-GUEST";
+const char* WIFI_PASSWORD = "";
+const char* SERVER_URL    = "http://10.0.2.2:5000/api/attendance";
+const char* NODE_ID       = "ESP32_MIT_IOT_LAB_01";
+
+#define STATUS_LED_PIN 2
+#define MANUAL_BTN_PIN 0
+
+struct StudentCard {
+    const char* student_id;
+    const char* student_name;
+    const char* rfid_uid;
+};
+
+const StudentCard ROSTER[] = {
+    { "2023MITEC042", "Ashok Kumar A", "E2 80 6F 3B" },
+    { "2023MITEC015", "Kavitha Raman", "C3 4D 8A 11" },
+    { "MIT-FAC-019",  "Dr. K. S. Parthasarathy", "A4 12 99 F0" }
+};
+
+int cardIndex = 0;
+unsigned long lastScan = 0;
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(STATUS_LED_PIN, OUTPUT);
+    pinMode(MANUAL_BTN_PIN, INPUT_PULLUP);
+    
+    Serial.println("\\n[SYSTEM] Connecting to Wi-Fi...");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(250);
+        Serial.print(".");
+    }
+    Serial.printf("\\n[SYSTEM] Connected! IP: %s\\n", WiFi.localIP().toString().c_str());
+}
+
+void loop() {
+    if (millis() - lastScan >= 15000 || digitalRead(MANUAL_BTN_PIN) == LOW) {
+        lastScan = millis();
+        const auto& card = ROSTER[cardIndex];
+        
+        Serial.printf("[SCAN] Student: %s (%s) | UID: %s\\n", card.student_name, card.student_id, card.rfid_uid);
+        
+        HTTPClient http;
+        http.begin(SERVER_URL);
+        http.addHeader("Content-Type", "application/json");
+        
+        char payload[256];
+        snprintf(payload, sizeof(payload), 
+            "{\\"student_id\\":\\"%s\\",\\"node_id\\":\\"%s\\",\\"rfid_uid\\":\\"%s\\",\\"rssi\\":%d}",
+            card.student_id, NODE_ID, card.rfid_uid, WiFi.RSSI());
+            
+        int httpCode = http.POST((uint8_t*)payload, strlen(payload));
+        if (httpCode == 200) {
+            Serial.printf("[HTTP 200] Verified! Response: %s\\n", http.getString().c_str());
+            digitalWrite(STATUS_LED_PIN, HIGH); delay(100); digitalWrite(STATUS_LED_PIN, LOW);
+        } else {
+            Serial.printf("[HTTP ERR] Code: %d\\n", httpCode);
+        }
+        http.end();
+        cardIndex = (cardIndex + 1) % 3;
+    }
+    delay(50);
+}`;
+---
+
+<div class="glass-card rounded-2xl overflow-hidden border border-[#00F0B5]/25 shadow-2xl relative">
+  
+  <!-- Sandbox Header & Status Toolbar -->
+  <div class="p-4 bg-[#041026]/90 border-b border-[#00F0B5]/15 flex flex-wrap items-center justify-between gap-4">
+    
+    <!-- Title and Hardware Spec -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-[#00693E]/40 border border-[#00F0B5]/30 flex items-center justify-center text-[#00F0B5]">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <rect x="9" y="9" width="6" height="6" />
+          <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
+          <line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" />
+          <line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" />
+          <line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="font-bold text-slate-100 text-sm tracking-wide">
+            Zero-Latency Wokwi Hardware Sandbox
+          </h2>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-[#00F0B5] border border-[#00F0B5]/30">
+            Xtensa LX6 @ 240MHz
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 font-mono">
+          Topology: ESP32-WROOM-32 + MFRC522 SPI RFID + SSD1306 OLED (I2C 0x3C)
+        </p>
+      </div>
+    </div>
+
+    <!-- Tab Switcher Navigation -->
+    <div class="flex items-center bg-[#020813] p-1 rounded-xl border border-slate-800 text-xs font-mono" id="sandbox-tab-group">
+      <button
+        type="button"
+        data-target="tab-simulation"
+        class="sandbox-tab-btn active px-3 py-1.5 rounded-lg text-[#00F0B5] bg-[#00693E]/40 border border-[#00F0B5]/30 transition-all flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <span>Live Wokwi</span>
+      </button>
+
+      <button
+        type="button"
+        data-target="tab-controller"
+        class="sandbox-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Stimulus Controller</span>
+      </button>
+
+      <button
+        type="button"
+        data-target="tab-sketch"
+        class="sandbox-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"></polyline>
+          <polyline points="8 6 2 12 8 18"></polyline>
+        </svg>
+        <span>Firmware (.ino)</span>
+      </button>
+
+      <button
+        type="button"
+        data-target="tab-topology"
+        class="sandbox-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        <span>diagram.json</span>
+      </button>
+
+      <button
+        type="button"
+        data-target="tab-serial"
+        class="sandbox-tab-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1.5"
+      >
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        <span>UART Telemetry</span>
+      </button>
+    </div>
+
+    <!-- Quick Action Controls -->
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        id="trigger-live-scan-btn"
+        class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#00693E] to-[#00b884] hover:from-[#008f65] hover:to-[#00F0B5] text-white text-xs font-mono font-semibold flex items-center gap-1.5 transition-all shadow-emerald-glow"
+      >
+        <span>⚡ Tap RFID Tag</span>
+      </button>
+
+      <button
+        type="button"
+        id="fullscreen-toggle-btn"
+        class="p-1.5 rounded-lg bg-[#020813] border border-slate-700 text-slate-400 hover:text-white transition-colors"
+        title="Toggle Fullscreen Canvas"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Tab Content Containers -->
+  <div class="relative bg-[#020813] min-h-[520px]">
+    
+    <!-- Tab 1: Live Wokwi Simulation Iframe & Interactive Virtual Canvas -->
+    <div id="tab-simulation" class="tab-pane block w-full h-[540px] relative">
+      <!-- Embedded Wokwi Iframe -->
+      <iframe
+        id="wokwi-iframe"
+        src={`https://wokwi.com/projects/${wokwiId}?view=diagram`}
+        class="w-full h-full border-0 bg-[#020813]"
+        allow="usb; serial"
+        loading="lazy"
+        title="Wokwi ESP32 Simulation Canvas"
+      ></iframe>
+
+      <!-- Overlay Fallback HUD if iframe loading or offline sandbox -->
+      <div class="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/30 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono z-10 pointer-events-auto">
+        <div class="flex items-center gap-3">
+          <span class="flex h-2.5 w-2.5 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0B5] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00F0B5]"></span>
+          </span>
+          <span class="text-slate-300 font-semibold">Active Hardware Emulation:</span>
+          <span class="text-[#00F0B5]">ESP32 @ 3.3V</span>
+          <span class="text-slate-500">•</span>
+          <span class="text-slate-300">SPI Bus: 10 MHz</span>
+          <span class="text-slate-500">•</span>
+          <span class="text-slate-300">I2C: 400 kHz</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <a
+            href={`https://wokwi.com/projects/${wokwiId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[#00F0B5] hover:underline flex items-center gap-1"
+          >
+            <span>Open in Wokwi Standalone</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Firmware Sketches (C++ / Arduino) -->
+    <div id="tab-sketch" class="tab-pane hidden w-full h-[540px] p-4 overflow-y-auto font-mono text-xs">
+      <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">esp32_attendance_node.ino</span>
+          <span class="text-slate-400">Target: ESP32-WROOM-32 / FreeRTOS</span>
+        </div>
+        <button
+          type="button"
+          id="copy-firmware-btn"
+          class="px-2.5 py-1 rounded bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-300 hover:text-[#00F0B5] transition-colors flex items-center gap-1.5"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span id="copy-firmware-text">Copy Sketch</span>
+        </button>
+      </div>
+
+      <pre class="bg-[#041026] p-4 rounded-xl border border-slate-800 text-slate-200 overflow-x-auto leading-relaxed"><code>{firmwareCodeSample}</code></pre>
+    </div>
+
+    <!-- Tab 3: diagram.json Topologies -->
+    <div id="tab-topology" class="tab-pane hidden w-full h-[540px] p-4 overflow-y-auto font-mono text-xs">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        
+        <!-- Parts Breakdown Card -->
+        <div class="p-3.5 rounded-xl bg-[#041026] border border-[#00F0B5]/20 space-y-2">
+          <div class="font-bold text-[#00F0B5] text-xs uppercase tracking-wider flex items-center gap-2">
+            <span>Hardware Bill of Materials</span>
+          </div>
+          <ul class="space-y-1.5 text-slate-300 text-[11px]">
+            <li class="flex justify-between">
+              <span>1x ESP32 DevKit v4</span>
+              <span class="text-slate-500 font-mono">id: esp</span>
+            </li>
+            <li class="flex justify-between">
+              <span>1x MFRC522 RFID SPI</span>
+              <span class="text-slate-500 font-mono">id: rc522</span>
+            </li>
+            <li class="flex justify-between">
+              <span>1x SSD1306 128x64 OLED</span>
+              <span class="text-slate-500 font-mono">id: oled (0x3C)</span>
+            </li>
+            <li class="flex justify-between">
+              <span>1x Green Status LED</span>
+              <span class="text-slate-500 font-mono">GPIO 2</span>
+            </li>
+            <li class="flex justify-between">
+              <span>1x 330Ω Resistor</span>
+              <span class="text-slate-500 font-mono">Current Limiter</span>
+            </li>
+            <li class="flex justify-between">
+              <span>1x Tactile Pushbutton</span>
+              <span class="text-slate-500 font-mono">GPIO 0 (Boot)</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Pin Routing Matrix -->
+        <div class="lg:col-span-2 p-3.5 rounded-xl bg-[#041026] border border-[#00F0B5]/20">
+          <div class="font-bold text-[#00F0B5] text-xs uppercase tracking-wider mb-2">
+            Inter-IC Pin Interconnect Matrix
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-yellow-400 font-bold">SCK:</span> GPIO 18 → RC522 SCK
+            </div>
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-blue-400 font-bold">MISO:</span> GPIO 19 → RC522 MISO
+            </div>
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-green-400 font-bold">MOSI:</span> GPIO 23 → RC522 MOSI
+            </div>
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-orange-400 font-bold">SDA/SS:</span> GPIO 5 → RC522 SDA
+            </div>
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-cyan-400 font-bold">I2C SDA:</span> GPIO 21 → OLED SDA
+            </div>
+            <div class="p-2 rounded bg-[#020813] border border-slate-800">
+              <span class="text-purple-400 font-bold">I2C SCL:</span> GPIO 22 → OLED SCL
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Raw diagram.json View -->
+      <div class="relative">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-slate-400">Raw Wokwi diagram.json Configuration</span>
+          <button
+            type="button"
+            id="copy-diagram-json-btn"
+            class="px-2.5 py-1 rounded bg-[#041026] border border-slate-700 text-slate-300 hover:text-[#00F0B5] text-[11px] transition-colors"
+          >
+            Copy diagram.json
+          </button>
+        </div>
+        <pre class="bg-[#041026] p-4 rounded-xl border border-slate-800 text-cyan-300 overflow-x-auto leading-relaxed"><code>{diagramJsonString}</code></pre>
+      </div>
+    </div>
+
+    <!-- Tab 4: UART Serial Telemetry Terminal -->
+    <div id="tab-serial" class="tab-pane hidden w-full h-[540px] p-4 bg-[#020813] font-mono text-xs flex flex-col justify-between">
+      
+      <!-- Terminal Controls Bar -->
+      <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-slate-400">
+        <div class="flex items-center gap-3">
+          <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-200 font-bold">ESP32 UART0 • 115200 BAUD (8-N-1)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="clear-serial-btn" class="px-2 py-0.5 rounded bg-[#041026] hover:bg-slate-800 text-[11px] text-slate-400">
+            Clear Buffer
+          </button>
+          <span class="text-[10px] text-emerald-400">Autoscroll ON</span>
+        </div>
+      </div>
+
+      <!-- Terminal Output Window -->
+      <div id="serial-terminal-log" class="flex-1 bg-[#041026]/90 rounded-xl p-4 border border-[#00F0B5]/15 overflow-y-auto space-y-1 text-slate-300 select-text leading-relaxed">
+        <div class="text-[#00F0B5] font-bold">[BOOT] ESP-IDF v4.4-dev-2651-g221c8b3-dirty / FreeRTOS Kernel v10.4.3</div>
+        <div class="text-slate-500">I (32) boot: ESP32 chip revision 1 | CPU0: 240MHz | CPU1: 240MHz</div>
+        <div class="text-slate-500">I (38) boot: Flash: 4MB (DIO, 40MHz) | SRAM: 520KB</div>
+        <div class="text-slate-400">======================================================================</div>
+        <div class="text-slate-300 font-bold">       VOLTCORE APEX ACADEMIA - ESP32 IOT ATTENDANCE NODE             </div>
+        <div class="text-slate-300">     Madras Institute of Technology (MIT) Campus, Anna University     </div>
+        <div class="text-slate-400">======================================================================</div>
+        <div class="text-slate-300">  Target Node ID  : ESP32_MIT_IOT_LAB_01</div>
+        <div class="text-slate-300">  Lab Facility    : MIT Chromepet - Embedded Systems Lab 304</div>
+        <div class="text-slate-400">----------------------------------------------------------------------</div>
+        <div class="text-cyan-400">[WIFI] Connecting to SSID: 'Wokwi-GUEST' ......</div>
+        <div class="text-[#00F0B5] font-bold">[WIFI] Connected Successfully!</div>
+        <div class="text-slate-300">  IP Address   : 10.0.2.15</div>
+        <div class="text-slate-300">  RSSI Signal  : -58 dBm</div>
+        <div class="text-slate-300">  Gateway IP   : 10.0.2.2</div>
+        <div class="text-emerald-400 font-bold">[SYSTEM] Initialization complete. Scan simulation loop active.</div>
+        <div class="text-amber-400">[SYSTEM] Tip: Press '⚡ Tap RFID Tag' button above for instant tap.</div>
+        <div class="text-slate-600">----------------------------------------------------------------------</div>
+        
+        <!-- Interactive Simulated Scan Event -->
+        <div class="text-[#00F0B5] font-bold pt-2">[CARD DETECTED] Simulated RFID Tap: E2 80 6F 3B</div>
+        <div class="text-slate-200">  Student Name : Ashok Kumar A</div>
+        <div class="text-slate-200">  Roll Number  : 2023MITEC042</div>
+        <div class="text-slate-200">  Department   : Dept of Electronics Engg (MIT Campus)</div>
+        <div class="text-cyan-300">[HTTP POST] Target: http://10.0.2.2:5000/api/attendance</div>
+        <div class="text-emerald-400 font-bold">[HTTP RES]  Code: 200 OK | Response: &#123;&quot;status&quot;:&quot;success&quot;,&quot;xp_awarded&quot;:50&#125;</div>
+        <div class="text-slate-400">[LED] GPIO 2 pulse acknowledged. Attendance recorded.</div>
+      </div>
+
+    </div>
+
+    <!-- Tab 5: Interactive Stimulus Controller Deck -->
+    <div id="tab-controller" class="tab-pane hidden w-full p-4">
+      <WokwiSimulationController client:load />
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Tab Switching Controller
+  const tabButtons = document.querySelectorAll('.sandbox-tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      if (!targetId) return;
+
+      tabButtons.forEach((b) => {
+        b.classList.remove('active', 'text-[#00F0B5]', 'bg-[#00693E]/40', 'border-[#00F0B5]/30');
+        b.classList.add('text-slate-400');
+      });
+
+      btn.classList.add('active', 'text-[#00F0B5]', 'bg-[#00693E]/40', 'border-[#00F0B5]/30');
+      btn.classList.remove('text-slate-400');
+
+      tabPanes.forEach((pane) => {
+        if (pane.id === targetId) {
+          pane.classList.remove('hidden');
+          pane.classList.add('block');
+        } else {
+          pane.classList.add('hidden');
+          pane.classList.remove('block');
+        }
+      });
+    });
+  });
+
+  // Tap RFID Tag Button Simulation in UART Log
+  const triggerScanBtn = document.getElementById('trigger-live-scan-btn');
+  const terminalLog = document.getElementById('serial-terminal-log');
+
+  triggerScanBtn?.addEventListener('click', () => {
+    if (!terminalLog) return;
+    const now = new Date().toLocaleTimeString();
+    
+    // Switch to serial tab automatically so user can watch the scan!
+    const serialTabBtn = document.querySelector('[data-target="tab-serial"]') as HTMLButtonElement | null;
+    serialTabBtn?.click();
+
+    const scanDiv = document.createElement('div');
+    scanDiv.className = 'pt-2 space-y-0.5 border-t border-slate-800';
+    scanDiv.innerHTML = `
+      <div class="text-amber-400 font-bold">[${now}] [USER TRIGGER] Manual RFID Card Tap Triggered!</div>
+      <div class="text-[#00F0B5] font-semibold">  Card UID     : E2 80 6F 3B</div>
+      <div class="text-slate-200">  Student      : Ashok Kumar A (2023MITEC042)</div>
+      <div class="text-cyan-300">  [HTTP POST]  Dispatching to Flask Server on port 5000...</div>
+      <div class="text-emerald-400 font-bold">  [HTTP 200]   Lab Attendance Logged! +50 XP Awarded (MIT Campus Gateway)</div>
+    `;
+    terminalLog.appendChild(scanDiv);
+    terminalLog.scrollTop = terminalLog.scrollHeight;
+  });
+
+  // Clear Serial Terminal Buffer
+  const clearSerialBtn = document.getElementById('clear-serial-btn');
+  clearSerialBtn?.addEventListener('click', () => {
+    if (terminalLog) {
+      terminalLog.innerHTML = '<div class="text-slate-500 font-mono text-xs">[BUFFER CLEARED] Telemetry listener active...</div>';
+    }
+  });
+
+  // Copy Code Handlers
+  const copyFirmwareBtn = document.getElementById('copy-firmware-btn');
+  const copyFirmwareText = document.getElementById('copy-firmware-text');
+  copyFirmwareBtn?.addEventListener('click', () => {
+    const code = document.querySelector('#tab-sketch code')?.textContent || '';
+    navigator.clipboard.writeText(code).then(() => {
+      if (copyFirmwareText) copyFirmwareText.textContent = 'Copied!';
+      setTimeout(() => {
+        if (copyFirmwareText) copyFirmwareText.textContent = 'Copy Sketch';
+      }, 2000);
+    });
+  });
+
+  const copyDiagramBtn = document.getElementById('copy-diagram-json-btn');
+  copyDiagramBtn?.addEventListener('click', () => {
+    const json = document.querySelector('#tab-topology code')?.textContent || '';
+    navigator.clipboard.writeText(json).then(() => {
+      copyDiagramBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyDiagramBtn.textContent = 'Copy diagram.json';
+      }, 2000);
+    });
+  });
+</script>

@@ -1,0 +1,122 @@
+---
+title: "EC8701: IoT Edge Node Foundations, Bare-Metal GPIO & Low-Power Sleep Architecture"
+code: "EC8701"
+semester: 7
+regulation: "Anna University R2021"
+department: "Department of Electronics Engineering, MIT Campus"
+credits: 4
+order: 1
+description: "Master direct memory-mapped GPIO register manipulation, ultra-low-power deep sleep modes, SAR ADC attenuation calibration, and capacitive touch peripherals on 32-bit Xtensa/Cortex-M microcontrollers."
+difficulty: "Fundamental"
+author: "MIT Campus Embedded Systems Faculty"
+publishDate: 2026-08-10
+prerequisites:
+  - "Digital Electronics & Logic Design"
+  - "C Programming & Pointer Arithmetic"
+learningOutcomes:
+  - "Manipulate bare-metal memory-mapped GPIO registers avoiding read-modify-write race hazards."
+  - "Configure Deep Sleep and ULP co-processor wake-up triggers with sub-10 uA quiescent current."
+  - "Diagnose the Passive Infrared (PIR) Acoustic Window Pane Glass Refraction failure mode."
+  - "Calibrate Non-Linear SAR ADC attenuation curves for precision sensor telemetry."
+hardwareKit:
+  - "ESP32 DevKit v4 Microcontroller"
+  - "PIR Motion Sensor (HC-SR501)"
+  - "Analog Ambient Light Sensor (LDR / TEMT6000)"
+  - "High-Precision Digital Multimeter (uA current measurement)"
+tags:
+  - "IoT Foundations"
+  - "Bare-Metal Registers"
+  - "Deep Sleep"
+  - "PIR Sensor"
+  - "Anna University R2021"
+syllabusUnits:
+  - unit: 1
+    title: "Memory-Mapped I/O & Atomic Register Manipulation"
+    topics:
+      - "GPIO_OUT_W1TS_REG (Write 1 to Set) vs GPIO_OUT_W1TC_REG (Write 1 to Clear)"
+      - "Eliminating Bitmask Race Hazards in Multitasking Environments"
+      - "Internal Pull-Up and Pull-Down Resistor Networks"
+    labHours: 6
+  - unit: 2
+    title: "SAR ADC Architecture & Non-Linear Calibration"
+    topics:
+      - "Successive Approximation Register (SAR) ADC Conversion Cycles"
+      - "Voltage Attenuation: 0dB (1.1V), 2.5dB (1.5V), 6dB (2.2V), 11dB (3.3V)"
+      - "eFuse Factory Vref Calibration and Polynomial Linearity Correction"
+    labHours: 8
+  - unit: 3
+    title: "Power Management & Energy Harvesting"
+    topics:
+      - "Active Mode vs Modem Sleep vs Light Sleep vs Deep Sleep"
+      - "RTC Memory Retention and ULP FSM Assembly Execution"
+      - "Ext0 and Ext1 External Pin Wake-Up Routing"
+    labHours: 8
+ieeeReference: "IEEE Sensors Journal, Vol. 24, No. 3, pp. 2910-2922"
+xpReward: 300
+---
+
+# EC8701: IoT Edge Node Foundations, Bare-Metal GPIO & Low-Power Sleep Architecture
+
+<div class="ieee-abstract">
+  <strong>Abstract</strong>—Battery-operated edge IoT sensor nodes deployed across industrial and academic campuses require microampere standby currents and deterministic digital I/O response times. This module focuses on direct memory-mapped register manipulation on the 32-bit Xtensa microcontroller, eliminating read-modify-write race conditions. We analyze Successive Approximation Register (SAR) ADC non-linearities, calibrate factory eFuse reference voltages, and investigate deep sleep state machines.
+  <div class="mt-2 text-xs font-mono text-[#00F0B5]">
+    <strong>Index Terms</strong>—Bare-Metal GPIO, Deep Sleep, SAR ADC, PIR Sensor, Power Profiling, Anna University.
+  </div>
+</div>
+
+---
+
+## I. Bare-Metal Register Manipulation vs Abstraction Layers
+
+Direct register operations using dedicated set/clear registers guarantee single-cycle atomic execution without disabling interrupts:
+
+```c
+// Atomic GPIO Pin Toggle avoiding Read-Modify-Write Race Hazards
+#define GPIO_OUT_W1TS_REG  (*(volatile uint32_t *)(0x3FF44008)) // Write 1 to SET
+#define GPIO_OUT_W1TC_REG  (*(volatile uint32_t *)(0x3FF4400C)) // Write 1 to CLEAR
+
+void inline set_pin_high(uint8_t pin) {
+    GPIO_OUT_W1TS_REG = (1 << pin); // Atomic hardware set
+}
+
+void inline set_pin_low(uint8_t pin) {
+    GPIO_OUT_W1TC_REG = (1 << pin); // Atomic hardware clear
+}
+```
+
+---
+
+## II. The Engineering Trap: Passive Infrared (PIR) Glass Refraction & Thermal Glitch
+
+<div class="glass-card p-5 rounded-2xl border border-red-500/40 bg-[#041026]/90 space-y-3 my-6">
+  <div class="flex items-center gap-2 text-red-400 font-mono font-bold text-sm tracking-wide">
+    <span class="text-base">⚠️</span>
+    <span>ENGINEERING TRAP: THE PIR PYROELECTRIC FALSE TRIGGER & GLASS REFRACTION PARADOX</span>
+  </div>
+
+  <p class="text-xs text-slate-200 leading-relaxed font-sans">
+    When students deploy IoT smart classroom nodes inside Anna University MIT Campus labs, PIR motion sensors (HC-SR501) frequently trigger dozens of ghost motion alerts when the room is empty, yet fail to detect occupants standing directly behind closed glass partitions.
+  </p>
+
+  <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-2">
+    <div class="text-amber-400 font-bold">1. Wavelength Physics:</div>
+    <p>
+      PIR sensors detect differential infrared emissions in the <strong>8 to 14 µm</strong> optical spectrum (human body temperature $\approx 37^\circ\text{C}$ corresponds to peak radiant exitance at $\lambda_{\text{peak}} \approx 9.35 \text{ µm}$ per Wien's Displacement Law). Standard soda-lime window glass has an extinction coefficient that is virtually opaque ($\approx 99.8\%$ absorption) to wavelengths above $4.5 \text{ µm}$. Consequently, human movement behind glass is completely invisible to the pyroelectric crystal!
+    </p>
+
+    <div class="text-amber-400 font-bold pt-1">2. Acoustic & Thermal Airflow False Triggers:</div>
+    <p>
+      Air conditioning registers emitting fluctuating thermal plumes produce convection currents across the Fresnel lens. The pyroelectric crystal senses differential temperature gradient $\frac{dT}{dt} > 0.05^\circ\text{C/s}$, generating false positive triggering.
+    </p>
+  </div>
+
+  <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
+    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <ul class="list-disc list-inside space-y-1 text-slate-300">
+      <li><strong>Dual-Technology Fusion:</strong> Pair PIR sensors with 10.525 GHz Doppler microwave radar (RCWL-0516). Motion is only asserted if both thermal infrared and Doppler RF return coincide.</li>
+      <li><strong>Polyethylene Fresnel Lens Masking:</strong> Install high-density polyethylene (HDPE) directional blinkers to shield the sensor from direct HVAC air currents.</li>
+      <li><strong>Software Moving Window Filter:</strong> Require at least 3 discrete state transitions within a 1.2-second window before waking the core from deep sleep.</li>
+    </ul>
+  </div>
+</div>
+

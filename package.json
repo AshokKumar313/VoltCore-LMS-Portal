@@ -1,0 +1,31 @@
+{
+  "name": "voltcore-apex-academia",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "VoltCore Apex Academia - Elite Embedded Systems & IoT LMS Platform tailored for Anna University / MIT Campus standards.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "qa": "python scripts/content_qa_validator.py --strict",
+    "schematics": "python backend/schematic_generator.py",
+    "test": "pytest tests"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^3.1.9",
+    "@astrojs/react": "^7.1.2",
+    "@astrojs/tailwind": "^5.1.0",
+    "astro": "^4.16.18",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^3.4.17"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  }
+}

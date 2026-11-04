@@ -1,0 +1,523 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import WokwiSandbox from '../components/WokwiSandbox.astro';
+import XPProgressionWidget from '../components/XPProgressionWidget.jsx';
+
+// Student Profile Constants for MIT Campus, Anna University
+const student = {
+  name: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  rfidUid: "E2 80 6F 3B",
+  streak: 14,
+  xp: 4850,
+  level: "Silicon Grandmaster (Level 18)",
+  specialization: "Embedded Systems & Real-Time IoT Systems"
+};
+---
+
+<MainLayout title="VoltCore Apex Academia | Anna University MIT Campus" ieeeMode={true}>
+  
+  <!-- Hero Section with German Precision Technical HUD -->
+  <section class="mb-10 relative">
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      
+      <!-- Ambient Lighting Accent -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-[#00F0B5]/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="max-w-2xl space-y-3">
+          
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-3 py-1 rounded-full bg-[#00693E]/60 border border-[#00F0B5]/40 text-[#00F0B5] text-xs font-mono font-bold tracking-wider uppercase">
+              Anna University R2021 Regulation
+            </span>
+            <span class="px-2.5 py-1 rounded-full bg-[#020813] border border-slate-700 text-slate-300 text-xs font-mono">
+              MIT Campus Chromepet
+            </span>
+            <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[#00F0B5] text-xs font-mono">
+              EC8702 • Lab 304
+            </span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            VoltCore <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00F0B5] via-emerald-400 to-cyan-300">Apex Academia</span>
+          </h1>
+
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Elite Embedded Systems & IoT Engineering Learning Management Platform. Bridging physical microcontrollers with real-time telemetry, zero-latency Wokwi simulation, and Gemini AI viva voce mentorship.
+          </p>
+
+          <!-- System Badges & Telemetry -->
+          <div class="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400">
+            <div class="flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+              <span class="text-slate-200">PBKDF2-SHA256 (260,000 iters)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+              <span class="text-slate-200">ESP32 REST Gateway (Port 5000)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+              <span class="text-slate-200">Zero-Latency Wokwi SPI/I2C</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Persona Quick Dashboard -->
+        <div class="glass-card p-5 rounded-2xl border border-[#00F0B5]/30 min-w-[280px] lg:max-w-xs space-y-3 font-mono text-xs shadow-xl">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <span class="text-slate-400">STUDENT PROFILE</span>
+            <span class="text-emerald-400 flex items-center gap-1 font-bold">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> ACTIVE LAB
+            </span>
+          </div>
+
+          <div>
+            <div class="text-base font-bold text-white">{student.name}</div>
+            <div class="text-slate-400 text-[11px]">{student.rollNo} • ECE Dept</div>
+            <div class="text-[#00F0B5] text-[11px] font-semibold mt-0.5">{student.level}</div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 space-y-1.5 text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-slate-400">RFID Token:</span>
+              <span class="text-[#00F0B5] font-bold bg-[#020813] px-1.5 py-0.5 rounded border border-[#00F0B5]/20">{student.rfidUid}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Lab Streak:</span>
+              <span class="text-amber-400 font-bold">🔥 {student.streak} Days</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">XP Points:</span>
+              <span class="text-white font-bold">{student.xp} / 5,000 XP</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onclick="document.getElementById('open-gemini-drawer-btn')?.click()"
+            class="w-full mt-2 py-2 rounded-xl bg-[#00693E]/50 hover:bg-[#00693E] text-[#00F0B5] hover:text-white border border-[#00F0B5]/30 font-bold transition-all flex items-center justify-center gap-1.5"
+          >
+            <span>Ask Gemini AI Viva Tutor</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Real-Time XP & Curriculum Modules Progression Widget -->
+  <section class="mb-12">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+          Gamified XP Progression & Anna University Module Hub
+        </h2>
+      </div>
+      <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
+        ⚡ 2.5x Boost Active • SQLite Real-Time Sync
+      </span>
+    </div>
+    <XPProgressionWidget client:load />
+  </section>
+
+  <!-- Section 1: Zero-Latency Hardware Sandbox -->
+  <section class="mb-12">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+          Interactive Hardware Simulation Sandbox
+        </h2>
+      </div>
+      <span class="text-xs font-mono text-slate-400 hidden sm:inline">
+        Wokwi Live Engine • diagram.json & ESP32 C++
+      </span>
+    </div>
+
+    <!-- Wokwi Sandbox Component -->
+    <WokwiSandbox />
+  </section>
+
+  <!-- Section 2: Live ESP32 Hardware Attendance Telemetry Feed -->
+  <section class="mb-12">
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-bold text-white font-mono">
+              Live ESP32 RFID Attendance Gateway
+            </h3>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00F0B5] text-[10px] font-mono border border-[#00F0B5]/30">
+              REST: Port 5000
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-0.5">
+            Streaming student RFID card scans from ESP32-WROOM-32 via HTTP POST JSON
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 font-mono text-xs">
+          <button
+            type="button"
+            id="refresh-attendance-btn"
+            class="px-3 py-1.5 rounded-lg bg-[#041026] hover:bg-[#020813] border border-[#00F0B5]/30 text-slate-200 hover:text-[#00F0B5] transition-all flex items-center gap-1.5"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+            </svg>
+            <span>Refresh Scan Log</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Scans Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left font-mono text-xs">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 text-[11px]">
+              <th class="py-2.5 px-3">TIMESTAMP</th>
+              <th class="py-2.5 px-3">STUDENT ID</th>
+              <th class="py-2.5 px-3">STUDENT NAME</th>
+              <th class="py-2.5 px-3">RFID UID TOKEN</th>
+              <th class="py-2.5 px-3">NODE ID</th>
+              <th class="py-2.5 px-3">VERIFICATION</th>
+            </tr>
+          </thead>
+          <tbody id="attendance-table-body" class="divide-y divide-slate-800/60">
+            <!-- Default Seed Rows -->
+            <tr class="hover:bg-[#041026]/80 text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:22:46</td>
+              <td class="py-2.5 px-3 font-bold text-white">2023MITEC042</td>
+              <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">Ashok Kumar A</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-slate-300">E2 80 6F 3B</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ Lab-Verified (+50 XP)</span></td>
+            </tr>
+            <tr class="hover:bg-[#041026]/80 text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:20:10</td>
+              <td class="py-2.5 px-3 font-bold text-white">2023MITEC015</td>
+              <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">Kavitha Raman</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-slate-300">C3 4D 8A 11</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ Lab-Verified (+50 XP)</span></td>
+            </tr>
+            <tr class="hover:bg-[#041026]/80 text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:15:02</td>
+              <td class="py-2.5 px-3 font-bold text-white">MIT-FAC-019</td>
+              <td class="py-2.5 px-3 text-amber-300 font-semibold">Dr. K. S. Parthasarathy</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-slate-300">A4 12 99 F0</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">✓ Faculty Access</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3: Anna University & IEEE Capstone Curriculum Modules -->
+  <section class="mb-12">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+          Anna University ECE Tiered Curriculum & IEEE Capstones
+        </h2>
+      </div>
+      <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
+        R2021 Regulation • Dept of Electronics Engineering
+      </span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Tier 1: IoT Foundations -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-emerald-500/30 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">TIER 1 FOUNDATION</span>
+          <span class="text-slate-400 text-[10px]">4 Credits • Sem 7</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8701: IoT Edge Node Foundations & Bare-Metal GPIO</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Direct memory-mapped atomic registers (W1TS/W1TC), SAR ADC calibration, and the PIR pyroelectric glass refraction trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-[#00F0B5]">Trap: Glass Refraction</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-emerald-400 border border-emerald-500/20 font-bold">+300 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 2: Automotive Edge -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-cyan-500/30 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-bold text-[10px]">TIER 2 AUTOMOTIVE</span>
+          <span class="text-slate-400 text-[10px]">4 Credits • Sem 7</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8704: Automotive Radar & Ultrasonic Edge Sensing</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Time-of-Flight timer capture, CAN 2.0B mailboxes, and the HC-SR04 speed-of-sound thermal gradient & snowstorm bounce trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-cyan-400">Trap: Specular Bounce</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-cyan-400 border border-cyan-500/20 font-bold">+350 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 3: Defense UAV FHSS -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-[#00F0B5]/40 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-[#00693E]/40 text-[#00F0B5] font-bold text-[10px]">TIER 3 CAPSTONE</span>
+          <span class="text-amber-400 text-[10px]">Apex Research</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8703: Defense UAV Telemetry & 2.4GHz FHSS</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          100 hops/s spread spectrum on SX1280, FreeRTOS SPI DMA, and the urban canyon multipath Doppler shift demodulation trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-[#00F0B5]">Trap: Doppler Shift (240Hz)</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/20 font-bold">+500 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 3: 5-Stage RV32I Soft-Core -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-amber-500/30 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold text-[10px]">TIER 3 SILICON</span>
+          <span class="text-amber-400 text-[10px]">Artix-7 FPGA</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8705: 5-Stage RV32I RISC-V Soft-Core in Verilog</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Synthesizable pipelined RV32I core on XC7A35T, hazard forwarding unit, and the RAW Load-Use 1-cycle bubble stall trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-amber-400">Trap: Load-Use Hazard</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-amber-400 border border-amber-500/20 font-bold">+500 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 3: FreeRTOS Kernel Internals -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-purple-500/30 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold text-[10px]">TIER 3 RTOS</span>
+          <span class="text-slate-400 text-[10px]">Cortex-M4 / ESP32</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8706: FreeRTOS & Deterministic Multi-Core Scheduling</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Priority inheritance mutexes, RMS vs EDF schedulability bounds, PendSV context switching, and the ISR Mutex Deadlock trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-purple-400">Trap: ISR Mutex Deadlock</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-purple-400 border border-purple-500/20 font-bold">+500 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 3: Railway Edge AI TinyML -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-blue-500/30 space-y-3 font-mono text-xs">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold text-[10px]">TIER 3 EDGE AI</span>
+          <span class="text-slate-400 text-[10px]">Jetson Nano / ESP32</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8707: High-Speed Railway Edge AI Track Defect Vision</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          MobileNet-V2 INT8 quantization, TensorRT acceleration, ADXL345 accelerometer fusion, and the rolling shutter skew trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-blue-400">Trap: Rolling Shutter Shear</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-blue-400 border border-blue-500/20 font-bold">+500 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 3: Advanced ARM Cortex-M DMA & Zero-Copy IPC (Phase 2 Capstone) -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-emerald-400/40 space-y-3 font-mono text-xs shadow-[0_0_20px_rgba(0,240,181,0.15)]">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-[#00693E]/40 text-[#00F0B5] font-bold text-[10px]">TIER 3 CAPSTONE</span>
+          <span class="text-[#00F0B5] text-[10px] font-bold">R2023 Spec</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8708: Cortex-M DMA Architecture & Zero-Copy IPC</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          AHB crossbar matrix contention, circular ping-pong ring buffers, FreeRTOS task notifications, and the DMA Pointer Overwrite trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-[#00F0B5]">Trap: DMA Pointer Race</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/30 font-bold">+550 XP</span>
+        </div>
+      </div>
+
+      <!-- Tier 4: TinyML Edge AI & Vibration FFT Anomaly (Phase 4 Capstone) -->
+      <div class="glass-card-hover glass-card p-5 rounded-2xl border border-rose-500/40 space-y-3 font-mono text-xs shadow-[0_0_20px_rgba(244,63,94,0.15)]">
+        <div class="flex justify-between items-center">
+          <span class="px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 font-bold text-[10px] border border-rose-500/30">TIER 4 EDGE AI</span>
+          <span class="text-rose-400 text-[10px] font-bold">Apex Milestone</span>
+        </div>
+        <div class="font-bold text-white text-sm">EC8709: TinyML Edge AI & Vibration FFT Anomaly</div>
+        <p class="text-slate-400 text-[11px] leading-relaxed">
+          Post-training INT8 asymmetric quantization, 64-point FFT harmonic decomposition, and the Integer Zero-Point Overflow trap.
+        </p>
+        <div class="pt-2 border-t border-slate-800 flex justify-between items-center text-[10px]">
+          <span class="text-rose-400">Trap: Zero-Point Overflow</span>
+          <span class="px-2 py-0.5 rounded bg-[#020813] text-rose-400 border border-rose-500/30 font-bold">+600 XP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 Rapid Learning & Firmware Verification Hub -->
+    <div class="mt-8 p-5 rounded-2xl bg-gradient-to-r from-[#00693E]/20 via-[#041026] to-[#020813] border border-[#00F0B5]/30 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-[#00693E]/40 border border-[#00F0B5]/40 flex items-center justify-center text-xl text-[#00F0B5] shadow-emerald-glow">
+          ⚡
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <span>Phase 2 Learning & Verification Suite Armed</span>
+            <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-[#00693E]/40 text-[#00F0B5] border border-[#00F0B5]/30">
+              New
+            </span>
+          </h3>
+          <p class="text-xs text-slate-400">
+            Automated Wokwi firmware test benches, SM-2 ECE spaced repetition, and 71-chunk BM25 RAG tutor.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <a
+          href="/telemetry"
+          class="px-3.5 py-2 rounded-xl bg-[#00F0B5] text-[#020813] font-mono font-bold text-xs hover:bg-emerald-300 transition-all shadow-[0_0_15px_rgba(0,240,181,0.3)] flex items-center gap-1.5"
+        >
+          <span>Live Telemetry SSE</span>
+          <span>→</span>
+        </a>
+        <a
+          href="/fleet"
+          class="px-3.5 py-2 rounded-xl bg-[#041026] border border-[#00F0B5]/40 text-[#00F0B5] font-mono font-bold text-xs hover:bg-[#00693E]/30 transition-all flex items-center gap-1.5"
+        >
+          <span>IoT Fleet Manager</span>
+          <span>→</span>
+        </a>
+        <a
+          href="/nptel"
+          class="px-3.5 py-2 rounded-xl bg-[#041026] border border-emerald-500/40 text-emerald-400 font-mono font-bold text-xs hover:bg-[#00693E]/30 transition-all flex items-center gap-1.5"
+        >
+          <span>NPTEL IIT Videos</span>
+          <span>→</span>
+        </a>
+        <a
+          href="/autograder"
+          class="px-3.5 py-2 rounded-xl bg-[#041026] border border-cyan-500/40 text-cyan-400 font-mono font-bold text-xs hover:bg-cyan-950/30 transition-all flex items-center gap-1.5"
+        >
+          <span>AutoGrader</span>
+          <span>→</span>
+        </a>
+        <a
+          href="/flashcards"
+          class="px-3.5 py-2 rounded-xl bg-[#041026] border border-amber-500/40 text-amber-400 font-mono font-bold text-xs hover:bg-amber-950/30 transition-all flex items-center gap-1.5"
+        >
+          <span>SM-2 Flashcards</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: IEEE Academic Journal Abstract & Architecture Spec -->
+  <section class="mb-12">
+    <div class="glass-card rounded-2xl p-6 sm:p-8 border border-[#00F0B5]/20 ieee-paper">
+      
+      <div class="text-center mb-6">
+        <div class="text-xs font-mono uppercase tracking-widest text-[#00F0B5] mb-1 font-bold">
+          IEEE TRANSACTIONS ON INDUSTRIAL INFORMATICS & EDUCATION • ANNA UNIVERSITY MIT CAMPUS
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white ieee-title">
+          Architectural Framework for Zero-Latency Hardware-in-the-Loop LMS Telemetry Using Dual-Core ESP32 and PBKDF2-HMAC-SHA256
+        </h2>
+        <div class="ieee-author-block text-xs sm:text-sm">
+          <strong>Ashok Kumar A</strong>, <em>Student Member, IEEE</em>, and <strong>Dr. K. S. Parthasarathy</strong>, <em>Senior Member, IEEE</em><br/>
+          Department of Electronics Engineering, Madras Institute of Technology Campus, Anna University, Chromepet, Chennai 600044, India
+        </div>
+      </div>
+
+      <!-- IEEE Abstract Block -->
+      <div class="ieee-abstract">
+        <strong>Abstract</strong>—In modern embedded systems pedagogy, the convergence of physical edge nodes and real-time laboratory tracking poses severe concurrency and cryptographic overheads. This article presents the complete architecture of <em>VoltCore Apex Academia</em>, a modular learning platform integrating an ESP32 hardware telemetry node with an OWASP-compliant SQLite database utilizing PBKDF2-HMAC-SHA256 (260,000 iterations). By offloading SPI frame decoding for 13.56MHz MFRC522 RFID tokens to FreeRTOS Core 1 and servicing HTTP/REST JSON payloads over Core 0, deterministic sub-15ms verification latency is maintained. A zero-latency Wokwi simulation sandbox and a Gemini AI-driven viva voce mentor are integrated, enabling students to simulate circuit topologies, debug clock stretching, and validate laboratory competencies against Anna University R2021 curriculum benchmarks.
+        <div class="mt-2 text-xs font-mono text-[#00F0B5]">
+          <strong>Index Terms</strong>—Embedded Systems, FreeRTOS, ESP32, Wokwi Simulation, RFID MFRC522, PBKDF2-SHA256, Anna University, Viva Voce Mentorship.
+        </div>
+      </div>
+
+      <!-- Two-Column Academic Layout -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 text-sm text-slate-300">
+        <div>
+          <h3 class="ieee-section-heading">I. Introduction & System Topologies</h3>
+          <p class="leading-relaxed">
+            Embedded systems education in tier-1 institutions such as the MIT Campus of Anna University requires students to engage with register-level peripheral manipulation while understanding distributed edge telemetry. Conventional web-based portals separate theoretical LMS materials from hardware compilation and laboratory attendance.
+          </p>
+          <p class="mt-3 leading-relaxed">
+            The VoltCore architecture eliminates this fragmentation through a tri-layer operational model: (i) an edge sensor cluster powered by ESP32 microcontrollers, (ii) a high-security backend enforcing 260,000-round key derivation, and (iii) an Astro-based reactive portal providing instant ⌘K search and Wokwi virtual hardware emulation.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="ieee-section-heading">II. Security & Concurrency Analysis</h3>
+          <p class="leading-relaxed">
+            Student identification tokens scanned via the MFRC522 front-end are encapsulated into JSON payloads and transmitted via HTTP POST. Rather than storing reversible identifiers, the database tier uses cryptographically isolated PBKDF2-HMAC-SHA256 hashing.
+          </p>
+          <div class="ieee-figure">
+            <div class="font-mono text-xs text-center text-[#00F0B5]">
+              ESP32 (Core 1: SPI / RFID) ➔ Core 0: Wi-Fi HTTP POST ➔ Flask REST (Port 5000) ➔ SQLite WAL (260,000 iters)
+            </div>
+            <div class="ieee-figure-caption">
+              Fig. 1. End-to-end data pipeline from physical/simulated RFID antenna to verified database record.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</MainLayout>
+
+<script>
+  // Dynamic Attendance Scans Polling from Flask Server (Port 5000)
+  const refreshBtn = document.getElementById('refresh-attendance-btn');
+  const tableBody = document.getElementById('attendance-table-body');
+
+  async function fetchLiveAttendance() {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/attendance?limit=10');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.data || !Array.isArray(data.data) || !tableBody) return;
+
+      tableBody.innerHTML = '';
+      data.data.forEach((row: any) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#041026]/80 text-slate-200 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-slate-400 font-mono">${row.timestamp}</td>
+          <td class="py-2.5 px-3 font-bold text-white font-mono">${row.user_id}</td>
+          <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">${row.name || 'Student'}</td>
+          <td class="py-2.5 px-3 font-mono"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-slate-300">${row.rfid_uid}</span></td>
+          <td class="py-2.5 px-3 text-slate-400 font-mono">${row.node_id}</td>
+          <td class="py-2.5 px-3 font-mono"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ ${row.status}</span></td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    } catch (e) {
+      // In offline/static mode, default table rows persist smoothly
+      console.log('Attendance API polling standby:', e);
+    }
+  }
+
+  refreshBtn?.addEventListener('click', () => {
+    fetchLiveAttendance();
+  });
+
+  // Auto-poll periodically every 10 seconds
+  setInterval(fetchLiveAttendance, 10000);
+</script>
+

@@ -1,0 +1,63 @@
+{
+  "name": "VoltCore Apex Academia — MIT Campus, Anna University",
+  "short_name": "VoltCore Apex",
+  "description": "Elite Embedded Systems and IoT LMS Platform engineered for Anna University / MIT Campus Standards (Department of Electronics Engineering, Regulation 2023).",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020813",
+  "theme_color": "#00693E",
+  "orientation": "any",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Firmware AutoGrader",
+      "short_name": "AutoGrader",
+      "description": "Automated Wokwi hidden test bench evaluator",
+      "url": "/autograder",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "SM-2 Flashcards",
+      "short_name": "Flashcards",
+      "description": "Spaced repetition register maps & formulas",
+      "url": "/flashcards",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Teacher Analytics",
+      "short_name": "Analytics",
+      "description": "NBA/NAAC attainment & weak-topic matrices",
+      "url": "/teacher",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "IoT Fleet Manager",
+      "short_name": "Fleet",
+      "description": "ESP32 LittleFS offline queue controller",
+      "url": "/fleet",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "NPTEL Video Mapper",
+      "short_name": "NPTEL",
+      "description": "Official IIT MOOC video lectures and timestamps",
+      "url": "/nptel",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+---
+import Topbar from '../components/Topbar.astro';
+import GeminiTutorDrawer from '../components/GeminiTutorDrawer.astro';
+import ToastNotifications from '../components/ToastNotifications.jsx';
+import GeminiRagDrawer from '../components/GeminiRagDrawer.jsx';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ieeeMode?: boolean;
+  activeNav?: string;
+}
+
+const {
+  title = "VoltCore Apex Academia | MIT Campus, Anna University",
+  description = "Elite Embedded Systems and IoT LMS Platform engineered for Anna University / MIT Campus Standards.",
+  ieeeMode = false,
+  activeNav = "dashboard",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="dark scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Progressive Web App (PWA) Manifest & Theme Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#00693E" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="VoltCore Apex" />
+
+    <!-- Google Fonts: Inter, JetBrains Mono, Latin Modern / STIX Two for IEEE Academic Papers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-[#020813] text-slate-100 font-sans antialiased selection:bg-[#00F0B5]/30 selection:text-[#00F0B5] min-h-screen flex flex-col relative overflow-x-hidden">
+    
+    <!-- German Precision Cyber-Grid Canvas & Radial Gradients -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+      <!-- Deep Royal Navy to Emerald Atmospheric Radial Glow -->
+      <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[650px] bg-gradient-to-b from-[#00693E]/20 via-[#00F0B5]/10 to-transparent blur-[140px] opacity-70"></div>
+      <div class="absolute top-[40%] -right-40 w-[600px] h-[600px] bg-[#00693E]/10 blur-[130px] rounded-full pointer-events-none"></div>
+      <div class="absolute bottom-0 -left-40 w-[700px] h-[500px] bg-[#041026] blur-[110px] pointer-events-none"></div>
+
+      <!-- Precision Sub-Pixel Grid (German Technical Blueprint Grid) -->
+      <div class="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,240,181,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,181,0.035)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+      
+      <!-- Coordinate Reticles & Alignment Ticks -->
+      <div class="absolute top-24 left-6 text-[10px] font-mono text-[#00F0B5]/25 tracking-widest hidden lg:block">
+        +00.00° LAT 12.9483° N (MIT CHROMEPET)
+      </div>
+      <div class="absolute top-24 right-6 text-[10px] font-mono text-[#00F0B5]/25 tracking-widest hidden lg:block">
+        SYS_VER 4.2.0 // FREERTOS_CORE_V10.5
+      </div>
+    </div>
+
+    <!-- Sticky Precision Glass Topbar -->
+    <Topbar />
+
+    <!-- Main Content Container with Glassmorphism -->
+    <div class="relative z-10 flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      
+      <!-- IEEE Academic Journal Breadcrumb / Banner (if applicable) -->
+      {ieeeMode && (
+        <div class="mb-6 p-4 rounded-xl border border-[#00F0B5]/20 bg-[#041026]/70 backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 rounded bg-[#00693E]/40 border border-[#00F0B5]/40 text-[#00F0B5] font-bold">
+              IEEE TRANSACTIONS STYLE
+            </span>
+            <span class="text-slate-400">Anna University / MIT Campus Curriculum Spec EC8702</span>
+          </div>
+          <div class="flex items-center gap-4 text-slate-400">
+            <span>DOI: 10.1109/MIT.ECE.2026.042</span>
+            <span>ISSN: 2169-3536</span>
+          </div>
+        </div>
+      )}
+
+      <!-- Primary View Slot -->
+      <main class="flex-1">
+        <slot />
+      </main>
+
+      <!-- Engineering Technical Footer -->
+      <footer class="mt-16 pt-8 pb-12 border-t border-[#00F0B5]/15 relative">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-400">
+          <div class="flex items-center gap-4">
+            <!-- Anna University MIT Emblem Emblem Badge -->
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00693E] to-[#041026] border border-[#00F0B5]/30 flex items-center justify-center font-mono font-bold text-base text-[#00F0B5] shadow-emerald-glow">
+              MIT
+            </div>
+            <div>
+              <div class="font-semibold text-slate-200 tracking-wide flex items-center gap-2">
+                VoltCore Apex Academia
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/25">
+                  Dept of Electronics Engg
+                </span>
+              </div>
+              <div class="text-xs text-slate-500">
+                Madras Institute of Technology (MIT) Campus, Anna University, Chromepet, Chennai - 600 044.
+              </div>
+            </div>
+          </div>
+
+          <!-- Hardware Telemetry Status Summary -->
+          <div class="flex items-center gap-6 font-mono text-xs">
+            <div class="flex items-center gap-2">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0B5] opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-[#00F0B5]"></span>
+              </span>
+              <span class="text-slate-300">ESP32 Lab Node: 10.0.2.2</span>
+            </div>
+            <div class="text-slate-500">|</div>
+            <div class="text-slate-300">
+              REST: <span class="text-[#00F0B5]">Port 5000 Active</span>
+            </div>
+            <div class="text-slate-500">|</div>
+            <div class="text-slate-300">
+              SQLite: <span class="text-emerald-400">WAL Mode</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Gemini AI Interactive Viva Tutor Drawer Component -->
+    <GeminiTutorDrawer />
+
+    <!-- Phase 1 Enterprise Glassmorphic Toast Notifications -->
+    <ToastNotifications client:load />
+
+    <!-- Phase 2 Gemini RAG Curriculum & Viva Drawer -->
+    <GeminiRagDrawer client:load />
+
+    <style is:global>
+      /* Italian Glassmorphism Core Utilities */
+      .glass-card {
+        background: rgba(4, 16, 38, 0.72);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 240, 181, 0.16);
+        box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+      }
+
+      .glass-card-hover {
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .glass-card-hover:hover {
+        border-color: rgba(0, 240, 181, 0.38);
+        box-shadow: 0 16px 44px -8px rgba(0, 240, 181, 0.18);
+        transform: translateY(-2px);
+      }
+
+      .glass-card-accent {
+        background: linear-gradient(135deg, rgba(0, 105, 62, 0.35) 0%, rgba(4, 16, 38, 0.85) 100%);
+        backdrop-filter: blur(24px);
+        border: 1px solid rgba(0, 240, 181, 0.3);
+      }
+
+      /* IEEE Journal Academic Typography Classes */
+      .ieee-paper {
+        font-family: 'STIX Two Text', 'Latin Modern Roman', Georgia, serif;
+        color: #e2e8f0;
+        line-height: 1.65;
+      }
+
+      .ieee-paper h1, .ieee-paper h2, .ieee-paper h3 {
+        font-family: 'Inter', sans-serif;
+        letter-spacing: -0.015em;
+      }
+
+      .ieee-title {
+        text-align: center;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+
+      .ieee-author-block {
+        text-align: center;
+        font-size: 0.95rem;
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+        color: #94a3b8;
+      }
+
+      .ieee-abstract {
+        background: rgba(2, 8, 19, 0.75);
+        border-left: 3px solid #00F0B5;
+        padding: 1.25rem 1.5rem;
+        margin: 1.5rem 0;
+        border-radius: 0 0.75rem 0.75rem 0;
+        font-size: 0.925rem;
+      }
+
+      .ieee-abstract strong {
+        color: #00F0B5;
+        font-family: 'Inter', sans-serif;
+      }
+
+      .ieee-section-heading {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #00F0B5;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid rgba(0, 240, 181, 0.2);
+        padding-bottom: 0.35rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .ieee-figure {
+        background: rgba(4, 16, 38, 0.6);
+        border: 1px solid rgba(0, 240, 181, 0.18);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+      }
+
+      .ieee-figure-caption {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-align: center;
+        margin-top: 0.75rem;
+      }
+
+      /* Custom Engineered Scrollbars */
+      ::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #020813;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(0, 240, 181, 0.25);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 240, 181, 0.55);
+      }
+    </style>
+    <!-- Service Worker Registration for Offline Progressive Web App (PWA) -->
+    <script is:inline>
+      if ('serviceWorker' in navigator && (window.location.protocol.startsWith('http') || window.location.hostname === 'localhost')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('[VoltCore PWA]: ServiceWorker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('[VoltCore PWA]: ServiceWorker registration offline/failed:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,274 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+const careerTracks = [
+  {
+    id: "embedded-firmware",
+    category: "Firmware",
+    title: "Embedded Firmware & Real-Time Kernel Specialist",
+    code: "TRACK-EMB",
+    ctcBand: "₹16 – 34 LPA (Domestic) • $125k – $180k (Global)",
+    targetRoles: ["Embedded Software Engineer", "RTOS Kernel Developer", "Firmware Architect"],
+    recruiters: ["Qualcomm", "Texas Instruments", "Intel", "Bosch", "NXP", "Collins Aerospace"],
+    mappedModules: [
+      { code: "EC8701", title: "Bare-Metal GPIO & Atomic Registers", xp: 300, status: "Verified" },
+      { code: "EC8702", title: "ARM Cortex-M Hardware & NVIC", xp: 400, status: "Verified" },
+      { code: "EC8706", title: "FreeRTOS Kernel & Priority Inversion", xp: 500, status: "Verified" },
+      { code: "EC8708", title: "Cortex-M DMA & Zero-Copy IPC", xp: 550, status: "Verified" }
+    ],
+    badges: [
+      "Bare-Metal Driver Virtuoso (W1TS/W1TC)",
+      "Real-Time Kernel Architect (FreeRTOS)",
+      "DMA Zero-Copy Silicon Master"
+    ],
+    readinessScore: 98,
+    borderGlow: "border-[#00F0B5]/40 hover:border-[#00F0B5]",
+    tagColor: "bg-[#00693E]/40 text-[#00F0B5] border-[#00F0B5]/30"
+  },
+  {
+    id: "vlsi-rtl-design",
+    category: "Silicon",
+    title: "VLSI & Digital RTL Design Engineer",
+    code: "TRACK-VLSI",
+    ctcBand: "₹18 – 42 LPA (Domestic) • $140k – $210k (Global)",
+    targetRoles: ["Digital RTL Engineer", "ASIC Verification Specialist", "FPGA Soft-Core Lead"],
+    recruiters: ["NVIDIA", "AMD", "Apple Silicon", "Qualcomm", "MediaTek", "Synopsys"],
+    mappedModules: [
+      { code: "EC8705", title: "5-Stage RV32I Soft-Core in Verilog", xp: 500, status: "Verified" },
+      { code: "EC8702", title: "Computer Organization & ISA", xp: 400, status: "Verified" }
+    ],
+    badges: [
+      "Verilog Logic Synthesizer",
+      "RISC-V 5-Stage Processor Architect",
+      "Artix-7 Zero-Slack Timing Master"
+    ],
+    readinessScore: 95,
+    borderGlow: "border-amber-500/40 hover:border-amber-500",
+    tagColor: "bg-amber-500/20 text-amber-400 border-amber-500/30"
+  },
+  {
+    id: "iot-cloud-systems",
+    category: "IoT Cloud",
+    title: "IoT Cloud & Edge Systems Architect",
+    code: "TRACK-IOT",
+    ctcBand: "₹14 – 30 LPA (Domestic) • $110k – $165k (Global)",
+    targetRoles: ["IoT Solutions Architect", "Edge AI Systems Lead", "Firmware Cloud Integrator"],
+    recruiters: ["AWS IoT", "Microsoft Azure Edge", "Siemens", "Honeywell", "Schneider", "Zoho"],
+    mappedModules: [
+      { code: "EC8701", title: "IoT Node Foundations", xp: 300, status: "Verified" },
+      { code: "EC8706", title: "FreeRTOS Dual-Core Pinned Tasks", xp: 500, status: "Verified" },
+      { code: "EC8709", title: "TinyML Edge AI Vibration Anomaly", xp: 600, status: "Verified" }
+    ],
+    badges: [
+      "Edge Telemetry Specialist (RFID & SSE)",
+      "Cloud Sync Architect (Merkle Chaining)",
+      "TinyML Edge Grandmaster"
+    ],
+    readinessScore: 96,
+    borderGlow: "border-cyan-500/40 hover:border-cyan-500",
+    tagColor: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30"
+  },
+  {
+    id: "automotive-systems",
+    category: "Automotive",
+    title: "Automotive Embedded Systems & Functional Safety",
+    code: "TRACK-AUTO",
+    ctcBand: "₹15 – 32 LPA (Domestic) • $120k – $175k (Global)",
+    targetRoles: ["Automotive Software Engineer", "ADAS Calibration Lead", "CAN Bus Architect"],
+    recruiters: ["Bosch Automotive", "Continental", "Aptiv", "Mercedes-Benz R&D", "Tata Motors"],
+    mappedModules: [
+      { code: "EC8704", title: "Automotive Radar & Ultrasonic Edge Sensing", xp: 350, status: "Verified" },
+      { code: "EC8702", title: "Embedded CAN Hardware & Transceivers", xp: 400, status: "Verified" }
+    ],
+    badges: [
+      "CAN Protocol Specialist (ISO 11898)",
+      "ADAS Ultrasonic Fusion Calibrator",
+      "ISO 26262 Fault-Tolerant Architect"
+    ],
+    readinessScore: 92,
+    borderGlow: "border-purple-500/40 hover:border-purple-500",
+    tagColor: "bg-purple-500/20 text-purple-400 border-purple-500/30"
+  },
+  {
+    id: "hardware-test-validation",
+    category: "Hardware Test",
+    title: "Hardware Test & Board Validation Engineer",
+    code: "TRACK-TEST",
+    ctcBand: "₹14 – 28 LPA (Domestic) • $110k – $160k (Global)",
+    targetRoles: ["Hardware Validation Lead", "PCB Bring-Up Engineer", "Automated Test Developer"],
+    recruiters: ["Texas Instruments", "Analog Devices", "Keysight", "Rohde & Schwarz", "ISRO"],
+    mappedModules: [
+      { code: "EC8702", title: "Embedded Peripherals & Oscilloscope Probing", xp: 400, status: "Verified" },
+      { code: "EC8708", title: "High-Speed Signal Integrity & DMA", xp: 550, status: "Verified" }
+    ],
+    badges: [
+      "Keysight DSO Bench Probing Specialist",
+      "Analog SPICE Monte Carlo Synthesizer",
+      "Automated HIL Firmware Test Master"
+    ],
+    readinessScore: 94,
+    borderGlow: "border-blue-500/40 hover:border-blue-500",
+    tagColor: "bg-blue-500/20 text-blue-400 border-blue-500/30"
+  }
+];
+---
+
+<MainLayout
+  title="Industry Career Tracks & Micro-Credentials | VoltCore Apex Academia"
+  description="Role-based career tracks mapping completed Anna University ECE labs and verified micro-credentials to Tier-1 industry readiness benchmarks (Qualcomm, TI, NVIDIA, Bosch)."
+  activeNav="careers"
+>
+  <div class="space-y-8 font-mono">
+    
+    <!-- Top Breadcrumb & Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs">
+      <div class="flex items-center gap-2 text-slate-400">
+        <a href="/" class="hover:text-[#00F0B5] transition-colors">VoltCore</a>
+        <span>/</span>
+        <span class="text-[#00F0B5]">Industry Career Tracks</span>
+        <span>/</span>
+        <span class="text-slate-500">Tier-1 Micro-Credential Benchmarks</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">
+          Anna University MIT Campus • Regulation 2023
+        </span>
+      </div>
+    </div>
+
+    <!-- Hero Banner with Italian Glassmorphism -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 space-y-3 max-w-3xl">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded bg-[#00693E]/60 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/30">
+            ECE INDUSTRY READINESS ROADMAP
+          </span>
+          <span class="text-xs text-slate-400">
+            Validated by MIT ECE Career Advisory Cell
+          </span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          Role-Based Career Tracks & Skill Portfolios
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          Directly map hands-on Wokwi firmware simulations, LTspice circuit analyses, and FreeRTOS RTOS laboratory verifications to Tier-1 semiconductor and embedded systems industry roles.
+        </p>
+      </div>
+    </div>
+
+    <!-- Career Tracks Grid -->
+    <div class="space-y-6">
+      {careerTracks.map((track) => (
+        <div class={`rounded-3xl border ${track.borderGlow} bg-gradient-to-b from-[#020813] via-[#041026] to-[#020813] p-6 sm:p-8 shadow-2xl transition-all space-y-6`}>
+          
+          {/* Track Header */}
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+            <div>
+              <div class="flex flex-wrap items-center gap-2.5">
+                <span class={`px-2.5 py-0.5 rounded-lg border text-xs font-bold ${track.tagColor}`}>
+                  {track.code}
+                </span>
+                <span class="text-xs text-slate-400">
+                  {track.category} Track
+                </span>
+              </div>
+              <h2 class="text-xl sm:text-2xl font-bold text-white mt-1.5">
+                {track.title}
+              </h2>
+              <div class="text-xs text-emerald-400 mt-1">
+                Compensation Band: <span class="font-bold text-white">{track.ctcBand}</span>
+              </div>
+            </div>
+
+            {/* Industry Readiness Dial */}
+            <div className="flex items-center gap-4 bg-[#020813] p-3 rounded-2xl border border-slate-800 shrink-0">
+              <div className="text-right">
+                <div className="text-[10px] uppercase text-slate-400">Industry Readiness</div>
+                <div className="text-2xl font-bold text-[#00F0B5]">{track.readinessScore}%</div>
+                <div className="text-[10px] text-emerald-400">Benchmark Cleared</div>
+              </div>
+              <div className="w-12 h-12 rounded-full border-4 border-[#00693E] border-t-[#00F0B5] flex items-center justify-center font-bold text-xs text-white">
+                ✓
+              </div>
+            </div>
+          </div>
+
+          {/* Recruiters & Target Roles Row */}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-[#041026]/60 p-4 rounded-2xl border border-slate-800/80">
+            <div>
+              <div class="text-slate-400 text-[11px] mb-1.5 uppercase tracking-wider">Target Job Titles:</div>
+              <div class="flex flex-wrap gap-1.5">
+                {track.targetRoles.map((role) => (
+                  <span class="px-2 py-0.5 rounded bg-[#020813] text-slate-200 border border-slate-700 text-[11px]">
+                    {role}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div class="text-slate-400 text-[11px] mb-1.5 uppercase tracking-wider">Top Recruiters Hiring This Profile:</div>
+              <div class="flex flex-wrap gap-1.5">
+                {track.recruiters.map((rec) => (
+                  <span class="px-2 py-0.5 rounded bg-[#00693E]/20 text-[#00F0B5] border border-[#00F0B5]/30 text-[11px] font-bold">
+                    {rec}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Mapped Anna University Syllabus Modules & Badges */}
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+            
+            {/* Left: Completed & Verified Modules */}
+            <div class="space-y-2.5">
+              <div class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Mapped Curriculum Labs:</span>
+                <span class="text-[#00F0B5] text-[11px]">Wokwi & Hardware Verified</span>
+              </div>
+              <div class="space-y-2">
+                {track.mappedModules.map((m) => (
+                  <div class="p-3 rounded-xl bg-[#020813] border border-slate-800 flex items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="px-1.5 py-0.5 rounded bg-[#041026] text-[#00F0B5] text-[10px] font-bold border border-[#00F0B5]/20">
+                        {m.code}
+                      </span>
+                      <span class="text-slate-200 font-semibold">{m.title}</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 text-[10px] font-bold border border-emerald-500/30 shrink-0">
+                      ✓ {m.status} (+{m.xp} XP)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Micro-Credential Badges */}
+            <div class="space-y-2.5">
+              <div class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Earned Micro-Credential Badges:</span>
+                <span class="text-amber-400 text-[11px]">MIT ECE Accredited</span>
+              </div>
+              <div class="space-y-2">
+                {track.badges.map((b, idx) => (
+                  <div class="p-3 rounded-xl bg-[#020813] border border-amber-500/20 flex items-center gap-3 text-xs">
+                    <span class="text-base text-amber-400">🏅</span>
+                    <div>
+                      <div class="text-slate-100 font-bold">{b}</div>
+                      <div class="text-[10px] text-slate-500">Tier-{idx + 1} Competency Cleared • Digital Verification Hash Valid</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      ))}
+    </div>
+
+  </div>
+</MainLayout>
+

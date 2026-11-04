@@ -1,0 +1,39 @@
+# ========================================================================================
+# VoltCore Apex Academia - Lightweight API Gateway Dockerfile
+# Anna University / MIT Campus Standards (Department of Electronics Engineering)
+# Optimized for Low-Resource Local Development (HP Victus / Intel Core i5 / 24GB RAM)
+# ========================================================================================
+
+FROM python:3.11-slim
+
+# Set environment flags for deterministic execution & minimal memory
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LMS_DB_PATH=/app/voltcore_lms.db
+
+WORKDIR /app
+
+# Install system dependencies (curl for healthchecks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install minimal Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt || true
+
+# Copy project files
+COPY lms_database.py attendance_server.py /app/
+COPY backend/ /app/backend/
+COPY src/content/modules/ /app/src/content/modules/
+
+# Expose Telemetry Port
+EXPOSE 5000
+
+# Healthcheck probe
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Launch Server
+CMD ["python", "attendance_server.py"]
+

@@ -1,0 +1,437 @@
+---
+/**
+ * VoltCore Apex Academia - Topbar Component
+ * German Precision Engineering + Italian Glassmorphism
+ * Profile: Ashok Kumar A (MIT Campus, Anna University)
+ */
+---
+
+<header class="sticky top-0 z-40 w-full border-b border-[#00F0B5]/15 bg-[#020813]/80 backdrop-blur-2xl transition-all">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 gap-3">
+      
+      <!-- Brand & Academic Institution Badge -->
+      <div class="flex items-center gap-3">
+        <a href="/" class="flex items-center gap-3 group">
+          <!-- Geometric Circuit Icon -->
+          <div class="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#00693E] via-[#041026] to-[#020813] border border-[#00F0B5]/40 flex items-center justify-center p-2 shadow-emerald-glow group-hover:border-[#00F0B5] transition-all">
+            <svg class="w-6 h-6 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              <circle cx="12" cy="12" r="3" fill="#00F0B5" fill-opacity="0.3"/>
+            </svg>
+            <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00F0B5] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#00F0B5]"></span>
+            </span>
+          </div>
+
+          <div class="hidden sm:block">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold tracking-tight text-lg text-white font-mono">
+                VOLT<span class="text-[#00F0B5]">CORE</span>
+              </span>
+              <span class="text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded bg-[#00693E]/50 text-[#00F0B5] border border-[#00F0B5]/30 font-mono font-semibold">
+                APEX
+              </span>
+            </div>
+            <p class="text-[10px] font-mono text-slate-400 tracking-tight">
+              MIT CAMPUS • ANNA UNIVERSITY
+            </p>
+          </div>
+        </a>
+
+        <!-- Lab Telemetry Pill -->
+        <div class="hidden xl:flex items-center gap-2 ml-4 px-2.5 py-1 rounded-full bg-[#041026] border border-[#00F0B5]/20 text-[11px] font-mono text-slate-300">
+          <span class="h-1.5 w-1.5 rounded-full bg-[#00F0B5] animate-pulse"></span>
+          <span>ESP32-NODE-01</span>
+          <span class="text-[#00F0B5] font-semibold">-58 dBm</span>
+        </div>
+      </div>
+
+      <!-- Center: Instant ⌘K Command Search Trigger -->
+      <div class="flex-1 max-w-md mx-2 sm:mx-4">
+        <button
+          type="button"
+          id="cmd-k-search-trigger"
+          class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/20 hover:border-[#00F0B5]/50 text-slate-400 hover:text-slate-200 text-xs font-mono transition-all shadow-inner group"
+        >
+          <div class="flex items-center gap-2.5">
+            <svg class="w-3.5 h-3.5 text-[#00F0B5] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span class="truncate">Search modules, registers, topologies...</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <kbd class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-[10px] text-[#00F0B5] font-semibold">
+              ⌘K
+            </kbd>
+          </div>
+        </button>
+      </div>
+
+      <!-- Right HUD: Gamified Streak, XP Multiplier & Ashok Kumar A Profile -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- Gamified Streak Counter -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#041026]/80 border border-amber-500/30 text-amber-400 text-xs font-mono font-bold shadow-sm" title="Active Lab Streak: 14 Consecutive Days">
+          <span class="text-sm">🔥</span>
+          <span class="tracking-tight">14d</span>
+          <span class="hidden md:inline text-[10px] text-amber-300/80 uppercase font-normal">Streak</span>
+        </div>
+
+        <!-- XP Multiplier HUD -->
+        <div class="hidden lg:flex flex-col items-end px-3 py-1 rounded-xl bg-[#041026]/80 border border-[#00F0B5]/25">
+          <div class="flex items-center gap-1 text-[11px] font-mono">
+            <span class="text-[#00F0B5] font-bold">⚡ 2.5x XP</span>
+            <span class="text-slate-400">| Lvl 18</span>
+          </div>
+          <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden mt-1">
+            <div class="h-full bg-gradient-to-r from-[#00693E] to-[#00F0B5] rounded-full w-[94%]"></div>
+          </div>
+        </div>
+
+        <!-- Student Profile: Ashok Kumar A -->
+        <div class="relative" id="profile-dropdown-container">
+          <button
+            type="button"
+            id="profile-btn"
+            class="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/30 hover:border-[#00F0B5] transition-all text-left"
+          >
+            <!-- Avatar Initials -->
+            <div class="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[1.5px] shadow-sm flex-shrink-0">
+              <div class="w-full h-full bg-[#020813] rounded-[6px] flex items-center justify-center font-mono font-extrabold text-xs text-[#00F0B5]">
+                AK
+              </div>
+              <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#020813]"></span>
+            </div>
+
+            <!-- Profile Meta (Desktop) -->
+            <div class="hidden md:block text-left">
+              <div class="text-xs font-bold text-slate-100 flex items-center gap-1.5 leading-tight">
+                <span>Ashok Kumar A</span>
+                <span class="text-[9px] font-mono px-1 rounded bg-[#00693E]/40 text-[#00F0B5] border border-[#00F0B5]/20">
+                  MIT
+                </span>
+              </div>
+              <div class="text-[10px] font-mono text-slate-400 leading-tight">
+                2023MITEC042 • ECE
+              </div>
+            </div>
+
+            <svg class="w-3.5 h-3.5 text-slate-400 hidden sm:block ml-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Interactive Profile Menu Popover -->
+          <div
+            id="profile-dropdown-menu"
+            class="hidden absolute right-0 mt-2 w-72 rounded-2xl bg-[#041026] border border-[#00F0B5]/30 shadow-2xl backdrop-blur-2xl p-4 z-50 text-xs font-mono"
+          >
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-800">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2px]">
+                <div class="w-full h-full bg-[#020813] rounded-[10px] flex items-center justify-center font-bold text-sm text-[#00F0B5]">
+                  AK
+                </div>
+              </div>
+              <div>
+                <div class="font-bold text-slate-100 text-sm">Ashok Kumar A</div>
+                <div class="text-slate-400 text-[11px]">ashok.kumar.a@mitindia.edu</div>
+                <div class="text-[#00F0B5] text-[10px] mt-0.5">Silicon Grandmaster (Lvl 18)</div>
+              </div>
+            </div>
+
+            <div class="py-3 space-y-2 border-b border-slate-800">
+              <div class="flex justify-between items-center text-slate-300">
+                <span class="text-slate-400">Roll Number:</span>
+                <span class="text-slate-200 font-bold">2023MITEC042</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-300">
+                <span class="text-slate-400">Campus:</span>
+                <span class="text-emerald-400 font-semibold">MIT Campus, Chromepet</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-300">
+                <span class="text-slate-400">Department:</span>
+                <span class="text-slate-200">Electronics Engg</span>
+              </div>
+              <div class="flex justify-between items-center text-slate-300">
+                <span class="text-slate-400">RFID Token:</span>
+                <span class="text-[#00F0B5] bg-[#020813] px-1.5 py-0.5 rounded border border-[#00F0B5]/30 font-bold">
+                  E2 80 6F 3B
+                </span>
+              </div>
+              <div class="flex justify-between items-center text-slate-300">
+                <span class="text-slate-400">Today's Lab Status:</span>
+                <span class="text-emerald-400 flex items-center gap-1 font-semibold">
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Verified (ESP32)
+                </span>
+              </div>
+            </div>
+
+            <div class="pt-3 space-y-1">
+              <a href="/careers" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Career Tracks & Pathways</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">R2023 Pathways</span>
+              </a>
+              <a href="/virtual-bench" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Virtual Bench Oscilloscope</span>
+                <span class="text-[9px] px-1 rounded bg-cyan-950 text-cyan-400">DSOX1204G</span>
+              </a>
+              <a href="/nptel-player" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Smart NPTEL Player</span>
+                <span class="text-[9px] px-1 rounded bg-amber-500/20 text-amber-400">IIT Sync</span>
+              </a>
+              <a href="/nptel" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>NPTEL IIT Video Mapping</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">MOOC Timestamps</span>
+              </a>
+              <a href="/telemetry" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Real-Time SSE Telemetry</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">Live Stream</span>
+              </a>
+              <a href="/teacher" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Teacher & NBA Analytics</span>
+                <span class="text-[9px] px-1 rounded bg-cyan-950 text-cyan-400">Admin</span>
+              </a>
+              <a href="/fleet" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>IoT Edge Fleet Manager</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">LittleFS</span>
+              </a>
+              <a href="/autograder" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Firmware AutoGrader</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">AST Tests</span>
+              </a>
+              <a href="/flashcards" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>SM-2 ECE Flashcards</span>
+                <span class="text-[9px] px-1 rounded bg-amber-500/20 text-amber-400">Spaced Recall</span>
+              </a>
+              <a href="/simulation" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>Hardware & SPICE Lab</span>
+                <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">Interactive</span>
+              </a>
+              <a href="/gate-ece" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-amber-400 hover:bg-[#020813] transition-colors flex items-center justify-between">
+                <span>2,000+ GATE ECE Bank</span>
+                <span class="text-[9px] px-1 rounded bg-amber-500/20 text-amber-400">Exam Mode</span>
+              </a>
+              <a href="/profile" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors">
+                Academic Transcript & Badges
+              </a>
+              <a href="/attendance" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors">
+                Hardware Scan Log History
+              </a>
+              <button type="button" class="w-full text-left px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">
+                Sign Out (Anna University IAM)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Instant ⌘K Command Modal Dialog -->
+  <dialog
+    id="search-palette-modal"
+    class="backdrop:bg-[#020813]/80 backdrop:backdrop-blur-md bg-transparent p-0 m-auto max-w-2xl w-full text-slate-100 rounded-2xl border border-[#00F0B5]/30 shadow-2xl focus:outline-none"
+  >
+    <div class="bg-[#041026] rounded-2xl overflow-hidden border border-[#00F0B5]/20 font-mono text-xs">
+      
+      <!-- Search Input Header -->
+      <div class="p-3.5 border-b border-slate-800 flex items-center gap-3 bg-[#020813]">
+        <svg class="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          id="cmd-k-input"
+          placeholder="Search syllabus modules, FreeRTOS registers, ESP32 pins, Wokwi sketches..."
+          class="w-full bg-transparent text-slate-100 text-sm placeholder-slate-500 focus:outline-none"
+        />
+        <kbd id="close-modal-btn" class="cursor-pointer px-2 py-1 rounded bg-[#041026] border border-slate-700 text-slate-400 hover:text-white text-[10px]">
+          ESC
+        </kbd>
+      </div>
+
+      <!-- Quick Category Chips -->
+      <div class="p-3 bg-[#020813]/50 border-b border-slate-800 flex gap-2 overflow-x-auto">
+        <button class="px-2 py-1 rounded-md bg-[#00693E]/40 text-[#00F0B5] border border-[#00F0B5]/30 text-[10px]">All</button>
+        <button class="px-2 py-1 rounded-md bg-[#041026] text-slate-300 hover:text-white text-[10px]">EC8702 Modules</button>
+        <button class="px-2 py-1 rounded-md bg-[#041026] text-slate-300 hover:text-white text-[10px]">Wokwi Topologies</button>
+        <button class="px-2 py-1 rounded-md bg-[#041026] text-slate-300 hover:text-white text-[10px]">Datasheets</button>
+      </div>
+
+      <!-- Quick Action Results -->
+      <div class="max-h-80 overflow-y-auto p-2 space-y-1" id="search-results-list">
+        <a href="/virtual-bench" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-cyan-400/30 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-cyan-950 text-cyan-400 flex items-center justify-center font-bold">
+              OSC
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-cyan-400">Keysight DSOX1204G Virtual Storage Oscilloscope</div>
+              <div class="text-[10px] text-slate-400">Dual-Trace • Edge Triggers • Timebase Scaling • FFT Spectrum Mode</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-cyan-400 border border-cyan-500/20 font-mono">Bench</span>
+        </a>
+
+        <a href="/careers" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-emerald-400/30 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-[#00693E]/40 text-[#00F0B5] flex items-center justify-center font-bold">
+              CR
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-[#00F0B5]">ECE Career Pathways & Micro-Credentials</div>
+              <div class="text-[10px] text-slate-400">Embedded Firmware • VLSI/RTL • IoT Cloud • Automotive Systems</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/20 font-mono">Careers</span>
+        </a>
+
+        <a href="/nptel-player" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-amber-400/30 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center font-bold">
+              NP
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-amber-400">Smart NPTEL Player & Chapter Notes</div>
+              <div class="text-[10px] text-slate-400">IIT Madras MOOC Sync • Speed 0.5x–2x • Timestamped Markdown Export</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-amber-400 border border-amber-500/20 font-mono">Player</span>
+        </a>
+
+        <a href="/autograder" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-[#00F0B5]/30 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-[#00693E]/40 text-[#00F0B5] flex items-center justify-center font-bold">
+              AG
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-[#00F0B5]">Wokwi Firmware AutoGrader & AST Evaluator</div>
+              <div class="text-[10px] text-slate-400">Hidden Test Benches • Register Audits • Non-blocking Timing</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/20 font-mono">Phase 2</span>
+        </a>
+
+        <a href="/flashcards" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-amber-500/30 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center font-bold">
+              SM
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-amber-400">SM-2 Spaced Repetition ECE Flashcards</div>
+              <div class="text-[10px] text-slate-400">ARM Registers • Hybrid-Pi • RISC-V Hazard Rules • Retention HUD</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-amber-400 border border-amber-500/20 font-mono">Spaced Recall</span>
+        </a>
+
+        <div class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-[#00F0B5]/30 cursor-pointer flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-[#00693E]/30 text-[#00F0B5] flex items-center justify-center font-bold">
+              EC
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-[#00F0B5]">EC8708: Cortex-M DMA Architecture & Zero-Copy IPC</div>
+              <div class="text-[10px] text-slate-400">Anna University R2023 • Circular Buffers & Engineering Trap</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/20 font-mono">Module 08</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-[#00F0B5]/30 cursor-pointer flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-cyan-950 text-cyan-400 flex items-center justify-center font-bold">
+              W
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-cyan-400">ESP32 + RC522 RFID Smart Attendance Node</div>
+              <div class="text-[10px] text-slate-400">Wokwi Hardware Simulation • diagram.json & FreeRTOS C++</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-cyan-400 border border-cyan-500/20 font-mono">Sim 01</span>
+        </div>
+
+        <div class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-[#00F0B5]/30 cursor-pointer flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-amber-950 text-amber-400 flex items-center justify-center font-bold">
+              DS
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-amber-400">ESP32-WROOM-32 Pinout & Xtensa LX6 Spec</div>
+              <div class="text-[10px] text-slate-400">Datasheet Reference • SPI, I2C, UART, ADC2 Attenuation</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-amber-400 border border-amber-500/20 font-mono">Hardware</span>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 bg-[#020813] border-t border-slate-800 text-[10px] text-slate-400 flex justify-between items-center">
+        <span>Press <kbd class="text-slate-300">↑</kbd> <kbd class="text-slate-300">↓</kbd> to navigate, <kbd class="text-slate-300">ESC</kbd> to dismiss</span>
+        <span class="text-[#00F0B5]">VoltCore Apex v1.0 • MIT Campus</span>
+      </div>
+    </div>
+  </dialog>
+</header>
+
+<script>
+  // ⌘K Search Modal Controller
+  const searchBtn = document.getElementById('cmd-k-search-trigger');
+  const searchModal = document.getElementById('search-palette-modal') as HTMLDialogElement | null;
+  const closeModalBtn = document.getElementById('close-modal-btn');
+  const searchInput = document.getElementById('cmd-k-input') as HTMLInputElement | null;
+
+  function openSearch() {
+    if (searchModal && !searchModal.open) {
+      searchModal.showModal();
+      setTimeout(() => searchInput?.focus(), 50);
+    }
+  }
+
+  function closeSearch() {
+    if (searchModal && searchModal.open) {
+      searchModal.close();
+    }
+  }
+
+  searchBtn?.addEventListener('click', openSearch);
+  closeModalBtn?.addEventListener('click', closeSearch);
+
+  // Keyboard shortcut listener: Cmd+K / Ctrl+K
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (searchModal?.open) {
+        closeSearch();
+      } else {
+        openSearch();
+      }
+    }
+    if (e.key === 'Escape' && searchModal?.open) {
+      closeSearch();
+    }
+  });
+
+  // Profile Dropdown Toggle
+  const profileBtn = document.getElementById('profile-btn');
+  const profileMenu = document.getElementById('profile-dropdown-menu');
+
+  profileBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    profileMenu?.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!profileMenu?.contains(target) && !profileBtn?.contains(target)) {
+      profileMenu?.classList.add('hidden');
+    }
+  });
+</script>
+

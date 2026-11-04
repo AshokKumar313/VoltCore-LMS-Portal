@@ -1,0 +1,423 @@
+{
+  "schema_version": "1.0.0",
+  "academic_institution": "Madras Institute of Technology (MIT) Campus, Anna University",
+  "department": "Department of Electronics Engineering",
+  "regulation": "Anna University Regulation 2023",
+  "curriculum_framework": "Choice Based Credit System (CBCS) & Outcome-Based Education (OBE)",
+  "platform_lead": "Ashok Kumar A",
+  "public_contact": "ashokkumar3132008@gmail.com",
+  "github_repository": "https://github.com/AshokKumar313",
+  "total_mapped_modules": 9,
+  "modules": [
+    {
+      "module_code": "EC8701",
+      "module_title": "IoT Edge Node Foundations & Bare-Metal GPIO",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": ["CO1", "CO2"],
+      "mapped_pos": ["PO1", "PO2", "PO5"],
+      "prerequisites": [
+        "Digital Electronics & Logic Design",
+        "Microprocessor 8086 / Microcontroller 8051",
+        "C Programming & Bitwise Register Manipulation"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-cs82",
+        "course_name": "Introduction to Internet of Things",
+        "instructor": "Prof. Sudip Misra",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/106105166",
+        "playlist_id": "PLJ5C_6qdAvBFkwtzGoNiw7QcK_xG7aI2K",
+        "lectures": [
+          {
+            "lecture_number": 3,
+            "lecture_title": "Sensing and Actuation in Edge IoT Nodes",
+            "youtube_video_id": "Uf_B1y_d6G4",
+            "youtube_url": "https://www.youtube.com/watch?v=Uf_B1y_d6G4",
+            "timestamp_start_sec": 120,
+            "timestamp_end_sec": 1940,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Direct Memory-Mapped Register Control (W1TS / W1TC)",
+              "SAR ADC Quantization Noise & Internal Attenuation",
+              "Passive Infrared Sensor Fresnel Lens Optics"
+            ]
+          },
+          {
+            "lecture_number": 8,
+            "lecture_title": "Basics of IoT Networking & Edge Hardware Interfaces",
+            "youtube_video_id": "b-bQp89S_0E",
+            "youtube_url": "https://www.youtube.com/watch?v=b-bQp89S_0E",
+            "timestamp_start_sec": 240,
+            "timestamp_end_sec": 2180,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "GPIO Pin Muxing & Pull-Up/Pull-Down Resistance",
+              "External Interrupt Controller (EXTI) Latency",
+              "Microcontroller Low-Power Sleep States"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8702",
+      "module_title": "Embedded Systems Architecture & Microcontrollers",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": ["CO1", "CO3"],
+      "mapped_pos": ["PO1", "PO3", "PO4"],
+      "prerequisites": [
+        "Computer Organization & Architecture",
+        "Linear Integrated Circuits"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-ee41",
+        "course_name": "Embedded Systems",
+        "instructor": "Prof. Santanu Chattopadhyay",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/108105057",
+        "playlist_id": "PLbRMhDVUMngcf7j9gV_3K3N1bKq5R0W8u",
+        "lectures": [
+          {
+            "lecture_number": 5,
+            "lecture_title": "ARM Cortex-M Hardware Architecture & Bus Matrix",
+            "youtube_video_id": "E6q2Q3f_z4Y",
+            "youtube_url": "https://www.youtube.com/watch?v=E6q2Q3f_z4Y",
+            "timestamp_start_sec": 180,
+            "timestamp_end_sec": 2400,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "ARM Cortex-M4 Harvard Bus Architecture (ICode, DCode, System Bus)",
+              "Nested Vectored Interrupt Controller (NVIC) Tail-Chaining",
+              "Memory Protection Unit (MPU) Region Configuration"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8704",
+      "module_title": "Automotive Radar & Ultrasonic Edge Sensing",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 2,
+      "mapped_cos": ["CO2", "CO4"],
+      "mapped_pos": ["PO3", "PO5"],
+      "prerequisites": [
+        "Signals and Systems",
+        "Transmission Lines and Waveguides",
+        "Serial Communication Protocols (UART/SPI/I2C)"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-de12",
+        "course_name": "Automotive Electronics & Autonomous Systems",
+        "instructor": "Prof. Janakiraman",
+        "institution": "Indian Institute of Technology (IIT) Madras",
+        "portal_url": "https://nptel.ac.in/courses/107106088",
+        "playlist_id": "PLq-Gm0yRYwTh4e5Wb5vF2aC7mO9k1p4Vw",
+        "lectures": [
+          {
+            "lecture_number": 14,
+            "lecture_title": "Controller Area Network (CAN 2.0B) Protocol & Bus Arbitration",
+            "youtube_video_id": "K8w9Xz2m_10",
+            "youtube_url": "https://www.youtube.com/watch?v=K8w9Xz2m_10",
+            "timestamp_start_sec": 300,
+            "timestamp_end_sec": 2250,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Wired-AND Non-Destructive Bitwise Arbitration",
+              "Dominant vs Recessive Differential Voltage Encoding",
+              "15-bit CRC Calculation and Bit-Stuffing Error Flags"
+            ]
+          },
+          {
+            "lecture_number": 21,
+            "lecture_title": "Ultrasonic Time-of-Flight & Millimeter-Wave FMCW Radar",
+            "youtube_video_id": "P3v7Nq9x_55",
+            "youtube_url": "https://www.youtube.com/watch?v=P3v7Nq9x_55",
+            "timestamp_start_sec": 150,
+            "timestamp_end_sec": 1980,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Speed of Sound Temperature Compensation Equation",
+              "Timer Input Capture Edge Stamping with Pre-Scalers",
+              "Specular Reflection & Multi-Path Ultrasonic Blind Spots"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8703",
+      "module_title": "Defense UAV Telemetry & 2.4GHz FHSS",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 3,
+      "mapped_cos": ["CO3", "CO5"],
+      "mapped_pos": ["PO1", "PO3", "PO12"],
+      "prerequisites": [
+        "Digital Communication Systems",
+        "Antennas and Microwave Engineering"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-ae09",
+        "course_name": "UAV Design & Autonomous Guidance Systems",
+        "instructor": "Prof. Radhakant Padhi",
+        "institution": "Indian Institute of Science (IISc) Bangalore",
+        "portal_url": "https://nptel.ac.in/courses/101108056",
+        "playlist_id": "PLyqSpQzTE6M8x4y9Z_qB3l2X7K9pM0wJ5",
+        "lectures": [
+          {
+            "lecture_number": 19,
+            "lecture_title": "Spread Spectrum Communication & Frequency Hopping (FHSS)",
+            "youtube_video_id": "M7v8Kp2x_91",
+            "youtube_url": "https://www.youtube.com/watch?v=M7v8Kp2x_91",
+            "timestamp_start_sec": 180,
+            "timestamp_end_sec": 2520,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Pseudorandom Noise (PN) Sequence Generator Polynomials",
+              "LoRa Chirp Spread Spectrum (CSS) Modulation Indices",
+              "Multipath Urban Canyon Doppler Shift Tracking (delta_f = f_c * v / c)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8705",
+      "module_title": "5-Stage RV32I RISC-V Soft-Core in Verilog HDL",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 3,
+      "mapped_cos": ["CO3", "CO4"],
+      "mapped_pos": ["PO3", "PO4", "PO5"],
+      "prerequisites": [
+        "Digital Electronics & Verilog HDL",
+        "Computer Organization & Design (Pipelined Processors)"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-cs77",
+        "course_name": "Computer Architecture & Open-Source RISC-V Processors",
+        "instructor": "Prof. Kamakoti Veezhinathan",
+        "institution": "Indian Institute of Technology (IIT) Madras (SHAKTI Processor Project)",
+        "portal_url": "https://nptel.ac.in/courses/106106166",
+        "playlist_id": "PLbRMhDVUMngcK_W2sH_8x4x5v7B9m0K3J",
+        "lectures": [
+          {
+            "lecture_number": 12,
+            "lecture_title": "5-Stage Pipelining (IF, ID, EX, MEM, WB) & Data Hazards",
+            "youtube_video_id": "Q4v8Kp9x_33",
+            "youtube_url": "https://www.youtube.com/watch?v=Q4v8Kp9x_33",
+            "timestamp_start_sec": 210,
+            "timestamp_end_sec": 2700,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Hazard Detection Unit & Pipeline Bubble Stalls",
+              "ALU Operand Forwarding Paths (EX/MEM and MEM/WB)",
+              "Load-Use Read-After-Write (RAW) Dependency Resolution"
+            ]
+          },
+          {
+            "lecture_number": 18,
+            "lecture_title": "RISC-V (RV32I) Instruction Set Architecture & Control Unit",
+            "youtube_video_id": "V2b9Lx5m_88",
+            "youtube_url": "https://www.youtube.com/watch?v=V2b9Lx5m_88",
+            "timestamp_start_sec": 120,
+            "timestamp_end_sec": 2400,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "R-Type, I-Type, S-Type, B-Type, U-Type, J-Type Formats",
+              "Register File x0 Hardwired Constant Zero Architecture",
+              "Artix-7 FPGA Block RAM vs Distributed LUT RAM Synthesis"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8706",
+      "module_title": "FreeRTOS & Deterministic Multi-Core Scheduling",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 4,
+      "mapped_cos": ["CO4"],
+      "mapped_pos": ["PO2", "PO3"],
+      "prerequisites": [
+        "Operating Systems Concepts",
+        "C Programming (Pointers, Memory Allocation & Callbacks)",
+        "ARM Cortex-M Exceptions & SysTick Timer"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-cs91",
+        "course_name": "Real-Time Systems & Kernel Architectures",
+        "instructor": "Prof. Rajib Mall",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/106105036",
+        "playlist_id": "PLbRMhDVUMngdrL_5P4hK9M8v_0Q2W4E6R",
+        "lectures": [
+          {
+            "lecture_number": 8,
+            "lecture_title": "Real-Time Task Scheduling: Rate Monotonic (RMS) & Earliest Deadline First (EDF)",
+            "youtube_video_id": "W9b4Nx2m_44",
+            "youtube_url": "https://www.youtube.com/watch?v=W9b4Nx2m_44",
+            "timestamp_start_sec": 180,
+            "timestamp_end_sec": 2460,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Liu & Layland Schedulability Bound: U <= n(2^(1/n) - 1)",
+              "Priority Inversion Phenomenon & Unbounded Blocking",
+              "Priority Inheritance Protocol vs Priority Ceiling Emulation"
+            ]
+          },
+          {
+            "lecture_number": 15,
+            "lecture_title": "FreeRTOS Kernel Internals: TCB, Context Switching & IPC",
+            "youtube_video_id": "T1v9Kq8x_77",
+            "youtube_url": "https://www.youtube.com/watch?v=T1v9Kq8x_77",
+            "timestamp_start_sec": 240,
+            "timestamp_end_sec": 2580,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Task Control Block (TCB) & Assembly Stack Pointer Swapping",
+              "ARM Cortex-M PendSV Low-Priority Context Switch Handler",
+              "Binary Semaphores vs Mutexes (xSemaphoreCreateMutex)"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8707",
+      "module_title": "High-Speed Railway Edge AI Track Defect Vision",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 5,
+      "mapped_cos": ["CO5"],
+      "mapped_pos": ["PO3", "PO5", "PO12"],
+      "prerequisites": [
+        "Digital Image Processing",
+        "Applied Linear Algebra & Convolution",
+        "Python / Embedded C++"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-ee88",
+        "course_name": "Deep Learning for Visual Computing",
+        "instructor": "Prof. Debdoot Sheet",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/108105158",
+        "playlist_id": "PLq-Gm0yRYwThZ_5k6P8p9M1N3bK4J2L0W",
+        "lectures": [
+          {
+            "lecture_number": 22,
+            "lecture_title": "Convolutional Neural Networks for Real-Time Edge Vision",
+            "youtube_video_id": "H5b9Kx4m_22",
+            "youtube_url": "https://www.youtube.com/watch?v=H5b9Kx4m_22",
+            "timestamp_start_sec": 300,
+            "timestamp_end_sec": 2700,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Depthwise Separable Convolutions in MobileNet Architecture",
+              "Post-Training Quantization (FP32 to INT8 Weight Compression)",
+              "CMOS Rolling Shutter Geometric Skew under High Velocities"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8708",
+      "module_title": "Advanced ARM Cortex-M DMA Architecture & Zero-Copy IPC",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 5,
+      "mapped_cos": ["CO1", "CO5"],
+      "mapped_pos": ["PO1", "PO5", "PO12"],
+      "prerequisites": [
+        "EC8702: Embedded Systems Architecture",
+        "EC8706: Real-Time Operating Systems",
+        "Cortex-M Memory Barriers (__DMB, __DSB, __ISB)"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-cs94",
+        "course_name": "Hardware-Software Co-Design for High-Performance Embedded Systems",
+        "instructor": "Prof. Santanu Chattopadhyay",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/106105159",
+        "playlist_id": "PLbRMhDVUMngcK_W2sH_8x4x5v7B9m0K3J",
+        "lectures": [
+          {
+            "lecture_number": 16,
+            "lecture_title": "Direct Memory Access (DMA) Controllers & Multi-Layer AHB Matrix",
+            "youtube_video_id": "X8v3Kq9m_66",
+            "youtube_url": "https://www.youtube.com/watch?v=X8v3Kq9m_66",
+            "timestamp_start_sec": 180,
+            "timestamp_end_sec": 2340,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Multi-Layer AHB Crossbar Matrix & Bus Contention Arbitration",
+              "Circular Ping-Pong DMA Buffer Topologies",
+              "Zero-Copy FreeRTOS Stream Buffers & Direct-to-Task Notifications"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC8709",
+      "module_title": "TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 5,
+      "mapped_cos": ["CO5"],
+      "mapped_pos": ["PO3", "PO5", "PO12"],
+      "prerequisites": [
+        "EC8708: Advanced Cortex-M DMA Architecture",
+        "Digital Signal Processing (DFT & Spectral Windowing)",
+        "Fixed-Point Arithmetic (Q-Format & Saturation Instructions)"
+      ],
+      "nptel_course": {
+        "course_id": "noc23-ee99",
+        "course_name": "Embedded AI & Edge Intelligence",
+        "instructor": "Prof. Gaurav Trivedi",
+        "institution": "Indian Institute of Technology (IIT) Guwahati",
+        "portal_url": "https://nptel.ac.in/courses/108103175",
+        "playlist_id": "PLyqSpQzTE6M8x4y9Z_qB3l2X7K9pM0wJ5",
+        "lectures": [
+          {
+            "lecture_number": 10,
+            "lecture_title": "TinyML Fixed-Point Quantization & CMSIS-NN Optimization",
+            "youtube_video_id": "Z9v4Kx8m_11",
+            "youtube_url": "https://www.youtube.com/watch?v=Z9v4Kx8m_11",
+            "timestamp_start_sec": 210,
+            "timestamp_end_sec": 2480,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Affine Asymmetric INT8 Quantization: q = round(r/S) + Z",
+              "Fixed-Point Multiplier Decomposition: M = M_0 * 2^(-n)",
+              "ARM SIMD Vector Saturation (__SSAT) & Dual-MAC Arithmetic"
+            ]
+          },
+          {
+            "lecture_number": 17,
+            "lecture_title": "Spectral Feature Extraction & Industrial Bearing Fault Classification",
+            "youtube_video_id": "K3b8Nx5m_99",
+            "youtube_url": "https://www.youtube.com/watch?v=K3b8Nx5m_99",
+            "timestamp_start_sec": 150,
+            "timestamp_end_sec": 2220,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Radix-2 Cooley-Tukey Fast Fourier Transform (FFT) on Xtensa/Cortex-M",
+              "Ball Pass Frequency Inner Race (BPFI) Resonance Identification",
+              "Dual-Core FreeRTOS Partitioning for Real-Time DSP Telemetry"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+

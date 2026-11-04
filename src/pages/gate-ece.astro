@@ -1,0 +1,46 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import GateEceQuestionBank from '../components/GateEceQuestionBank.jsx';
+---
+
+<MainLayout title="GATE ECE & Anna University 2,000+ Exam Engine | VoltCore Apex" activeNav="gate">
+  <div class="space-y-8">
+    
+    <!-- Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-mono font-bold border border-amber-500/30">
+              GATE ECE TOP 1% & ANNA UNIVERSITY CURRICULUM
+            </span>
+            <span class="text-xs font-mono text-slate-400">Department of Electronics Engineering</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-mono">
+            2,000+ IEEE & GATE ECE Question Repository
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-300 font-mono mt-1 max-w-2xl">
+            Rigorously compiled engineering challenges across Analog Circuits, Digital VLSI, Signals & Systems, and Electromagnetics. Features step-by-step IEEE mathematical proofs and engineering trap distractor breakdowns.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 font-mono text-xs">
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-200 hover:text-white transition-all flex items-center gap-2"
+          >
+            <svg class="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Back to LMS Hub</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive GATE ECE Question Bank React Island -->
+    <GateEceQuestionBank client:load />
+
+  </div>
+</MainLayout>
+

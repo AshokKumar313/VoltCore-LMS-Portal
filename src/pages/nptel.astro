@@ -1,0 +1,32 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import NptelCurriculumMapper from '../components/NptelCurriculumMapper.jsx';
+---
+
+<MainLayout
+  title="NPTEL Curriculum & IIT Video Lecture Mapping | VoltCore Apex Academia"
+  description="Official NPTEL IIT video lectures mapped directly to Anna University Regulation 2023 units, Course Outcomes (COs), Program Outcomes (POs), and precise timestamps."
+  activeNav="nptel"
+>
+  <div class="space-y-6">
+    <!-- Breadcrumb & Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
+      <div class="flex items-center gap-2 text-slate-400">
+        <a href="/" class="hover:text-[#00F0B5] transition-colors">VoltCore</a>
+        <span>/</span>
+        <span class="text-[#00F0B5]">NPTEL IIT Lectures</span>
+        <span>/</span>
+        <span class="text-slate-500">Regulation 2023 CO/PO Mapping</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">
+          Anna University CBCS & OBE Compliant
+        </span>
+      </div>
+    </div>
+
+    <!-- Interactive NPTEL Mapper React Island -->
+    <NptelCurriculumMapper client:load />
+  </div>
+</MainLayout>
+

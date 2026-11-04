@@ -1,0 +1,192 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+// Student Profile Constants for Ashok Kumar A
+const profile = {
+  name: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  campus: "Chromepet, Chennai - 600 044",
+  email: "ashok.kumar.a@mitindia.edu",
+  rfidUid: "E2 80 6F 3B",
+  rank: "Silicon Grandmaster (Level 18)",
+  xpPoints: 4850,
+  xpTarget: 5000,
+  streakDays: 14,
+  specialization: "Embedded Systems, FreeRTOS & IoT Hardware Design",
+  completedModules: [
+    { code: "EC8702", title: "Embedded and Real-Time Systems Architecture", grade: "O (Outstanding)", credits: 4 },
+    { code: "EC8691", title: "Microprocessors and Microcontrollers (ARM Cortex)", grade: "O (Outstanding)", credits: 3 },
+    { code: "EC8791", title: "Internet of Things (IoT) Sensor Networks", grade: "A+", credits: 3 },
+    { code: "EC8711", title: "Embedded System Laboratory & Hardware In-The-Loop", grade: "O (Outstanding)", credits: 2 }
+  ],
+  hardwareBadges: [
+    { title: "FreeRTOS Kernel Master", icon: "⚡", description: "Configured multi-task preemption, mutexes, and queues on dual-core ESP32." },
+    { title: "Wokwi Hardware Virtuoso", icon: "🔬", description: "Successfully simulated SPI/I2C mixed topologies with zero timing jitter." },
+    { title: "Silicon Cryptographer", icon: "🛡️", description: "Implemented PBKDF2-HMAC-SHA256 authenticated edge node verification." },
+    { title: "14-Day Lab Attendance Streak", icon: "🔥", description: "Consistently swiped RFID MFRC522 card at MIT Embedded Lab 304." }
+  ]
+};
+---
+
+<MainLayout title={`Student Portfolio | ${profile.name} (MIT Campus)`} activeNav="profile">
+  <div class="space-y-8">
+    
+    <!-- Hero Profile Identity Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Large Glass Avatar -->
+          <div class="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-mono font-extrabold text-2xl text-[#00F0B5]">
+              AK
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813]"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                {profile.name}
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-mono font-bold border border-[#00F0B5]/40">
+                MIT CAMPUS
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 font-mono mt-0.5">
+              Roll No: <span class="text-white font-bold">{profile.rollNo}</span> • {profile.department}
+            </div>
+            <div class="text-xs text-slate-400 font-mono mt-0.5">
+              {profile.institution}
+            </div>
+            <div class="text-[#00F0B5] font-mono text-xs font-semibold mt-1">
+              {profile.rank} • {profile.specialization}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Return -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 font-mono text-xs">
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-200 hover:text-white transition-all flex items-center gap-2"
+          >
+            <svg class="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Back to LMS Hub</span>
+          </a>
+
+          <a
+            href="/attendance"
+            class="px-4 py-2 rounded-xl bg-[#00693E]/50 hover:bg-[#00693E] text-[#00F0B5] hover:text-white border border-[#00F0B5]/30 font-bold transition-all flex items-center gap-2"
+          >
+            <span>View Swipes</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Gamification & XP Progress HUD -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
+      <div class="glass-card p-5 rounded-2xl border border-[#00F0B5]/25">
+        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+          <span>EXPERIENCE POINTS (XP)</span>
+          <span class="text-[#00F0B5] font-bold">Level 18</span>
+        </div>
+        <div class="text-2xl font-extrabold text-white">
+          {profile.xpPoints} <span class="text-xs text-slate-400 font-normal">/ {profile.xpTarget} XP</span>
+        </div>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mt-3">
+          <div class="h-full bg-gradient-to-r from-[#00693E] to-[#00F0B5] rounded-full w-[97%]"></div>
+        </div>
+        <div class="text-[10px] text-slate-400 mt-2">150 XP until Level 19: "Embedded Firmware Architect"</div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl border border-amber-500/25">
+        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+          <span>LAB ATTENDANCE STREAK</span>
+          <span class="text-amber-400 font-bold">Consecutive</span>
+        </div>
+        <div class="text-2xl font-extrabold text-amber-400 flex items-center gap-2">
+          <span>🔥 {profile.streakDays} Days</span>
+        </div>
+        <div class="text-xs text-slate-300 mt-2">
+          Verified daily on ESP32 RFID Node (Lab 304)
+        </div>
+        <div class="text-[10px] text-emerald-400 mt-1">Status: Active Today</div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl border border-[#00F0B5]/25">
+        <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+          <span>HARDWARE CREDENTIALS</span>
+          <span class="text-[#00F0B5] font-bold">RFID Verified</span>
+        </div>
+        <div class="text-lg font-bold text-white mt-1">
+          UID: <span class="text-[#00F0B5]">{profile.rfidUid}</span>
+        </div>
+        <div class="text-xs text-slate-300 mt-1">
+          Security: PBKDF2-HMAC-SHA256 (260,000 iters)
+        </div>
+        <div class="text-[10px] text-slate-400 mt-1">IAM: Anna University MIT Campus</div>
+      </div>
+    </div>
+
+    <!-- Academic Modules & Transcript Table -->
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4 font-mono text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-200 text-sm">Anna University Curriculum Transcript (R2021)</span>
+        </div>
+        <span class="text-[#00F0B5] font-bold">CGPA: 9.82 / 10.0</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 text-[11px]">
+              <th class="py-2.5 px-3">COURSE CODE</th>
+              <th class="py-2.5 px-3">COURSE TITLE</th>
+              <th class="py-2.5 px-3">CREDITS</th>
+              <th class="py-2.5 px-3">GRADE</th>
+              <th class="py-2.5 px-3">STATUS</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60">
+            {profile.completedModules.map((mod) => (
+              <tr class="hover:bg-[#041026] text-slate-200">
+                <td class="py-2.5 px-3 font-bold text-white">{mod.code}</td>
+                <td class="py-2.5 px-3 text-[#00F0B5]">{mod.title}</td>
+                <td class="py-2.5 px-3 text-slate-300">{mod.credits}</td>
+                <td class="py-2.5 px-3 font-bold text-amber-300">{mod.grade}</td>
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">Completed</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Hardware & Systems Badges -->
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4">
+      <div class="flex items-center gap-2 pb-3 border-b border-slate-800 font-mono">
+        <span class="font-bold text-slate-200 text-sm">Verified Hardware Engineering Badges</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {profile.hardwareBadges.map((badge) => (
+          <div class="p-4 rounded-xl bg-[#020813] border border-[#00F0B5]/20 space-y-2 font-mono">
+            <div class="text-2xl">{badge.icon}</div>
+            <div class="font-bold text-white text-xs">{badge.title}</div>
+            <div class="text-[11px] text-slate-400 leading-relaxed">{badge.description}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
+

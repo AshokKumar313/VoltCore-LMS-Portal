@@ -1,0 +1,187 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+// Anna University MIT Campus Attendance Records
+const student = {
+  name: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  rfidUid: "E2 80 6F 3B",
+  streak: 14,
+  xp: 4850
+};
+---
+
+<MainLayout title="Hardware Telemetry & Attendance Log | VoltCore Apex" activeNav="attendance">
+  <div class="space-y-8">
+    
+    <!-- Header Banner -->
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/30 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-mono font-bold border border-[#00F0B5]/30">
+            MIT Chromepet • IoT Lab 304
+          </span>
+          <span class="text-xs font-mono text-slate-400">Node: ESP32_MIT_IOT_LAB_01</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
+          Hardware Attendance & Telemetry Terminal
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 font-mono mt-1">
+          Real-time RFID swipe ingestion via Flask REST Engine (Port 5000) & SQLite WAL backend.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 font-mono text-xs">
+        <a
+          href="/"
+          class="px-3.5 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-300 hover:text-white transition-all flex items-center gap-1.5"
+        >
+          <svg class="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back to Hub</span>
+        </a>
+
+        <button
+          type="button"
+          id="manual-refresh-logs-btn"
+          class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#00693E] to-[#00b884] text-white font-semibold transition-all shadow-emerald-glow flex items-center gap-2"
+        >
+          <svg class="w-4 h-4 animate-spin-slow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          <span>Sync Telemetry</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Telemetry Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
+      <div class="glass-card p-4 rounded-xl border border-[#00F0B5]/20">
+        <div class="text-[10px] text-slate-400 uppercase tracking-wider">Gateway Status</div>
+        <div class="text-lg font-bold text-[#00F0B5] flex items-center gap-2 mt-1">
+          <span class="h-2 w-2 rounded-full bg-[#00F0B5] animate-ping"></span>
+          ONLINE (Port 5000)
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1">Sub-15ms Latency</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-[#00F0B5]/20">
+        <div class="text-[10px] text-slate-400 uppercase tracking-wider">Active Student</div>
+        <div class="text-lg font-bold text-white mt-1">Ashok Kumar A</div>
+        <div class="text-[10px] text-emerald-400 mt-1">Roll: 2023MITEC042</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-[#00F0B5]/20">
+        <div class="text-[10px] text-slate-400 uppercase tracking-wider">RFID Token</div>
+        <div class="text-lg font-bold text-amber-400 mt-1">E2 80 6F 3B</div>
+        <div class="text-[10px] text-slate-400 mt-1">MFRC522 13.56 MHz</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-[#00F0B5]/20">
+        <div class="text-[10px] text-slate-400 uppercase tracking-wider">Lab Attendance</div>
+        <div class="text-lg font-bold text-white mt-1">100% Verified</div>
+        <div class="text-[10px] text-[#00F0B5] mt-1">+50 XP Awarded Today</div>
+      </div>
+    </div>
+
+    <!-- Attendance Historical Logs Table -->
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4 font-mono text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-200">Authenticated Swipe Log (SQLite WAL Table: attendance)</span>
+        </div>
+        <span class="text-[11px] text-slate-400">Auto-refresh active (10s)</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="text-slate-400 border-b border-slate-800 text-[11px]">
+              <th class="py-2.5 px-3">RECORD ID</th>
+              <th class="py-2.5 px-3">TIMESTAMP</th>
+              <th class="py-2.5 px-3">STUDENT ROLL</th>
+              <th class="py-2.5 px-3">STUDENT NAME</th>
+              <th class="py-2.5 px-3">DEPARTMENT</th>
+              <th class="py-2.5 px-3">RFID TOKEN</th>
+              <th class="py-2.5 px-3">NODE</th>
+              <th class="py-2.5 px-3">STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="full-attendance-tbody" class="divide-y divide-slate-800/60">
+            <tr class="hover:bg-[#041026] text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">#042</td>
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:22:46</td>
+              <td class="py-2.5 px-3 font-bold text-white">2023MITEC042</td>
+              <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">Ashok Kumar A</td>
+              <td class="py-2.5 px-3 text-slate-400">Electronics Engg</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700">E2 80 6F 3B</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ Lab-Verified</span></td>
+            </tr>
+            <tr class="hover:bg-[#041026] text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">#041</td>
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:20:10</td>
+              <td class="py-2.5 px-3 font-bold text-white">2023MITEC015</td>
+              <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">Kavitha Raman</td>
+              <td class="py-2.5 px-3 text-slate-400">Electronics Engg</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700">C3 4D 8A 11</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ Lab-Verified</span></td>
+            </tr>
+            <tr class="hover:bg-[#041026] text-slate-200">
+              <td class="py-2.5 px-3 text-slate-400">#040</td>
+              <td class="py-2.5 px-3 text-slate-400">2026-11-04 15:15:02</td>
+              <td class="py-2.5 px-3 font-bold text-white">MIT-FAC-019</td>
+              <td class="py-2.5 px-3 text-amber-300 font-semibold">Dr. K. S. Parthasarathy</td>
+              <td class="py-2.5 px-3 text-slate-400">Electronics Engg</td>
+              <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700">A4 12 99 F0</span></td>
+              <td class="py-2.5 px-3 text-slate-400">ESP32_MIT_IOT_LAB_01</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] font-bold">✓ Faculty Access</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
+
+<script>
+  const refreshBtn = document.getElementById('manual-refresh-logs-btn');
+  const tbody = document.getElementById('full-attendance-tbody');
+
+  async function loadLogs() {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/api/attendance?limit=25');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.data || !Array.isArray(data.data) || !tbody) return;
+
+      tbody.innerHTML = '';
+      data.data.forEach((row: any) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#041026] text-slate-200 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-slate-400">#${row.id}</td>
+          <td class="py-2.5 px-3 text-slate-400">${row.timestamp}</td>
+          <td class="py-2.5 px-3 font-bold text-white">${row.user_id}</td>
+          <td class="py-2.5 px-3 text-[#00F0B5] font-semibold">${row.name || 'Student'}</td>
+          <td class="py-2.5 px-3 text-slate-400">${row.department || 'Electronics Engg'}</td>
+          <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700">${row.rfid_uid}</span></td>
+          <td class="py-2.5 px-3 text-slate-400">${row.node_id}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">✓ ${row.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.log('Attendance sync offline:', e);
+    }
+  }
+
+  refreshBtn?.addEventListener('click', loadLogs);
+  setInterval(loadLogs, 10000);
+</script>
+

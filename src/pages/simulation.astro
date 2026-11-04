@@ -1,0 +1,179 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import WokwiSandbox from '../components/WokwiSandbox.astro';
+import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
+---
+
+<MainLayout title="Hardware & Analog Simulation Laboratory | VoltCore Apex" activeNav="simulation">
+  <div class="space-y-10">
+    
+    <!-- Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/60 text-[#00F0B5] text-xs font-mono font-bold border border-[#00F0B5]/40">
+              MIT CAMPUS VIRTUAL LAB 304
+            </span>
+            <span class="text-xs font-mono text-slate-400">Zero-Latency Hardware Emulation & SPICE</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-mono">
+            Hardware & Analog Simulation Laboratory
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-300 font-mono mt-1 max-w-2xl">
+            Integrated dual simulation engines: Wokwi real-time digital microcontroller execution coupled with native LTspice small-signal analog frequency and transient analysis.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 font-mono text-xs">
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-200 hover:text-white transition-all flex items-center gap-2"
+          >
+            <svg class="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>Back to LMS Hub</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: LTspice Analog Simulation Viewer -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            1. LTspice Circuit Simulation & Waveform Viewer
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
+          .tran • .ac Bode • .op DC Bias Analysis
+        </span>
+      </div>
+
+      <LtspiceSimulationViewer client:load />
+    </section>
+
+    <!-- Section 2: Wokwi Digital Hardware Simulation & Stimulus Deck -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            2. Wokwi Digital Hardware Emulation & Stimulus Deck
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-slate-400 hidden sm:inline">
+          ESP32-WROOM-32 • SPI DMA • I2C Bus • UART Telemetry
+        </span>
+      </div>
+
+      <WokwiSandbox />
+    </section>
+
+    <!-- Section 3: Deterministic Schemdraw Circuit Schematics Gallery -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            3. Deterministic Schemdraw Circuit Schematics (Zero AI Hallucination)
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
+          IEEE 315 / IEC 60617 Vector SVGs Compiled at Build Time
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Circuit 1: BJT CE Amplifier -->
+        <div class="rounded-2xl border border-slate-800 bg-[#020813] p-5 space-y-4 hover:border-[#00F0B5]/40 transition-all">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-white text-sm font-mono">BJT Common-Emitter Amplifier</h3>
+              <p class="text-[11px] text-slate-400 font-mono">Voltage Divider Bias • Emitter Bypass Ce • 180° Phase Inversion</p>
+            </div>
+            <a href="/visuals/schematics/bjt_ce_amplifier.svg" target="_blank" class="px-2.5 py-1 rounded-lg bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30 text-xs font-mono hover:bg-[#00F0B5] hover:text-[#020813] transition-all">
+              SVG ↗
+            </a>
+          </div>
+          <div class="rounded-xl bg-[#041026] p-4 border border-slate-800 flex items-center justify-center overflow-x-auto min-h-[220px]">
+            <img src="/visuals/schematics/bjt_ce_amplifier.svg" alt="BJT Common-Emitter Amplifier Schematic" class="max-h-64 object-contain" />
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+            <span>Core: 2N2222 (β=150)</span>
+            <span>Supply: +12V Vcc</span>
+            <span class="text-[#00F0B5]">Rc: 2.2kΩ | Re: 470Ω</span>
+          </div>
+        </div>
+
+        <!-- Circuit 2: Op-Amp Inverting Amplifier -->
+        <div class="rounded-2xl border border-slate-800 bg-[#020813] p-5 space-y-4 hover:border-[#00F0B5]/40 transition-all">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-white text-sm font-mono">Op-Amp Inverting Configuration</h3>
+              <p class="text-[11px] text-slate-400 font-mono">LM741 • Av = -Rf/Rin = -10 • Virtual Ground</p>
+            </div>
+            <a href="/visuals/schematics/opamp_inverting_amplifier.svg" target="_blank" class="px-2.5 py-1 rounded-lg bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30 text-xs font-mono hover:bg-[#00F0B5] hover:text-[#020813] transition-all">
+              SVG ↗
+            </a>
+          </div>
+          <div class="rounded-xl bg-[#041026] p-4 border border-slate-800 flex items-center justify-center overflow-x-auto min-h-[220px]">
+            <img src="/visuals/schematics/opamp_inverting_amplifier.svg" alt="Op-Amp Inverting Configuration Schematic" class="max-h-64 object-contain" />
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+            <span>Rin: 10 kΩ</span>
+            <span>Rf: 100 kΩ</span>
+            <span class="text-[#00F0B5]">Gain: -10 (180° Inverted)</span>
+          </div>
+        </div>
+
+        <!-- Circuit 3: RC Low-Pass Filter -->
+        <div class="rounded-2xl border border-slate-800 bg-[#020813] p-5 space-y-4 hover:border-[#00F0B5]/40 transition-all">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-white text-sm font-mono">1st-Order Passive RC Low-Pass Filter</h3>
+              <p class="text-[11px] text-slate-400 font-mono">fc = 1 / (2πRC) = 1.59 kHz • -20 dB/decade Roll-Off</p>
+            </div>
+            <a href="/visuals/schematics/rc_lowpass_filter.svg" target="_blank" class="px-2.5 py-1 rounded-lg bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30 text-xs font-mono hover:bg-[#00F0B5] hover:text-[#020813] transition-all">
+              SVG ↗
+            </a>
+          </div>
+          <div class="rounded-xl bg-[#041026] p-4 border border-slate-800 flex items-center justify-center overflow-x-auto min-h-[220px]">
+            <img src="/visuals/schematics/rc_lowpass_filter.svg" alt="RC Low-Pass Filter Schematic" class="max-h-64 object-contain" />
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+            <span>R: 1 kΩ</span>
+            <span>C: 100 nF</span>
+            <span class="text-[#00F0B5]">Cutoff: 1.591 kHz</span>
+          </div>
+        </div>
+
+        <!-- Circuit 4: ESP32 I2C Bus Topology -->
+        <div class="rounded-2xl border border-slate-800 bg-[#020813] p-5 space-y-4 hover:border-[#00F0B5]/40 transition-all">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-white text-sm font-mono">ESP32 I2C Hardware Bus Topology</h3>
+              <p class="text-[11px] text-slate-400 font-mono">4.7 kΩ Pull-Ups to +3.3V • SDA GPIO 21 • SCL GPIO 22</p>
+            </div>
+            <a href="/visuals/schematics/esp32_i2c_bus_topology.svg" target="_blank" class="px-2.5 py-1 rounded-lg bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30 text-xs font-mono hover:bg-[#00F0B5] hover:text-[#020813] transition-all">
+              SVG ↗
+            </a>
+          </div>
+          <div class="rounded-xl bg-[#041026] p-4 border border-slate-800 flex items-center justify-center overflow-x-auto min-h-[220px]">
+            <img src="/visuals/schematics/esp32_i2c_bus_topology.svg" alt="ESP32 I2C Bus Topology Schematic" class="max-h-64 object-contain" />
+          </div>
+          <div class="text-[11px] font-mono text-slate-400 flex justify-between">
+            <span>Pull-Ups: 4.7 kΩ</span>
+            <span>Bus Voltage: +3.3V</span>
+            <span class="text-[#00F0B5]">Speed: 400 kHz Fast-Mode</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</MainLayout>
+

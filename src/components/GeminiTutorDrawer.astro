@@ -1,0 +1,133 @@
+---
+/**
+ * VoltCore Apex Academia - Gemini AI Tutor Drawer
+ * Embeds GeminiTutorChat.jsx React component for interactive conversation & Viva Quizzes
+ */
+import GeminiTutorChat from './GeminiTutorChat.jsx';
+---
+
+<!-- Floating Activation Pill -->
+<aside aria-label="VoltCore Gemini Cortex AI Assistant" class="contents">
+  <button
+    type="button"
+    id="open-gemini-drawer-btn"
+    class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#00693E] via-[#041026] to-[#002b19] border border-[#00F0B5]/40 hover:border-[#00F0B5] text-white shadow-2xl backdrop-blur-2xl flex items-center gap-3 group hover:scale-105 transition-all cursor-pointer shadow-emerald-glow"
+    title="Open Gemini AI Viva Mentor (Alt + G)"
+  >
+    <div class="relative w-7 h-7 rounded-lg bg-[#00F0B5]/20 flex items-center justify-center text-[#00F0B5]">
+      <svg class="w-4 h-4 animate-spin-slow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+      <span class="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#00F0B5] animate-ping"></span>
+    </div>
+    <div class="text-left">
+      <div class="text-xs font-bold font-mono tracking-tight text-white flex items-center gap-1.5">
+        <span>GEMINI CORTEX</span>
+        <span class="text-[9px] px-1.5 py-0.2 rounded bg-[#00F0B5]/20 text-[#00F0B5]">AI TUTOR</span>
+      </div>
+      <div class="text-[10px] font-mono text-slate-400">Anna University Viva Mentor</div>
+    </div>
+    <kbd class="hidden sm:inline-block px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-[9px] text-[#00F0B5] font-mono ml-1">
+      Alt+G
+    </kbd>
+  </button>
+
+  <!-- Slide-Over Drawer Backdrop -->
+  <div
+    id="gemini-drawer-backdrop"
+    class="fixed inset-0 bg-[#020813]/70 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"
+  ></div>
+
+  <!-- Slide-Over Drawer Container -->
+  <div
+    id="gemini-tutor-drawer"
+    class="fixed top-0 right-0 h-full w-full max-w-xl bg-[#041026] border-l border-[#00F0B5]/30 z-50 transform translate-x-full transition-transform duration-300 ease-out flex flex-col shadow-2xl backdrop-blur-3xl font-mono text-xs"
+  >
+    <!-- Drawer Header -->
+    <div class="p-4 bg-[#020813] border-b border-[#00F0B5]/20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[1.5px]">
+          <div class="w-full h-full bg-[#020813] rounded-[10px] flex items-center justify-center text-[#00F0B5]">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm text-white">VoltCore Gemini Cortex</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-[#00F0B5] border border-[#00F0B5]/30 font-semibold">
+              ONLINE
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Trained on Anna University R2021 Syllabus & MIT Lab Standards
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        id="close-gemini-drawer-btn"
+        class="p-2 rounded-xl bg-[#041026] hover:bg-slate-800 text-slate-400 hover:text-white transition-colors border border-slate-800"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Interactive React Chat Component Body -->
+    <div class="flex-1 overflow-hidden">
+      <GeminiTutorChat
+        client:load
+        apiUrl="http://127.0.0.1:5000/app/api/tutor_query"
+        studentName="Ashok Kumar A"
+        studentRoll="2023MITEC042"
+      />
+    </div>
+
+    <!-- Footer Meta -->
+    <div class="p-3 bg-[#020813] border-t border-slate-800 text-[10px] text-slate-500 flex justify-between items-center">
+      <span>MIT Campus AI Engine • Gemini 2.0 / 3.8</span>
+      <span class="text-[#00F0B5]">Student: Ashok Kumar A</span>
+    </div>
+  </div>
+</aside>
+
+<script>
+  const openBtn = document.getElementById('open-gemini-drawer-btn');
+  const closeBtn = document.getElementById('close-gemini-drawer-btn');
+  const drawer = document.getElementById('gemini-tutor-drawer');
+  const backdrop = document.getElementById('gemini-drawer-backdrop');
+
+  function openDrawer() {
+    drawer?.classList.remove('translate-x-full');
+    backdrop?.classList.remove('opacity-0', 'pointer-events-none');
+    backdrop?.classList.add('opacity-100');
+  }
+
+  function closeDrawer() {
+    drawer?.classList.add('translate-x-full');
+    backdrop?.classList.remove('opacity-100');
+    backdrop?.classList.add('opacity-0', 'pointer-events-none');
+  }
+
+  openBtn?.addEventListener('click', openDrawer);
+  closeBtn?.addEventListener('click', closeDrawer);
+  backdrop?.addEventListener('click', closeDrawer);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.altKey && e.key.toLowerCase() === 'g') {
+      e.preventDefault();
+      if (drawer?.classList.contains('translate-x-full')) {
+        openDrawer();
+      } else {
+        closeDrawer();
+      }
+    }
+  });
+</script>

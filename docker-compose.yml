@@ -1,0 +1,88 @@
+# ========================================================================================
+# VoltCore Apex Academia - Enterprise Multi-Container Docker Composition
+# Anna University / MIT Campus Standards (Department of Electronics Engineering)
+# Optimized for Low-Resource Local Development (HP Victus, Intel Core i5, 24GB RAM)
+# Services:
+#   1. api   : Flask Telemetry, SQLite Relational Database & RAG Knowledge Engine
+#   2. cache : Redis LRU Memory-Bounded Micro-Cache (Max 64MB memory limit)
+#   3. web   : Nginx Reverse Proxy & High-Speed Static Astro Production Server
+# ========================================================================================
+
+version: '3.8'
+
+services:
+  # 1. Flask REST API & Hardware Telemetry Gateway
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: voltcore_api_gateway
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LMS_DB_PATH=/app/voltcore_lms.db
+      - VOLTCORE_JWT_SECRET=${VOLTCORE_JWT_SECRET:-MIT_CHROMEPET_ECE_SECURE_JWT_KEY_2026_@P3X}
+      # Secured / Restricted Metadata - Isolated via Environment Variables & RBAC
+      - SECURE_ADMIN_EMAIL=${SECURE_ADMIN_EMAIL:-ashokkumar2008313@gmail.com}
+      - SECURE_ADMIN_PHONE=${SECURE_ADMIN_PHONE:-+91 9597382878}
+      - PUBLIC_ADMIN_EMAIL=${PUBLIC_ADMIN_EMAIL:-ashokkumar3132008@gmail.com}
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+    volumes:
+      - ./voltcore_lms.db:/app/voltcore_lms.db
+      - ./backend/offline_spool.json:/app/backend/offline_spool.json
+    depends_on:
+      - cache
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 256M
+        reservations:
+          cpus: '0.15'
+          memory: 64M
+    networks:
+      - voltcore_net
+
+  # 2. Redis In-Memory Micro-Cache for Telemetry Deduplication & Rate Limiting
+  cache:
+    image: redis:7-alpine
+    container_name: voltcore_redis_cache
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+    networks:
+      - voltcore_net
+
+  # 3. Nginx High-Performance Reverse Proxy & Static Astro Host
+  web:
+    image: nginx:1.25-alpine
+    container_name: voltcore_web_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 128M
+    networks:
+      - voltcore_net
+
+networks:
+  voltcore_net:
+    driver: bridge
+

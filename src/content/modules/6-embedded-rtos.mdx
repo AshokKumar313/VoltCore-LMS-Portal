@@ -1,0 +1,253 @@
+---
+title: "EC8706: Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling"
+code: "EC8706"
+semester: 7
+regulation: "Anna University R2021"
+department: "Department of Electronics Engineering, MIT Campus"
+credits: 4
+order: 6
+description: "Master FreeRTOS kernel internals on ARM Cortex-M and dual-core Xtensa ESP32, analyzing priority inversion inheritance, semaphore signaling matrices, Rate Monotonic vs EDF scheduling bounds, and PendSV context switching."
+difficulty: "Apex Research"
+author: "MIT Campus Embedded Systems & RTOS Faculty"
+publishDate: 2026-09-20
+prerequisites:
+  - "EC8702: Embedded Systems Architecture"
+  - "ARM Cortex-M Hardware Architecture (NVIC, SysTick, PendSV)"
+  - "Data Structures in Embedded C (Circular Queues & Doubly-Linked Lists)"
+learningOutcomes:
+  - "Analyze Priority Inversion mechanisms and prove mathematical bounds for Priority Inheritance Mutexes."
+  - "Formulate schedulability bounds using Rate Monotonic Scheduling (RMS) and Earliest Deadline First (EDF)."
+  - "Dissect ARM Cortex-M context switching routines utilizing PendSV exceptions and dual stack pointers (MSP vs PSP)."
+  - "Diagnose and resolve the Nested Mutex Deadlock & Interrupt Context Preemption trap."
+hardwareKit:
+  - "STMicroelectronics STM32F401RE Nucleo-64 (ARM Cortex-M4 @ 84MHz)"
+  - "ESP32-S3 Dual-Core Xtensa LX7 DevKit"
+  - "Segger J-Link EDU Mini Debugger"
+  - "Rigol DS1054Z 4-Channel Digital Oscilloscope (Task GPIO Profiling)"
+tags:
+  - "FreeRTOS"
+  - "ARM Cortex-M4"
+  - "Priority Inversion"
+  - "PendSV"
+  - "Rate Monotonic Scheduling"
+  - "Anna University R2021"
+syllabusUnits:
+  - unit: 1
+    title: "Kernel Architecture & ARM Cortex-M Low-Level Context Switching"
+    topics:
+      - "Main Stack Pointer (MSP) vs Process Stack Pointer (PSP) in Thread/Handler Modes"
+      - "SysTick Periodic Tick Timer & PendSV Tail-Chaining Context Switch Routine"
+      - "Task Control Block (TCB) Data Structures and Ready List Traversal"
+    labHours: 6
+  - unit: 2
+    title: "Synchronization Primitives & Priority Inversion Resolution"
+    topics:
+      - "Binary vs Counting Semaphores vs FreeRTOS Direct-to-Task Notifications"
+      - "Priority Inversion Anatomy and Priority Inheritance Protocol Limits"
+      - "Event Groups, Message Buffer Queues, and Ring Buffer Descriptors"
+    labHours: 8
+  - unit: 3
+    title: "Real-Time Scheduling Theory & Schedulability Proofs"
+    topics:
+      - "Liu and Layland Utilization Bound for Rate Monotonic Scheduling"
+      - "Earliest Deadline First (EDF) Dynamic Scheduling Proofs"
+      - "Memory Protection Unit (MPU) Sandboxing for High-Integrity Tasks"
+    labHours: 8
+ieeeReference: "IEEE Transactions on Computers, Vol. 73, No. 5, pp. 1240-1254"
+xpReward: 500
+---
+
+# EC8706: Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling
+
+<div class="ieee-abstract">
+  <strong>Abstract</strong>—Embedded mission-critical applications require bounded response times, deterministic interrupt servicing, and strict concurrency isolation. This module explores the internal microarchitectural mechanics of the FreeRTOS real-time kernel operating on ARM Cortex-M4 and dual-core Xtensa microcontrollers. We rigorously evaluate task preemption pipelines, quantify schedulability using the Liu & Layland utilization bound for Rate Monotonic Scheduling (RMS), and examine low-level context switching orchestrated via the ARM Cortex-M <code>PendSV</code> exception. Furthermore, we expose the catastrophic failure modes of priority inversion and analyze how priority inheritance mitigates unbounded task starvation.
+  <div class="mt-2 text-xs font-mono text-[#00F0B5]">
+    <strong>Index Terms</strong>—FreeRTOS, ARM Cortex-M4, PendSV, Priority Inheritance, Rate Monotonic Scheduling, Context Switching.
+  </div>
+</div>
+
+---
+
+## I. Schedulability Theory: Rate Monotonic (RMS) vs Earliest Deadline First (EDF)
+
+In periodic real-time task sets where each task $\tau_i$ is defined by a computation time $C_i$ and a period $T_i$, total processor utilization is defined as:
+
+$$U = \sum_{i=1}^{n} \frac{C_i}{T_i}$$
+
+### 1. Liu & Layland Schedulability Theorem for RMS
+Under static-priority Rate Monotonic Scheduling (shorter period = higher priority), a set of $n$ independent periodic tasks is guaranteed to be schedulable if:
+
+$$U \le n \left( 2^{1/n} - 1 \right)$$
+
+As $n \to \infty$, the asymptotic bound converges to:
+
+$$\lim_{n \to \infty} n \left( 2^{1/n} - 1 \right) = \ln(2) \approx 0.69315 \quad (69.3\%)$$
+
+For dynamic-priority Earliest Deadline First (EDF), the schedulability condition expands to the full utilization envelope:
+
+$$U_{\text{EDF}} \le 1.0 \quad (100\%)$$
+
+---
+
+## II. ARM Cortex-M Hardware Context Switching: SysTick, PendSV, and Stack Pointers
+
+FreeRTOS on ARM Cortex-M leverages two distinct hardware stack pointers:
+- **Main Stack Pointer (MSP):** Utilized by the operating system kernel, exceptions, and Interrupt Service Routines (ISRs) in Handler Mode.
+- **Process Stack Pointer (PSP):** Exclusively utilized by individual FreeRTOS application tasks in Thread Mode.
+
+```text
+[ Task A Running (PSP_A) ]
+         |
+         v
++-------------------------------+  (Hardware automatically pushes R0-R3, R12, LR, PC, xPSR)
+| SysTick Timer ISR (Handler)   |
++-------------------------------+  Sets PENDSVSET in ICSR (Interrupt Control & State Register)
+         |
+         v
++-------------------------------+  Executes at lowest interrupt priority (0xFF)
+| PendSV_Handler (Context Sw)   |  Saves remaining R4-R11 onto PSP_A
++-------------------------------+  Updates pxCurrentTCB to Task B
+         |                         Restores R4-R11 from PSP_B, updates PSP
+         v
+[ Task B Resumes (PSP_B) ]
+```
+
+---
+
+## III. The Engineering Trap: Deadlock in Nested Mutex Acquisition with ISR Preemption
+
+<div class="glass-card p-5 rounded-2xl border border-red-500/40 bg-[#041026]/90 space-y-3 my-6">
+  <div class="flex items-center gap-2 text-red-400 font-mono font-bold text-sm tracking-wide">
+    <span class="text-base">⚠️</span>
+    <span>ENGINEERING TRAP: NESTED MUTEX RE-ENTRANCY & THE ISR CONTEXT PREEMPTION TRAP</span>
+  </div>
+
+  <p class="text-xs text-slate-200 leading-relaxed font-sans">
+    During the execution of high-speed SPI sensor logging in Anna University Embedded Lab trials, student firmware intermittently freezes in a silent permanent hard-fault or infinite loop within <code>vPortValidateInterruptPriority()</code>.
+  </p>
+
+  <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-2">
+    <div class="text-amber-400 font-bold">1. Root Failure Mechanism:</div>
+    <div>
+      FreeRTOS Mutexes (created via <code>xSemaphoreCreateMutex()</code>) record the <em>Task Handle</em> of the holder to implement priority inheritance. When an engineer erroneously calls:
+    </div>
+    <div class="text-center py-1 text-red-400">
+      <code>xSemaphoreTake(xMutex, portMAX_DELAY); // INVOKED INSIDE HARDWARE ISR!</code>
+    </div>
+    <div>
+      An Interrupt Service Routine executes in <strong>Handler Mode without a Task Control Block (TCB)</strong>. Because an ISR has no TCB, priority inheritance math corrupts the internal ready lists, dereferencing null pointers in the kernel scheduler.
+    </div>
+
+    <div class="text-amber-400 font-bold pt-1">2. Nested Mutex Deadlock:</div>
+    <div>
+      Task $\tau_{\text{High}}$ demands Mutex A then Mutex B. Concurrently, Task $\tau_{\text{Low}}$ acquires Mutex B and attempts to take Mutex A. If a context switch occurs between acquisitions, circular wait condition $W = \{\tau_{\text{High}} \to B \to \tau_{\text{Low}} \to A \to \tau_{\text{High}}\}$ triggers an unrecoverable deadlock.
+    </div>
+  </div>
+
+  <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
+    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <ul class="list-disc list-inside space-y-1 text-slate-300">
+      <li><strong>Never Mutex in ISR:</strong> Mutexes are strictly prohibited inside ISRs. Use Binary Semaphores or Direct-to-Task Notifications with <code>xTaskNotifyFromISR()</code> and <code>portYIELD_FROM_ISR()</code>.</li>
+      <li><strong>Nested Mutex Ordering:</strong> Enforce strict hierarchical acquisition ordering: Mutexes must always be claimed in index order ($M_1 \prec M_2 \prec M_3$).</li>
+      <li><strong>Recursive Mutexes:</strong> For re-entrant calls within the same task thread, exclusively employ <code>xSemaphoreCreateRecursiveMutex()</code> and <code>xSemaphoreTakeRecursive()</code>.</li>
+    </ul>
+  </div>
+</div>
+
+---
+
+## IV. Production FreeRTOS Embedded C Implementation
+
+The following complete FreeRTOS driver implements deterministic multi-task scheduling, priority inheritance protection on the SPI bus, and ISR-safe task notification:
+
+```c
+/**
+ * VoltCore Apex Academia - Module 6: FreeRTOS Real-Time Kernel Driver
+ * Target: ARM Cortex-M4 (STM32F4) / Dual-Core ESP32
+ * Standards: Anna University Department of Electronics Engineering
+ */
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+#include "queue.h"
+
+// Task Priorities (Higher number = Higher Priority in FreeRTOS)
+#define PRIORITY_TELEMETRY_TX  (tskIDLE_PRIORITY + 3)
+#define PRIORITY_SENSOR_SAMPLE (tskIDLE_PRIORITY + 2)
+#define PRIORITY_BACKGROUND_LOG (tskIDLE_PRIORITY + 1)
+
+// Mutex guarding SPI Bus & MFRC522 Front-End
+SemaphoreHandle_t xSpiBusMutex = NULL;
+TaskHandle_t xTelemetryTaskHandle = NULL;
+
+void vSensorSampleTask(void *pvParameters) {
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xFrequency = pdMS_TO_TICKS(20); // 50 Hz Periodic Rate
+
+    for (;;) {
+        // Precise periodic delay avoiding drift
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        // Acquire SPI bus mutex with priority inheritance
+        if (xSemaphoreTake(xSpiBusMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
+            // Safe Critical Section: SPI Frame Ingestion
+            // Direct register operations executed here
+            xSemaphoreGive(xSpiBusMutex);
+        }
+    }
+}
+
+void vTelemetryTxTask(void *pvParameters) {
+    uint32_t ulNotificationValue;
+
+    for (;;) {
+        // Block until notified by Hardware GPIO Interrupt
+        xTaskNotifyWait(0x00, ULONG_MAX, &ulNotificationValue, portMAX_DELAY);
+
+        if (xSemaphoreTake(xSpiBusMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+            // Transmit packet across RF transceiver
+            xSemaphoreGive(xSpiBusMutex);
+        }
+    }
+}
+
+// ISR Routine executing in Handler Mode
+void EXTI0_IRQHandler(void) {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+    // Direct-to-Task notification avoids semaphore allocation overhead
+    vTaskNotifyGiveFromISR(xTelemetryTaskHandle, &xHigherPriorityTaskWoken);
+
+    // Force immediate context switch if unblocked task has higher priority
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
+void vApplicationSetup(void) {
+    // 1. Create Priority-Inheritance Mutex
+    xSpiBusMutex = xSemaphoreCreateMutex();
+    configASSERT(xSpiBusMutex != NULL);
+
+    // 2. Create Tasks with Bound Stacks
+    xTaskCreate(
+        vSensorSampleTask, "SensorTask", configMINIMAL_STACK_SIZE + 128,
+        NULL, PRIORITY_SENSOR_SAMPLE, NULL
+    );
+
+    xTaskCreate(
+        vTelemetryTxTask, "TelemetryTask", configMINIMAL_STACK_SIZE + 256,
+        NULL, PRIORITY_TELEMETRY_TX, &xTelemetryTaskHandle
+    );
+
+    // 3. Start FreeRTOS Kernel Scheduler
+    vTaskStartScheduler();
+}
+```
+
+---
+
+## V. Laboratory Viva Voce Examination Questions
+
+1. **PendSV Tail-Chaining:** Why is <code>PendSV</code> assigned the lowest priority (0xFF) on the ARM Cortex-M nested vectored interrupt controller (NVIC)?
+2. **Priority Inheritance Boundary:** Does Priority Inheritance prevent priority inversion completely, or does it bound the maximum blocking time? Prove your answer mathematically.
+

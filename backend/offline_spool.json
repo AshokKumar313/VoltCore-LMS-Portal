@@ -1,0 +1,42 @@
+{
+  "pending_scans": [
+    {
+      "id": 1,
+      "user_id": "2023MITEC042",
+      "name": "Ashok Kumar A",
+      "role": "Student",
+      "department": "Department of Electronics Engineering",
+      "campus": "Madras Institute of Technology (MIT) Campus, Anna University",
+      "node_id": "ESP32_MIT_IOT_LAB_01",
+      "rfid_uid": "E2 80 6F 3B",
+      "status": "Lab-Verified",
+      "timestamp": "2026-11-04 09:52:33"
+    },
+    {
+      "id": 2,
+      "user_id": "2023MITEC042",
+      "name": "Ashok Kumar A",
+      "role": "Student",
+      "department": "Department of Electronics Engineering",
+      "campus": "Madras Institute of Technology (MIT) Campus, Anna University",
+      "node_id": "ESP32_MIT_IOT_LAB_01",
+      "rfid_uid": "E2 80 6F 3B",
+      "status": "Lab-Verified",
+      "timestamp": "2026-11-04 09:52:46"
+    },
+    {
+      "id": 3,
+      "user_id": "2023MITEC042",
+      "name": "Ashok Kumar A",
+      "role": "Student",
+      "department": "Department of Electronics Engineering",
+      "campus": "Madras Institute of Technology (MIT) Campus, Anna University",
+      "node_id": "ESP32_MIT_IOT_LAB_01",
+      "rfid_uid": "E2 80 6F 3B",
+      "status": "Lab-Verified",
+      "timestamp": "2026-11-04 10:23:35"
+    }
+  ],
+  "pending_users": [],
+  "created_at": "2026-11-04T10:30:18.722404"
+}

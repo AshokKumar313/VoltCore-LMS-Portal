@@ -1,0 +1,36 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import TeacherAnalyticsDashboard from '../components/TeacherAnalyticsDashboard.jsx';
+import ContentStatusBoard from '../components/ContentStatusBoard.jsx';
+---
+
+<MainLayout
+  title="Teacher Analytics & NBA SAR Attainment | VoltCore Apex Academia"
+  description="Executive educator analytics dashboard featuring Wokwi weak-topic matrices, statistical Z-score early warning systems, and automated NBA Course Outcome attainment reports."
+  activeNav="teacher"
+>
+  <div class="space-y-8">
+    <!-- Breadcrumb & Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
+      <div class="flex items-center gap-2 text-slate-400">
+        <a href="/" class="hover:text-[#00F0B5] transition-colors">VoltCore</a>
+        <span>/</span>
+        <span class="text-[#00F0B5]">Teacher Analytics</span>
+        <span>/</span>
+        <span class="text-slate-500">Editorial Lifecycle & Attainment</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">
+          Anna University ECE R2023 Cohort
+        </span>
+      </div>
+    </div>
+
+    <!-- Section 1: Curriculum Content Status Board -->
+    <ContentStatusBoard client:load />
+
+    <!-- Section 2: Teacher Analytics Dashboard -->
+    <TeacherAnalyticsDashboard client:load />
+  </div>
+</MainLayout>
+
