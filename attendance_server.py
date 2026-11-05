@@ -679,6 +679,171 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     @app.route("/api/research/overview", methods=["GET"])
     def research_overview_endpoint():
         from backend.research_discovery_engine import research_discovery_engine
@@ -727,6 +892,171 @@ if HAS_FLASK:
         ip = request.remote_addr or "127.0.0.1"
         res = security_hardening_engine.validate_mfa_token(uid, tok, client_ip=ip)
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     @app.route("/api/security/backup/create", methods=["POST", "OPTIONS"])
@@ -931,6 +1261,171 @@ if HAS_FLASK:
             actor_role=role
         )
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     @app.route("/api/academic/calendar/add", methods=["POST", "OPTIONS"])
@@ -1172,6 +1667,171 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     @app.route("/api/digital/truth_table", methods=["POST", "OPTIONS"])
     def digital_truth_table_endpoint():
         if request.method == "OPTIONS":
@@ -1186,6 +1846,171 @@ if HAS_FLASK:
         vars_list = payload.get("variables", None)
         res = digital_electronics_engine.generate_truth_table(expr, vars_list)
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     @app.route("/api/digital/kmap_solve", methods=["POST", "OPTIONS"])
@@ -1267,6 +2092,171 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     @app.route("/api/analog_comm/transistor_bias", methods=["POST", "OPTIONS"])
     def analog_comm_transistor_bias_endpoint():
         if request.method == "OPTIONS":
@@ -1292,6 +2282,171 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     @app.route("/api/analog_comm/opamp_calc", methods=["POST", "OPTIONS"])
     def analog_comm_opamp_calc_endpoint():
         if request.method == "OPTIONS":
@@ -1315,6 +2470,171 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     @app.route("/api/analog_comm/txline_calc", methods=["POST", "OPTIONS"])
     def analog_comm_txline_calc_endpoint():
         if request.method == "OPTIONS":
@@ -1331,6 +2651,171 @@ if HAS_FLASK:
             ZL_imag=float(payload.get("ZL_imag", 0.0))
         )
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     @app.route("/api/analog_comm/modulation_calc", methods=["POST", "OPTIONS"])
@@ -1354,6 +2839,171 @@ if HAS_FLASK:
             channel_bandwidth=float(payload.get("channel_bandwidth", 100000.0))
         )
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     @app.route("/api/analog_comm/calc/save", methods=["POST", "OPTIONS"])
@@ -1516,6 +3166,171 @@ if HAS_FLASK:
         status = payload.get("status", "COMPLETED")
         res = project_innovation_engine.update_milestone_status(mid, status)
         code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
     # ====================================================================================
@@ -1858,6 +3673,271 @@ if HAS_FLASK:
         res_action = payload.get("resolution", "MERGED")
         role = payload.get("role", "Admin")
         res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    # ====================================================================================
+    # Phase 27: Data Intelligence & Academic Quality Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/intelligence/overview", methods=["GET"])
+    def intelligence_overview_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        return jsonify(data_intelligence_engine.get_overview_metrics()), 200
+
+    @app.route("/api/intelligence/audits", methods=["GET"])
+    def intelligence_audits_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        atype = request.args.get("audit_type")
+        status = request.args.get("status")
+        sev = request.args.get("severity")
+        return jsonify(data_intelligence_engine.get_academic_audits(atype, status, sev)), 200
+
+    @app.route("/api/intelligence/run-consistency-check", methods=["POST", "OPTIONS"])
+    def intelligence_consistency_check_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.run_record_consistency_check(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/resolve-audit", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("audit_id", "")
+        notes = payload.get("resolution_notes", "Audit cleared by academic reviewer.")
+        by = payload.get("resolved_by", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_audit_issue(aid, notes, resolved_by=by, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/intelligence/syllabus-coverage", methods=["GET"])
+    def intelligence_syllabus_coverage_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_syllabus_coverage(code)), 200
+
+    @app.route("/api/intelligence/update-syllabus-unit", methods=["POST", "OPTIONS"])
+    def intelligence_update_syllabus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        unit = int(payload.get("unit_num", 1))
+        covered = int(payload.get("topics_covered", 0))
+        hrs = float(payload.get("hours_actual", 0.0))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.update_syllabus_unit_progress(code, unit, covered, hrs, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/question-bank-gaps", methods=["GET"])
+    def intelligence_qb_gaps_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        return jsonify(data_intelligence_engine.get_question_bank_gaps(code)), 200
+
+    @app.route("/api/intelligence/analyze-question-bank", methods=["POST", "OPTIONS"])
+    def intelligence_analyze_qb_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        code = payload.get("course_code", "EC3451")
+        questions = payload.get("questions", [])
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.analyze_custom_question_bank(code, questions, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), status_code
+
+    @app.route("/api/intelligence/content-freshness", methods=["GET"])
+    def intelligence_content_freshness_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        code = request.args.get("course_code")
+        status = request.args.get("freshness_status")
+        return jsonify(data_intelligence_engine.get_content_freshness(code, status)), 200
+
+    @app.route("/api/intelligence/audit-freshness", methods=["POST", "OPTIONS"])
+    def intelligence_audit_freshness_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        thresh = int(payload.get("stale_threshold_days", 180))
+        role = payload.get("role", "Faculty")
+        res = data_intelligence_engine.audit_content_freshness(thresh, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/duplicate-documents", methods=["GET"])
+    def intelligence_duplicate_docs_endpoint():
+        from backend.data_intelligence_engine import data_intelligence_engine
+        status = request.args.get("status")
+        return jsonify(data_intelligence_engine.get_duplicate_documents(status)), 200
+
+    @app.route("/api/intelligence/detect-duplicates", methods=["POST", "OPTIONS"])
+    def intelligence_detect_duplicates_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        res = data_intelligence_engine.detect_duplicate_submission(
+            doc_id_a=payload.get("doc_id_a", "DOC_A"),
+            doc_id_b=payload.get("doc_id_b", "DOC_B"),
+            title_a=payload.get("title_a", "Document A"),
+            title_b=payload.get("title_b", "Document B"),
+            text_a=payload.get("text_a", ""),
+            text_b=payload.get("text_b", ""),
+            threshold_pct=float(payload.get("threshold_pct", 75.0)),
+            actor_role=payload.get("role", "Faculty")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/intelligence/resolve-duplicate", methods=["POST", "OPTIONS"])
+    def intelligence_resolve_duplicate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.data_intelligence_engine import data_intelligence_engine
+        payload = request.get_json(silent=True) or {}
+        did = payload.get("duplicate_id", "")
+        res_action = payload.get("resolution", "MERGED")
+        role = payload.get("role", "Admin")
+        res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+
+    # ====================================================================================
+    # Phase 28: Platform Intelligence & Reliability Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/reliability/overview", methods=["GET"])
+    def reliability_overview_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        return jsonify(platform_reliability_engine.get_overview_metrics()), 200
+
+    @app.route("/api/reliability/apm", methods=["GET"])
+    def reliability_apm_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        return jsonify(platform_reliability_engine.get_apm_metrics()), 200
+
+    @app.route("/api/reliability/telemetry", methods=["GET"])
+    def reliability_telemetry_summary_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        limit = int(request.args.get("limit", 10))
+        return jsonify(platform_reliability_engine.get_feature_usage_summary(limit)), 200
+
+    @app.route("/api/reliability/record-telemetry", methods=["POST", "OPTIONS"])
+    def reliability_record_telemetry_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.platform_reliability_engine import platform_reliability_engine
+        payload = request.get_json(silent=True) or {}
+        feat = payload.get("feature_name", "UNKNOWN_FEATURE")
+        route = payload.get("route", "/")
+        actor = payload.get("actor_id", "2023MITEC042")
+        lat = float(payload.get("latency_ms", 1.5))
+        status = int(payload.get("status_code", 200))
+        res = platform_reliability_engine.record_feature_telemetry(feat, route, actor, lat, status)
+        return jsonify(res), 200
+
+    @app.route("/api/reliability/db-health", methods=["GET"])
+    def reliability_db_health_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        return jsonify(platform_reliability_engine.get_database_wal_health()), 200
+
+    @app.route("/api/reliability/db-checkpoint", methods=["POST", "OPTIONS"])
+    def reliability_db_checkpoint_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.platform_reliability_engine import platform_reliability_engine
+        payload = request.get_json(silent=True) or {}
+        mode = payload.get("mode", "PASSIVE")
+        role = payload.get("role", "Admin")
+        res = platform_reliability_engine.execute_wal_checkpoint(mode=mode, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/reliability/link-checks", methods=["GET"])
+    def reliability_link_checks_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        return jsonify(platform_reliability_engine.get_link_health_checks()), 200
+
+    @app.route("/api/reliability/link-scan", methods=["POST", "OPTIONS"])
+    def reliability_link_scan_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.platform_reliability_engine import platform_reliability_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = platform_reliability_engine.run_route_integrity_scan(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/reliability/config-audits", methods=["GET"])
+    def reliability_config_audits_endpoint():
+        from backend.platform_reliability_engine import platform_reliability_engine
+        return jsonify(platform_reliability_engine.get_config_health_audits()), 200
+
+    @app.route("/api/reliability/run-audit", methods=["POST", "OPTIONS"])
+    def reliability_run_audit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.platform_reliability_engine import platform_reliability_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = platform_reliability_engine.run_full_system_audit(actor_role=role)
         code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
@@ -2255,6 +4335,31 @@ else:
                 status = params.get("status", [None])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(data_intelligence_engine.get_duplicate_documents(status)).encode("utf-8"))
+            elif parsed.path == "/api/reliability/overview":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_overview_metrics()).encode("utf-8"))
+            elif parsed.path == "/api/reliability/apm":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_apm_metrics()).encode("utf-8"))
+            elif parsed.path == "/api/reliability/telemetry":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                limit = int(params.get("limit", [10])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_feature_usage_summary(limit)).encode("utf-8"))
+            elif parsed.path == "/api/reliability/db-health":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_database_wal_health()).encode("utf-8"))
+            elif parsed.path == "/api/reliability/link-checks":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_link_health_checks()).encode("utf-8"))
+            elif parsed.path == "/api/reliability/config-audits":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(platform_reliability_engine.get_config_health_audits()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -2804,6 +4909,38 @@ else:
                 res_action = payload.get("resolution", "MERGED")
                 role = payload.get("role", "Admin")
                 res = data_intelligence_engine.resolve_duplicate_pair(did, res_action, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/reliability/record-telemetry":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                feat = payload.get("feature_name", "UNKNOWN_FEATURE")
+                route = payload.get("route", "/")
+                actor = payload.get("actor_id", "2023MITEC042")
+                lat = float(payload.get("latency_ms", 1.5))
+                status = int(payload.get("status_code", 200))
+                res = platform_reliability_engine.record_feature_telemetry(feat, route, actor, lat, status)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/reliability/db-checkpoint":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                mode = payload.get("mode", "PASSIVE")
+                role = payload.get("role", "Admin")
+                res = platform_reliability_engine.execute_wal_checkpoint(mode=mode, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/reliability/link-scan":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                role = payload.get("role", "Admin")
+                res = platform_reliability_engine.run_route_integrity_scan(actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/reliability/run-audit":
+                from backend.platform_reliability_engine import platform_reliability_engine
+                role = payload.get("role", "Admin")
+                res = platform_reliability_engine.run_full_system_audit(actor_role=role)
                 code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

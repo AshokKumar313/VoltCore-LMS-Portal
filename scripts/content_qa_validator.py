@@ -65,6 +65,7 @@ VALID_INTERNAL_ROUTES = {
     "/settings",
     "/simulation",
     "/smart-lab",
+    "/system-health",
     "/teacher",
     "/telemetry",
     "/virtual-bench",

@@ -50,6 +50,7 @@ const PRECACHE_ASSETS = [
   '/settings',
   '/simulation',
   '/smart-lab',
+  '/system-health',
   '/teacher',
   '/telemetry',
   '/virtual-bench',
