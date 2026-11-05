@@ -793,6 +793,64 @@ if HAS_FLASK:
         from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
         return jsonify(cloud_deployment_optimizer.generate_production_manifest()), 200
 
+    @app.route("/api/physical_hil/ports", methods=["GET"])
+    def physical_hil_ports_endpoint():
+        from backend.physical_hil_manager import physical_hil_manager
+        return jsonify(physical_hil_manager.list_detected_ports()), 200
+
+    @app.route("/api/physical_hil/overview", methods=["GET"])
+    def physical_hil_overview_endpoint():
+        from backend.physical_hil_manager import physical_hil_manager
+        return jsonify(physical_hil_manager.get_lab_overview()), 200
+
+    @app.route("/api/physical_hil/lock", methods=["POST", "OPTIONS"])
+    def physical_hil_lock_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.physical_hil_manager import physical_hil_manager
+        payload = request.get_json(silent=True) or {}
+        port_id = payload.get("port_id", "COM3")
+        user_id = payload.get("user_id", "2023MITEC042")
+        role = payload.get("role", "Student")
+        res = physical_hil_manager.acquire_port_lock(port_id, user_id, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 409)
+        return jsonify(res), code
+
+    @app.route("/api/physical_hil/release", methods=["POST", "OPTIONS"])
+    def physical_hil_release_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.physical_hil_manager import physical_hil_manager
+        payload = request.get_json(silent=True) or {}
+        port_id = payload.get("port_id", "COM3")
+        user_id = payload.get("user_id", "2023MITEC042")
+        res = physical_hil_manager.release_port_lock(port_id, user_id)
+        code = 200 if res.get("status") == "SUCCESS" else 403
+        return jsonify(res), code
+
+    @app.route("/api/physical_hil/run_assertion", methods=["POST", "OPTIONS"])
+    def physical_hil_assertion_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.physical_hil_manager import physical_hil_manager
+        payload = request.get_json(silent=True) or {}
+        port_id = payload.get("port_id", "COM3")
+        user_id = payload.get("user_id", "2023MITEC042")
+        res = physical_hil_manager.run_test_bench_assertions(port_id, user_id)
+        return jsonify(res), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -932,6 +990,14 @@ else:
                 from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(cloud_deployment_optimizer.generate_production_manifest()).encode("utf-8"))
+            elif parsed.path == "/api/physical_hil/ports":
+                from backend.physical_hil_manager import physical_hil_manager
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(physical_hil_manager.list_detected_ports()).encode("utf-8"))
+            elif parsed.path == "/api/physical_hil/overview":
+                from backend.physical_hil_manager import physical_hil_manager
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(physical_hil_manager.get_lab_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1043,6 +1109,30 @@ else:
                 hardware = payload.get("hardware", "ESP32-S3")
                 role = payload.get("role", "Student")
                 res = next_gen_agent_engine.diagnose_lab_issue(symptom_query=symptom, hardware_target=hardware, actor_role=role)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/physical_hil/lock":
+                from backend.physical_hil_manager import physical_hil_manager
+                port_id = payload.get("port_id", "COM3")
+                user_id = payload.get("user_id", "2023MITEC042")
+                role = payload.get("role", "Student")
+                res = physical_hil_manager.acquire_port_lock(port_id, user_id, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 409)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/physical_hil/release":
+                from backend.physical_hil_manager import physical_hil_manager
+                port_id = payload.get("port_id", "COM3")
+                user_id = payload.get("user_id", "2023MITEC042")
+                res = physical_hil_manager.release_port_lock(port_id, user_id)
+                code = 200 if res.get("status") == "SUCCESS" else 403
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/physical_hil/run_assertion":
+                from backend.physical_hil_manager import physical_hil_manager
+                port_id = payload.get("port_id", "COM3")
+                user_id = payload.get("user_id", "2023MITEC042")
+                res = physical_hil_manager.run_test_bench_assertions(port_id, user_id)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

@@ -49,6 +49,7 @@ VALID_INTERNAL_ROUTES = {
     "/next-gen",
     "/nptel",
     "/nptel-player",
+    "/physical-lab",
     "/profile",
     "/research",
     "/security-hub",
