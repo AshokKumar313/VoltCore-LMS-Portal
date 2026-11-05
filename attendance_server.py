@@ -707,6 +707,43 @@ if HAS_FLASK:
         from backend.enterprise_admin_engine import enterprise_admin_engine
         return jsonify(enterprise_admin_engine.compute_nba_co_po_matrix()), 200
 
+    @app.route("/api/security/overview", methods=["GET"])
+    def security_overview_endpoint():
+        from backend.security_hardening_engine import security_hardening_engine
+        return jsonify(security_hardening_engine.get_security_overview()), 200
+
+    @app.route("/api/security/mfa/validate", methods=["POST", "OPTIONS"])
+    def security_mfa_validate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.security_hardening_engine import security_hardening_engine
+        payload = request.get_json(silent=True) or {}
+        uid = payload.get("user_id", "2023MITEC042")
+        tok = payload.get("token", "")
+        ip = request.remote_addr or "127.0.0.1"
+        res = security_hardening_engine.validate_mfa_token(uid, tok, client_ip=ip)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/security/backup/create", methods=["POST", "OPTIONS"])
+    def security_backup_create_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.security_hardening_engine import security_hardening_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Admin")
+        res = security_hardening_engine.create_database_backup(actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else 403
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -812,6 +849,10 @@ else:
                 from backend.enterprise_admin_engine import enterprise_admin_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(enterprise_admin_engine.compute_nba_co_po_matrix()).encode("utf-8"))
+            elif parsed.path == "/api/security/overview":
+                from backend.security_hardening_engine import security_hardening_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(security_hardening_engine.get_security_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -903,6 +944,19 @@ else:
                 )
                 code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 409)
                 self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/security/mfa/validate":
+                from backend.security_hardening_engine import security_hardening_engine
+                uid = payload.get("user_id", "2023MITEC042")
+                tok = payload.get("token", "")
+                res = security_hardening_engine.validate_mfa_token(uid, tok)
+                self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 400)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/security/backup/create":
+                from backend.security_hardening_engine import security_hardening_engine
+                role = payload.get("role", "Admin")
+                res = security_hardening_engine.create_database_backup(actor_role=role)
+                self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 403)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
