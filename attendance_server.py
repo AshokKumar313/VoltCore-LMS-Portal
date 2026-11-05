@@ -679,6 +679,24 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    @app.route("/api/research/overview", methods=["GET"])
+    def research_overview_endpoint():
+        from backend.research_discovery_engine import research_discovery_engine
+        return jsonify(research_discovery_engine.get_research_overview()), 200
+
+    @app.route("/api/research/synthesize", methods=["POST", "OPTIONS"])
+    def research_synthesize_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.research_discovery_engine import research_discovery_engine
+        payload = request.get_json(silent=True) or {}
+        pids = payload.get("paper_ids", [])
+        return jsonify(research_discovery_engine.generate_literature_synthesis(pids)), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -772,6 +790,10 @@ else:
                 from backend.collaboration_hub import collaboration_hub
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(collaboration_hub.get_collaboration_overview()).encode("utf-8"))
+            elif parsed.path == "/api/research/overview":
+                from backend.research_discovery_engine import research_discovery_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(research_discovery_engine.get_research_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -839,6 +861,12 @@ else:
                 sid = payload.get("student_id", "2023MITEC042")
                 sname = payload.get("student_name", "Ashok Kumar A")
                 res = collaboration_hub.join_study_group(gid, sid, sname)
+                self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 400)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/research/synthesize":
+                from backend.research_discovery_engine import research_discovery_engine
+                pids = payload.get("paper_ids", [])
+                res = research_discovery_engine.generate_literature_synthesis(pids)
                 self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 400)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

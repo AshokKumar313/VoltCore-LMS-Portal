@@ -32,6 +32,7 @@ const PRECACHE_ASSETS = [
   '/nptel',
   '/nptel-player',
   '/profile',
+  '/research',
   '/settings',
   '/simulation',
   '/smart-lab',
