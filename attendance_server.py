@@ -783,6 +783,16 @@ if HAS_FLASK:
         from backend.next_gen_agent_engine import next_gen_agent_engine
         return jsonify(next_gen_agent_engine.get_digital_twin_telemetry()), 200
 
+    @app.route("/api/cloud_deploy/status", methods=["GET"])
+    def cloud_deploy_status_endpoint():
+        from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
+        return jsonify(cloud_deployment_optimizer.run_full_cloud_audit()), 200
+
+    @app.route("/api/cloud_deploy/manifest", methods=["GET"])
+    def cloud_deploy_manifest_endpoint():
+        from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
+        return jsonify(cloud_deployment_optimizer.generate_production_manifest()), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -914,6 +924,14 @@ else:
                 from backend.next_gen_agent_engine import next_gen_agent_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(next_gen_agent_engine.get_digital_twin_telemetry()).encode("utf-8"))
+            elif parsed.path == "/api/cloud_deploy/status":
+                from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(cloud_deployment_optimizer.run_full_cloud_audit()).encode("utf-8"))
+            elif parsed.path == "/api/cloud_deploy/manifest":
+                from deploy.cloud_deployment_optimizer import cloud_deployment_optimizer
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(cloud_deployment_optimizer.generate_production_manifest()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))

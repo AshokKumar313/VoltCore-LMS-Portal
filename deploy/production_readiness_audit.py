@@ -40,6 +40,7 @@ EXPECTED_STATIC_ROUTES = [
     "attendance",
     "autograder",
     "careers",
+    "cloud-deploy",
     "collaboration",
     "enterprise-admin",
     "exam-center",
