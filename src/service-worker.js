@@ -30,6 +30,7 @@ const PRECACHE_ASSETS = [
   '/fleet',
   '/gate-ece',
   '/hardware-hil',
+  '/next-gen',
   '/nptel',
   '/nptel-player',
   '/profile',

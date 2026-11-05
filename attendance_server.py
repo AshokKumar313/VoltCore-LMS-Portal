@@ -744,6 +744,45 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
 
+    @app.route("/api/next_gen/overview", methods=["GET"])
+    def next_gen_overview_endpoint():
+        from backend.next_gen_agent_engine import next_gen_agent_engine
+        uid = request.args.get("user_id", "2023MITEC042")
+        return jsonify(next_gen_agent_engine.get_next_gen_overview(user_id=uid)), 200
+
+    @app.route("/api/next_gen/recommendations", methods=["GET"])
+    def next_gen_recommendations_endpoint():
+        from backend.next_gen_agent_engine import next_gen_agent_engine
+        uid = request.args.get("user_id", "2023MITEC042")
+        return jsonify(next_gen_agent_engine.recommend_syllabus_progression(user_id=uid)), 200
+
+    @app.route("/api/next_gen/diagnose", methods=["POST", "OPTIONS"])
+    def next_gen_diagnose_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.next_gen_agent_engine import next_gen_agent_engine
+        payload = request.get_json(silent=True) or {}
+        symptom = payload.get("symptom", "")
+        hardware = payload.get("hardware", "ESP32-S3")
+        role = payload.get("role", "Student")
+        res = next_gen_agent_engine.diagnose_lab_issue(symptom_query=symptom, hardware_target=hardware, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/next_gen/career_path", methods=["GET"])
+    def next_gen_career_path_endpoint():
+        from backend.next_gen_agent_engine import next_gen_agent_engine
+        uid = request.args.get("user_id", "2023MITEC042")
+        return jsonify(next_gen_agent_engine.predict_career_path(user_id=uid)), 200
+
+    @app.route("/api/next_gen/telemetry_twin", methods=["GET"])
+    def next_gen_telemetry_twin_endpoint():
+        from backend.next_gen_agent_engine import next_gen_agent_engine
+        return jsonify(next_gen_agent_engine.get_digital_twin_telemetry()), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -853,6 +892,28 @@ else:
                 from backend.security_hardening_engine import security_hardening_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(security_hardening_engine.get_security_overview()).encode("utf-8"))
+            elif parsed.path == "/api/next_gen/overview":
+                from backend.next_gen_agent_engine import next_gen_agent_engine
+                params = parse_qs(parsed.query)
+                uid = params.get("user_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(next_gen_agent_engine.get_next_gen_overview(user_id=uid)).encode("utf-8"))
+            elif parsed.path == "/api/next_gen/recommendations":
+                from backend.next_gen_agent_engine import next_gen_agent_engine
+                params = parse_qs(parsed.query)
+                uid = params.get("user_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(next_gen_agent_engine.recommend_syllabus_progression(user_id=uid)).encode("utf-8"))
+            elif parsed.path == "/api/next_gen/career_path":
+                from backend.next_gen_agent_engine import next_gen_agent_engine
+                params = parse_qs(parsed.query)
+                uid = params.get("user_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(next_gen_agent_engine.predict_career_path(user_id=uid)).encode("utf-8"))
+            elif parsed.path == "/api/next_gen/telemetry_twin":
+                from backend.next_gen_agent_engine import next_gen_agent_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(next_gen_agent_engine.get_digital_twin_telemetry()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -957,6 +1018,14 @@ else:
                 role = payload.get("role", "Admin")
                 res = security_hardening_engine.create_database_backup(actor_role=role)
                 self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 403)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/next_gen/diagnose":
+                from backend.next_gen_agent_engine import next_gen_agent_engine
+                symptom = payload.get("symptom", "")
+                hardware = payload.get("hardware", "ESP32-S3")
+                role = payload.get("role", "Student")
+                res = next_gen_agent_engine.diagnose_lab_issue(symptom_query=symptom, hardware_target=hardware, actor_role=role)
+                self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)

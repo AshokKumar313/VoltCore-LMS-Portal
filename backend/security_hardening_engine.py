@@ -509,3 +509,4 @@ class SecurityHardeningEngine:
 
 # Global Security Hardening Engine Singleton
 security_hardening_engine = SecurityHardeningEngine()
+
