@@ -6,8 +6,8 @@ import { triggerToast } from './ToastNotifications.jsx';
  * VoltCore Apex Academia - Gemini RAG Curriculum & Viva Drawer
  * Anna University / MIT Campus Standards (Department of Electronics Engineering)
  * ----------------------------------------------------------------------------------------
- * Platform Lead / Architect: Ashok Kumar A (ashokkumar2008313@gmail.com | +91 9597382878)
- * GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
+ * Platform Lead / Architect: Ashok Kumar A (ashokkumar3132008@gmail.com)
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
  * Features:
  *   - Local BM25 RAG Curriculum retrieval across all .mdx modules
  *   - Verifiable IEEE citations with section breadcrumbs and relevance scores

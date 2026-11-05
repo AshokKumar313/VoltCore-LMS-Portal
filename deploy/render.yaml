@@ -48,3 +48,4 @@ services:
         value: http://host.docker.internal:11434
       - key: FLASK_ENV
         value: production
+

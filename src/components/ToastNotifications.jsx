@@ -5,8 +5,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
  * VoltCore Apex Academia - Enterprise Glassmorphic Toast Notifications
  * Tailored for Anna University / MIT Campus Standards (Department of Electronics Eng.)
  * ----------------------------------------------------------------------------------------
- * Platform Lead / Architect: Ashok Kumar A (ashokkumar2008313@gmail.com | +91 9597382878)
- * GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
+ * Platform Lead / Architect: Ashok Kumar A (ashokkumar3132008@gmail.com)
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
  * Aesthetic: Italian Glassmorphism (Deep Royal Navy #020813 to Emerald #00693E)
  * Features:
  *   - Instant visual feedback for XP Gains, ESP32 Attendance Scans, Login, and Rate Limits

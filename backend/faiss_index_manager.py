@@ -181,3 +181,4 @@ class VectorIndexManager:
                 self.faiss_index = faiss.IndexFlatIP(self.dimension)
                 self.faiss_index.add(self.numpy_matrix)
         return True
+

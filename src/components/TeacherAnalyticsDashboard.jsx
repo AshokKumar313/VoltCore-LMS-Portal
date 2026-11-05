@@ -133,8 +133,8 @@ export default function TeacherAnalyticsDashboard({
           setAdminMetadata({
             platform_lead: 'Ashok Kumar A',
             public_email: 'ashokkumar3132008@gmail.com',
-            admin_email: 'ashokkumar2008313@gmail.com',
-            admin_phone: '+91 9597382878',
+            admin_email: '[SECURED - CONNECT BACKEND ENV: SECURE_ADMIN_EMAIL]',
+            admin_phone: '[SECURED - CONNECT BACKEND ENV: SECURE_ADMIN_PHONE]',
             rbac_access_level: 'PRIVILEGED_ADMIN_ACCESS',
             institution: 'Madras Institute of Technology (MIT) Campus, Anna University'
           });

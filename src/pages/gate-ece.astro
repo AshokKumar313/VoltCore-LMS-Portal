@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import GateEceQuestionBank from '../components/GateEceQuestionBank.jsx';
+import GateEceInteractiveSolvers from '../components/GateEceInteractiveSolvers.jsx';
 ---
 
 <MainLayout title="GATE ECE & Anna University 2,000+ Exam Engine | VoltCore Apex" activeNav="gate">
@@ -20,7 +21,7 @@ import GateEceQuestionBank from '../components/GateEceQuestionBank.jsx';
             2,000+ IEEE & GATE ECE Question Repository
           </h1>
           <p class="text-xs sm:text-sm text-slate-300 font-mono mt-1 max-w-2xl">
-            Rigorously compiled engineering challenges across Analog Circuits, Digital VLSI, Signals & Systems, and Electromagnetics. Features step-by-step IEEE mathematical proofs and engineering trap distractor breakdowns.
+            Rigorously compiled engineering challenges across Analog Circuits, Digital VLSI, Signals & Systems, and Electromagnetics. Features step-by-step IEEE mathematical proofs, K-Map minimizers, Bode stability tools, and engineering trap distractor breakdowns.
           </p>
         </div>
 
@@ -37,6 +38,9 @@ import GateEceQuestionBank from '../components/GateEceQuestionBank.jsx';
         </div>
       </div>
     </div>
+
+    <!-- Interactive Solvers Toolkit: K-Map, Bode Stability, 8051 / ARM Cortex Assembly -->
+    <GateEceInteractiveSolvers client:load />
 
     <!-- Interactive GATE ECE Question Bank React Island -->
     <GateEceQuestionBank client:load />

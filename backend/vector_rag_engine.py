@@ -324,3 +324,4 @@ class VectorRagEngine:
 
 # Global Vector RAG instance
 vector_rag_engine = VectorRagEngine()
+

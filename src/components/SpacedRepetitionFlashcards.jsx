@@ -6,8 +6,8 @@ import { triggerToast } from './ToastNotifications.jsx';
  * VoltCore Apex Academia - SM-2 Spaced Repetition ECE Flashcards
  * Anna University / MIT Campus Standards (Department of Electronics Engineering)
  * ----------------------------------------------------------------------------------------
- * Platform Lead / Architect: Ashok Kumar A (ashokkumar2008313@gmail.com | +91 9597382878)
- * GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
+ * Platform Lead / Architect: Ashok Kumar A (ashokkumar3132008@gmail.com)
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
  * Algorithm: SuperMemo-2 (SM-2) Interval Spacing
  * Features:
  *   - 3D perspective flip card animations

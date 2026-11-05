@@ -41,6 +41,7 @@ VALID_INTERNAL_ROUTES = {
     "/flashcards",
     "/fleet",
     "/gate-ece",
+    "/hardware-hil",
     "/nptel",
     "/nptel-player",
     "/profile",

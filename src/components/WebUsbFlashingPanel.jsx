@@ -626,3 +626,4 @@ export default function WebUsbFlashingPanel() {
     </div>
   );
 }
+
