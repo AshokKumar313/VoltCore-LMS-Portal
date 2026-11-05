@@ -202,3 +202,4 @@ def test_privacy_invariants_no_credential_leakage(temp_engine):
     assert p_email not in overview_json
     assert p_phone not in overview_json
     assert overview["student_id"] == DEFAULT_STUDENT_ID
+

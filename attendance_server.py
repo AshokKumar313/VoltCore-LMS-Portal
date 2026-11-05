@@ -1227,6 +1227,155 @@ if HAS_FLASK:
         )
         return jsonify(res), 200
 
+    @app.route("/api/analog_comm/overview", methods=["GET"])
+    def analog_comm_overview_endpoint():
+        from backend.analog_comm_engine import analog_comm_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(analog_comm_engine.get_overview(sid)), 200
+
+    @app.route("/api/analog_comm/presets", methods=["GET"])
+    def analog_comm_presets_endpoint():
+        from backend.analog_comm_engine import analog_comm_engine
+        cat = request.args.get("category")
+        return jsonify(analog_comm_engine.get_presets(cat)), 200
+
+    @app.route("/api/analog_comm/calculations", methods=["GET"])
+    def analog_comm_calculations_endpoint():
+        from backend.analog_comm_engine import analog_comm_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(analog_comm_engine.get_saved_calculations(sid)), 200
+
+    @app.route("/api/analog_comm/filter_calc", methods=["POST", "OPTIONS"])
+    def analog_comm_filter_calc_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.calculate_filter(
+            filter_type=payload.get("filter_type", "RC_LPF"),
+            R=float(payload.get("R", 10000.0)),
+            C=float(payload.get("C", 1.0e-8)),
+            L=float(payload.get("L", 1.0e-3)),
+            R2=float(payload.get("R2")) if payload.get("R2") else None,
+            C2=float(payload.get("C2")) if payload.get("C2") else None,
+            gain=float(payload.get("gain", 1.0))
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/analog_comm/transistor_bias", methods=["POST", "OPTIONS"])
+    def analog_comm_transistor_bias_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.calculate_transistor_bias(
+            transistor_type=payload.get("transistor_type", "BJT_NPN"),
+            Vcc=float(payload.get("Vcc", 12.0)),
+            R1=float(payload.get("R1", 39000.0)),
+            R2=float(payload.get("R2", 10000.0)),
+            Rc=float(payload.get("Rc", 2200.0)),
+            Re=float(payload.get("Re", 1000.0)),
+            beta=float(payload.get("beta", 150.0)),
+            Vbe=float(payload.get("Vbe", 0.7)),
+            Vth=float(payload.get("Vth", 2.0)),
+            kn=float(payload.get("kn", 1.5e-3))
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/analog_comm/opamp_calc", methods=["POST", "OPTIONS"])
+    def analog_comm_opamp_calc_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.calculate_opamp(
+            config=payload.get("config", "INVERTING"),
+            Rin=float(payload.get("Rin", 10000.0)),
+            Rf=float(payload.get("Rf", 100000.0)),
+            GBW=float(payload.get("GBW", 1000000.0)),
+            SR=float(payload.get("SR", 500000.0)),
+            Vpeak=float(payload.get("Vpeak", 5.0)),
+            Vio=float(payload.get("Vio", 0.002)),
+            Iio=float(payload.get("Iio", 2.0e-8))
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/analog_comm/txline_calc", methods=["POST", "OPTIONS"])
+    def analog_comm_txline_calc_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.calculate_txline(
+            Z0=float(payload.get("Z0", 50.0)),
+            ZL_real=float(payload.get("ZL_real", 75.0)),
+            ZL_imag=float(payload.get("ZL_imag", 0.0))
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/analog_comm/modulation_calc", methods=["POST", "OPTIONS"])
+    def analog_comm_modulation_calc_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.calculate_modulation(
+            modulation_type=payload.get("modulation_type", "AM"),
+            carrier_freq=float(payload.get("carrier_freq", 1.0e6)),
+            mod_freq=float(payload.get("mod_freq", 5000.0)),
+            mod_index=float(payload.get("mod_index", 0.8)),
+            delta_f=float(payload.get("delta_f", 75000.0)),
+            Pc=float(payload.get("Pc", 100.0)),
+            snr_db=float(payload.get("snr_db", 20.0)),
+            channel_bandwidth=float(payload.get("channel_bandwidth", 100000.0))
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/analog_comm/calc/save", methods=["POST", "OPTIONS"])
+    def analog_comm_calc_save_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.analog_comm_engine import analog_comm_engine
+        payload = request.get_json(silent=True) or {}
+        res = analog_comm_engine.save_calculation(
+            student_id=payload.get("student_id", "2023MITEC042"),
+            title=payload.get("title", "Custom Calculation"),
+            category=payload.get("category", "FILTER"),
+            parameters=payload.get("parameters", {}),
+            results=payload.get("results", {}),
+            subject_code=payload.get("subject_code", "EC3451")
+        )
+        return jsonify(res), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1479,6 +1628,21 @@ else:
                 sid = params.get("student_id", ["2023MITEC042"])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(digital_electronics_engine.get_saved_circuits(sid)).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/overview":
+                from backend.analog_comm_engine import analog_comm_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(analog_comm_engine.get_overview(sid)).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/presets":
+                from backend.analog_comm_engine import analog_comm_engine
+                cat = params.get("category", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(analog_comm_engine.get_presets(cat)).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/calculations":
+                from backend.analog_comm_engine import analog_comm_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(analog_comm_engine.get_saved_calculations(sid)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1775,6 +1939,89 @@ else:
                     minterms=payload.get("minterms", []),
                     simplified_sop=payload.get("simplified_sop", ""),
                     actor_role=payload.get("role", "Student")
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/filter_calc":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.calculate_filter(
+                    filter_type=payload.get("filter_type", "RC_LPF"),
+                    R=float(payload.get("R", 10000.0)),
+                    C=float(payload.get("C", 1.0e-8)),
+                    L=float(payload.get("L", 1.0e-3)),
+                    R2=float(payload.get("R2")) if payload.get("R2") else None,
+                    C2=float(payload.get("C2")) if payload.get("C2") else None,
+                    gain=float(payload.get("gain", 1.0))
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/transistor_bias":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.calculate_transistor_bias(
+                    transistor_type=payload.get("transistor_type", "BJT_NPN"),
+                    Vcc=float(payload.get("Vcc", 12.0)),
+                    R1=float(payload.get("R1", 39000.0)),
+                    R2=float(payload.get("R2", 10000.0)),
+                    Rc=float(payload.get("Rc", 2200.0)),
+                    Re=float(payload.get("Re", 1000.0)),
+                    beta=float(payload.get("beta", 150.0)),
+                    Vbe=float(payload.get("Vbe", 0.7)),
+                    Vth=float(payload.get("Vth", 2.0)),
+                    kn=float(payload.get("kn", 1.5e-3))
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/opamp_calc":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.calculate_opamp(
+                    config=payload.get("config", "INVERTING"),
+                    Rin=float(payload.get("Rin", 10000.0)),
+                    Rf=float(payload.get("Rf", 100000.0)),
+                    GBW=float(payload.get("GBW", 1000000.0)),
+                    SR=float(payload.get("SR", 500000.0)),
+                    Vpeak=float(payload.get("Vpeak", 5.0)),
+                    Vio=float(payload.get("Vio", 0.002)),
+                    Iio=float(payload.get("Iio", 2.0e-8))
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/txline_calc":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.calculate_txline(
+                    Z0=float(payload.get("Z0", 50.0)),
+                    ZL_real=float(payload.get("ZL_real", 75.0)),
+                    ZL_imag=float(payload.get("ZL_imag", 0.0))
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/modulation_calc":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.calculate_modulation(
+                    modulation_type=payload.get("modulation_type", "AM"),
+                    carrier_freq=float(payload.get("carrier_freq", 1.0e6)),
+                    mod_freq=float(payload.get("mod_freq", 5000.0)),
+                    mod_index=float(payload.get("mod_index", 0.8)),
+                    delta_f=float(payload.get("delta_f", 75000.0)),
+                    Pc=float(payload.get("Pc", 100.0)),
+                    snr_db=float(payload.get("snr_db", 20.0)),
+                    channel_bandwidth=float(payload.get("channel_bandwidth", 100000.0))
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/analog_comm/calc/save":
+                from backend.analog_comm_engine import analog_comm_engine
+                res = analog_comm_engine.save_calculation(
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    title=payload.get("title", "Custom Calculation"),
+                    category=payload.get("category", "FILTER"),
+                    parameters=payload.get("parameters", {}),
+                    results=payload.get("results", {}),
+                    subject_code=payload.get("subject_code", "EC3451")
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

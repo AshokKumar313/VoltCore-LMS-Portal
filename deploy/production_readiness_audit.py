@@ -38,6 +38,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 EXPECTED_STATIC_ROUTES = [
     "",
     "academic-hub",
+    "analog-communication",
     "attendance",
     "autograder",
     "careers",
