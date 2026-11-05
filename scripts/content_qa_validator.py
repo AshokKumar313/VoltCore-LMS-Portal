@@ -34,6 +34,7 @@ if hasattr(sys.stdout, "reconfigure"):
 # Valid known internal routes in the VoltCore LMS Portal
 VALID_INTERNAL_ROUTES = {
     "/",
+    "/academic-hub",
     "/attendance",
     "/autograder",
     "/careers",

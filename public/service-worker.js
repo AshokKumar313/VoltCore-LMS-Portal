@@ -19,6 +19,7 @@ const CACHE_NAME = 'voltcore-apex-v4.4.0';
 // Core Application Shell Pre-Cache Manifest
 const PRECACHE_ASSETS = [
   '/',
+  '/academic-hub',
   '/attendance',
   '/autograder',
   '/careers',

@@ -883,6 +883,87 @@ if HAS_FLASK:
         from backend.voice_command_router import voice_command_router
         return jsonify(voice_command_router.get_voice_overview()), 200
 
+    @app.route("/api/academic/calendar", methods=["GET"])
+    def academic_calendar_endpoint():
+        from backend.academic_management_engine import academic_management_engine
+        ev_type = request.args.get("event_type", "ALL")
+        limit = int(request.args.get("limit", 50))
+        return jsonify(academic_management_engine.get_calendar_events(event_type=ev_type, limit=limit)), 200
+
+    @app.route("/api/academic/syllabus", methods=["GET"])
+    def academic_syllabus_endpoint():
+        from backend.academic_management_engine import academic_management_engine
+        code = request.args.get("subject_code")
+        sid = request.args.get("student_id", "2023MITEC042")
+        if code:
+            data = academic_management_engine.get_subject_details(code)
+            if data:
+                return jsonify(data), 200
+            return jsonify({"status": "error", "message": f"Subject '{code}' not found"}), 404
+        return jsonify(academic_management_engine.get_syllabus_overview(student_id=sid)), 200
+
+    @app.route("/api/academic/overview", methods=["GET"])
+    def academic_overview_endpoint():
+        from backend.academic_management_engine import academic_management_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(academic_management_engine.get_syllabus_overview(student_id=sid)), 200
+
+    @app.route("/api/academic/topic/update", methods=["POST", "OPTIONS"])
+    def academic_topic_update_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.academic_management_engine import academic_management_engine
+        payload = request.get_json(silent=True) or {}
+        tid = payload.get("topic_id", "")
+        status = payload.get("status", "COMPLETED")
+        hrs = payload.get("hours_spent")
+        sid = payload.get("student_id", "2023MITEC042")
+        role = payload.get("role", "Student")
+        res = academic_management_engine.update_topic_status(
+            topic_id=tid,
+            new_status=status,
+            hours_spent=float(hrs) if hrs is not None else None,
+            student_id=sid,
+            actor_role=role
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/academic/calendar/add", methods=["POST", "OPTIONS"])
+    def academic_calendar_add_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.academic_management_engine import academic_management_engine
+        payload = request.get_json(silent=True) or {}
+        title = payload.get("title", "")
+        ev_type = payload.get("event_type", "EXAM")
+        s_date = payload.get("start_date", "")
+        e_date = payload.get("end_date", s_date)
+        venue = payload.get("venue", "MIT Campus")
+        desc = payload.get("description", "")
+        reg = payload.get("target_regulation", "ECE Regulation 2023")
+        role = payload.get("role", "Faculty")
+        res = academic_management_engine.add_calendar_event(
+            title=title,
+            event_type=ev_type,
+            start_date=s_date,
+            end_date=e_date,
+            venue=venue,
+            description=desc,
+            target_regulation=reg,
+            actor_role=role
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 403
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1044,6 +1125,35 @@ else:
                 from backend.voice_command_router import voice_command_router
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(voice_command_router.get_voice_overview()).encode("utf-8"))
+            elif parsed.path == "/api/academic/calendar":
+                from backend.academic_management_engine import academic_management_engine
+                params = parse_qs(parsed.query)
+                ev_type = params.get("event_type", ["ALL"])[0]
+                limit = int(params.get("limit", [50])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(academic_management_engine.get_calendar_events(event_type=ev_type, limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/academic/syllabus":
+                from backend.academic_management_engine import academic_management_engine
+                params = parse_qs(parsed.query)
+                code = params.get("subject_code", [None])[0]
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                if code:
+                    data = academic_management_engine.get_subject_details(code)
+                    if data:
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps(data).encode("utf-8"))
+                    else:
+                        self._set_cors_headers(404)
+                        self.wfile.write(json.dumps({"status": "error", "message": f"Subject '{code}' not found"}).encode("utf-8"))
+                else:
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps(academic_management_engine.get_syllabus_overview(student_id=sid)).encode("utf-8"))
+            elif parsed.path == "/api/academic/overview":
+                from backend.academic_management_engine import academic_management_engine
+                params = parse_qs(parsed.query)
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(academic_management_engine.get_syllabus_overview(student_id=sid)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1188,6 +1298,46 @@ else:
                 role = payload.get("role", "Student")
                 res = voice_command_router.process_voice_query(transcript, student_id=student_id, actor_role=role)
                 self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/academic/topic/update":
+                from backend.academic_management_engine import academic_management_engine
+                tid = payload.get("topic_id", "")
+                status = payload.get("status", "COMPLETED")
+                hrs = payload.get("hours_spent")
+                sid = payload.get("student_id", "2023MITEC042")
+                role = payload.get("role", "Student")
+                res = academic_management_engine.update_topic_status(
+                    topic_id=tid,
+                    new_status=status,
+                    hours_spent=float(hrs) if hrs is not None else None,
+                    student_id=sid,
+                    actor_role=role
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/academic/calendar/add":
+                from backend.academic_management_engine import academic_management_engine
+                title = payload.get("title", "")
+                ev_type = payload.get("event_type", "EXAM")
+                s_date = payload.get("start_date", "")
+                e_date = payload.get("end_date", s_date)
+                venue = payload.get("venue", "MIT Campus")
+                desc = payload.get("description", "")
+                reg = payload.get("target_regulation", "ECE Regulation 2023")
+                role = payload.get("role", "Faculty")
+                res = academic_management_engine.add_calendar_event(
+                    title=title,
+                    event_type=ev_type,
+                    start_date=s_date,
+                    end_date=e_date,
+                    venue=venue,
+                    description=desc,
+                    target_regulation=reg,
+                    actor_role=role
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 403
+                self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
