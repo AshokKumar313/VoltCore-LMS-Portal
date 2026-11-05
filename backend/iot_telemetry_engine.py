@@ -685,3 +685,4 @@ class IotTelemetryEngine:
 
 # Singleton instance for platform-wide import
 iot_telemetry_engine = IotTelemetryEngine()
+

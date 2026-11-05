@@ -1,0 +1,87 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ComponentInspectorHub from '../components/ComponentInspectorHub.jsx';
+
+// Smart PCB, SMD & Component Inspector Lab Metadata
+const inspectorMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  facility: "Lab 304 Hardware Prototyping & Inspection Suite",
+  standards: "IEC 60062 Color Code • IPC-2221 PCB Design • EIA-96 1% SMD • Theta-JA Thermal Models",
+  mode: "4/5/6-Band Resistors + SMD Decoders + IPC-2221 Trace Sizing + IC Thermal Dissipation Assessment"
+};
+---
+
+<MainLayout title={`Component & PCB Inspector Lab | Lab 304 | MIT Campus (Anna University)`} activeNav="component-inspector">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🔬
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Smart PCB, SMD &amp; Component Inspector Lab
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 30 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {inspectorMetadata.department} • {inspectorMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{inspectorMetadata.lead} ({inspectorMetadata.rollNo})</span> • {inspectorMetadata.facility}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Resistor Standards:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">IEC 60062 / EIA-96</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">PCB Standard:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">IPC-2221 Empirical</span>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Facility Standards Bar -->
+      <div class="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-300 font-mono">
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>4/5/6-Band Axial Color Code Decoder with TCR (ppm/K)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[#00F0B5] font-bold">✓</span>
+          <span>SMD 3/4-Digit &amp; EIA-96 1% Chip Decoder with MLCC Capacitance</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>IPC-2221 PCB Trace Width &amp; IC Silicon Junction Thermal Safety</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Component Inspector Hub Island -->
+    <ComponentInspectorHub client:load />
+
+  </div>
+</MainLayout>

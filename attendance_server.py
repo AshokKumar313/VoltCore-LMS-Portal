@@ -4023,6 +4023,109 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 30: Smart PCB, SMD & Component Inspector Lab Endpoints
+    # ====================================================================================
+
+    @app.route("/api/inspector/axial-decode", methods=["POST", "OPTIONS"])
+    def inspector_axial_decode_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.component_inspector_engine import component_inspector_engine
+        payload = request.get_json(silent=True) or {}
+        bands = payload.get("bands", [])
+        actor = payload.get("actor_id", "2023MITEC042")
+        res = component_inspector_engine.decode_axial_resistor(bands, actor_id=actor)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/inspector/smd-decode", methods=["POST", "OPTIONS"])
+    def inspector_smd_decode_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.component_inspector_engine import component_inspector_engine
+        payload = request.get_json(silent=True) or {}
+        code_str = payload.get("code", "")
+        ctype = payload.get("component_type", "RESISTOR")
+        actor = payload.get("actor_id", "2023MITEC042")
+        res = component_inspector_engine.decode_smd_marking(code_str, component_type=ctype, actor_id=actor)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/inspector/pcb-trace", methods=["POST", "OPTIONS"])
+    def inspector_pcb_trace_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.component_inspector_engine import component_inspector_engine
+        payload = request.get_json(silent=True) or {}
+        curr = float(payload.get("current_a", 1.0))
+        trise = float(payload.get("temp_rise_c", 10.0))
+        cop = float(payload.get("copper_oz", 1.0))
+        ttype = payload.get("trace_type", "external")
+        length = float(payload.get("trace_length_cm", 10.0))
+        amb = float(payload.get("ambient_temp_c", 25.0))
+        dname = payload.get("design_name")
+        actor = payload.get("actor_id", "2023MITEC042")
+        res = component_inspector_engine.calculate_pcb_trace_width(
+            curr, trise, cop, ttype, length, amb, design_name=dname, actor_id=actor
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/inspector/ic-thermal", methods=["POST", "OPTIONS"])
+    def inspector_ic_thermal_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.component_inspector_engine import component_inspector_engine
+        payload = request.get_json(silent=True) or {}
+        pkg = payload.get("package_code", "DIP-8")
+        pwr = float(payload.get("power_watts", 0.5))
+        amb = float(payload.get("ambient_temp_c", 25.0))
+        th_ja = payload.get("theta_ja_custom")
+        if th_ja is not None:
+            th_ja = float(th_ja)
+        target_tj = float(payload.get("target_max_tj_c", 100.0))
+        actor = payload.get("actor_id", "2023MITEC042")
+        res = component_inspector_engine.evaluate_ic_thermal_dissipation(
+            pkg, pwr, amb, theta_ja_custom=th_ja, target_max_tj_c=target_tj, actor_id=actor
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/inspector/history", methods=["GET"])
+    def inspector_history_endpoint():
+        from backend.component_inspector_engine import component_inspector_engine
+        itype = request.args.get("inspection_type")
+        limit = int(request.args.get("limit", 25))
+        return jsonify(component_inspector_engine.get_inspection_history(itype, limit)), 200
+
+    @app.route("/api/inspector/saved-pcb", methods=["GET"])
+    def inspector_saved_pcb_endpoint():
+        from backend.component_inspector_engine import component_inspector_engine
+        limit = int(request.args.get("limit", 25))
+        return jsonify(component_inspector_engine.get_saved_pcb_calculations(limit)), 200
+
+    @app.route("/api/inspector/catalogs", methods=["GET"])
+    def inspector_catalogs_endpoint():
+        from backend.component_inspector_engine import component_inspector_engine
+        return jsonify(component_inspector_engine.get_catalogs()), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4461,6 +4564,21 @@ else:
                 status = params.get("status", [None])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(iot_telemetry_engine.get_threshold_alerts(status)).encode("utf-8"))
+            elif parsed.path == "/api/inspector/history":
+                from backend.component_inspector_engine import component_inspector_engine
+                itype = params.get("inspection_type", [None])[0]
+                limit = int(params.get("limit", [25])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(component_inspector_engine.get_inspection_history(itype, limit)).encode("utf-8"))
+            elif parsed.path == "/api/inspector/saved-pcb":
+                from backend.component_inspector_engine import component_inspector_engine
+                limit = int(params.get("limit", [25])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(component_inspector_engine.get_saved_pcb_calculations(limit)).encode("utf-8"))
+            elif parsed.path == "/api/inspector/catalogs":
+                from backend.component_inspector_engine import component_inspector_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(component_inspector_engine.get_catalogs()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -5073,6 +5191,55 @@ else:
                 role = payload.get("role", "Admin")
                 res = iot_telemetry_engine.toggle_bench_relay(bid, state, actor_id=actor, actor_role=role)
                 code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/inspector/axial-decode":
+                from backend.component_inspector_engine import component_inspector_engine
+                bands = payload.get("bands", [])
+                actor = payload.get("actor_id", "2023MITEC042")
+                res = component_inspector_engine.decode_axial_resistor(bands, actor_id=actor)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/inspector/smd-decode":
+                from backend.component_inspector_engine import component_inspector_engine
+                code_str = payload.get("code", "")
+                ctype = payload.get("component_type", "RESISTOR")
+                actor = payload.get("actor_id", "2023MITEC042")
+                res = component_inspector_engine.decode_smd_marking(code_str, component_type=ctype, actor_id=actor)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/inspector/pcb-trace":
+                from backend.component_inspector_engine import component_inspector_engine
+                curr = float(payload.get("current_a", 1.0))
+                trise = float(payload.get("temp_rise_c", 10.0))
+                cop = float(payload.get("copper_oz", 1.0))
+                ttype = payload.get("trace_type", "external")
+                length = float(payload.get("trace_length_cm", 10.0))
+                amb = float(payload.get("ambient_temp_c", 25.0))
+                dname = payload.get("design_name")
+                actor = payload.get("actor_id", "2023MITEC042")
+                res = component_inspector_engine.calculate_pcb_trace_width(
+                    curr, trise, cop, ttype, length, amb, design_name=dname, actor_id=actor
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/inspector/ic-thermal":
+                from backend.component_inspector_engine import component_inspector_engine
+                pkg = payload.get("package_code", "DIP-8")
+                pwr = float(payload.get("power_watts", 0.5))
+                amb = float(payload.get("ambient_temp_c", 25.0))
+                th_ja = payload.get("theta_ja_custom")
+                if th_ja is not None:
+                    th_ja = float(th_ja)
+                target_tj = float(payload.get("target_max_tj_c", 100.0))
+                actor = payload.get("actor_id", "2023MITEC042")
+                res = component_inspector_engine.evaluate_ic_thermal_dissipation(
+                    pkg, pwr, amb, theta_ja_custom=th_ja, target_max_tj_c=target_tj, actor_id=actor
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 400
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
