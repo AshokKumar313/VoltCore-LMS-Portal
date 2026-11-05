@@ -1,0 +1,87 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import DataIntelligenceHub from '../components/DataIntelligenceHub.jsx';
+
+// Data Intelligence & Academic Quality Center Metadata
+const dataIntelligenceMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  workspace: "Data Intelligence & Academic Quality Center",
+  standards: "NBA Criteria 2 & 3 • NAAC Quality Metrics • Bloom's Taxonomy • SQLite WAL Audit Trail",
+  mode: "Consistency Verification + Syllabus Coverage Heatmaps + Question Bank Taxonomy + Duplicate Guard"
+};
+---
+
+<MainLayout title={`Data Intelligence & Academic Quality Center | MIT Campus (Anna University)`} activeNav="data-intelligence">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🧠
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Data Intelligence &amp; Academic Quality Center
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 27 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {dataIntelligenceMetadata.department} • {dataIntelligenceMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{dataIntelligenceMetadata.lead} ({dataIntelligenceMetadata.rollNo})</span> • {dataIntelligenceMetadata.workspace}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Framework:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">AU Reg 2023</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Quality Index:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">NBA / NAAC Ready</span>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Academic Compliance Bar -->
+      <div class="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-300 font-mono">
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>Attendance vs Eligibility Consistency Checks</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[#00F0B5] font-bold">✓</span>
+          <span>Bloom’s Taxonomy L1–L6 CO1–CO5 Quotas</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>Jaccard Lexical Duplicate Guard (&gt;75% Overlap)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Data Intelligence Hub -->
+    <DataIntelligenceHub client:load />
+
+  </div>
+</MainLayout>

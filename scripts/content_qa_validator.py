@@ -42,6 +42,7 @@ VALID_INTERNAL_ROUTES = {
     "/careers",
     "/cloud-deploy",
     "/collaboration",
+    "/data-intelligence",
     "/digital-electronics",
     "/ece-knowledge",
     "/learning-productivity",
