@@ -1630,6 +1630,71 @@ if HAS_FLASK:
             status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
             return jsonify(res), status_code
 
+    # ====================================================================================
+    # Phase 26: Accessibility & Inclusive Learning Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/accessibility/overview", methods=["GET"])
+    def accessibility_overview_endpoint():
+        from backend.accessibility_engine import accessibility_engine
+        uid = request.args.get("user_id", "2023MITEC042")
+        return jsonify(accessibility_engine.get_overview(uid)), 200
+
+    @app.route("/api/accessibility/preferences", methods=["GET", "POST", "OPTIONS"])
+    def accessibility_preferences_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.accessibility_engine import accessibility_engine
+        if request.method == "GET":
+            uid = request.args.get("user_id", "2023MITEC042")
+            return jsonify(accessibility_engine.get_preferences(uid)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            uid = payload.get("user_id", "2023MITEC042")
+            res = accessibility_engine.save_preferences(uid, payload)
+            return jsonify(res), 200
+
+    @app.route("/api/accessibility/dictionary", methods=["GET"])
+    def accessibility_dictionary_endpoint():
+        from backend.accessibility_engine import accessibility_engine
+        q = request.args.get("query")
+        cat = request.args.get("category")
+        course = request.args.get("course_code")
+        lang = request.args.get("language", "en")
+        return jsonify(accessibility_engine.get_dictionary(query=q, category=cat, course_code=course, language=lang)), 200
+
+    @app.route("/api/accessibility/simplify", methods=["GET"])
+    def accessibility_simplify_endpoint():
+        from backend.accessibility_engine import accessibility_engine
+        key = request.args.get("concept_key", "")
+        detail = accessibility_engine.get_simplification(key)
+        if not detail:
+            return jsonify({"status": "ERROR", "message": "Concept simplification not found"}), 404
+        return jsonify({"status": "SUCCESS", "simplification": detail}), 200
+
+    @app.route("/api/accessibility/simplifications", methods=["GET"])
+    def accessibility_simplifications_all_endpoint():
+        from backend.accessibility_engine import accessibility_engine
+        return jsonify(accessibility_engine.get_all_simplifications()), 200
+
+    @app.route("/api/accessibility/feedback", methods=["POST", "OPTIONS"])
+    def accessibility_feedback_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.accessibility_engine import accessibility_engine
+        payload = request.get_json(silent=True) or {}
+        res = accessibility_engine.record_feedback(payload)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1960,6 +2025,38 @@ else:
                 from backend.faculty_productivity_engine import faculty_productivity_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(faculty_productivity_engine.get_meeting_minutes()).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/overview":
+                from backend.accessibility_engine import accessibility_engine
+                uid = params.get("user_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(accessibility_engine.get_overview(uid)).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/preferences":
+                from backend.accessibility_engine import accessibility_engine
+                uid = params.get("user_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(accessibility_engine.get_preferences(uid)).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/dictionary":
+                from backend.accessibility_engine import accessibility_engine
+                q = params.get("query", [None])[0]
+                cat = params.get("category", [None])[0]
+                course = params.get("course_code", [None])[0]
+                lang = params.get("language", ["en"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(accessibility_engine.get_dictionary(query=q, category=cat, course_code=course, language=lang)).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/simplify":
+                from backend.accessibility_engine import accessibility_engine
+                key = params.get("concept_key", [""])[0]
+                detail = accessibility_engine.get_simplification(key)
+                if not detail:
+                    self._set_cors_headers(404)
+                    self.wfile.write(json.dumps({"status": "ERROR", "message": "Concept simplification not found"}).encode("utf-8"))
+                else:
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "simplification": detail}).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/simplifications":
+                from backend.accessibility_engine import accessibility_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(accessibility_engine.get_all_simplifications()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -2431,6 +2528,18 @@ else:
                 role = payload.get("role", "Faculty")
                 res = faculty_productivity_engine.record_meeting_minutes(payload, actor_role=role)
                 code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/preferences":
+                from backend.accessibility_engine import accessibility_engine
+                uid = payload.get("user_id", "2023MITEC042")
+                res = accessibility_engine.save_preferences(uid, payload)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/accessibility/feedback":
+                from backend.accessibility_engine import accessibility_engine
+                res = accessibility_engine.record_feedback(payload)
+                code = 200 if res.get("status") == "SUCCESS" else 400
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

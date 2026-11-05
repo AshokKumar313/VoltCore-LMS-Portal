@@ -35,6 +35,7 @@ if hasattr(sys.stdout, "reconfigure"):
 VALID_INTERNAL_ROUTES = {
     "/",
     "/academic-hub",
+    "/accessibility",
     "/analog-communication",
     "/attendance",
     "/autograder",

@@ -924,3 +924,4 @@ class FacultyProductivityEngine:
 
 # Singleton instance for system-wide dispatch
 faculty_productivity_engine = FacultyProductivityEngine()
+

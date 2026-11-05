@@ -20,6 +20,7 @@ const CACHE_NAME = 'voltcore-apex-v4.4.0';
 const PRECACHE_ASSETS = [
   '/',
   '/academic-hub',
+  '/accessibility',
   '/analog-communication',
   '/attendance',
   '/autograder',
