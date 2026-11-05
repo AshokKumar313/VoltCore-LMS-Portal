@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "project": {
+    "name": "VoltCore Apex Academia",
+    "description": "Enterprise Embedded Systems & IoT LMS Platform for Anna University / MIT Campus ECE Regulation 2023",
+    "version": "5.0.0-Phase5",
+    "lead_architect": "Ashok Kumar A",
+    "institution": "Madras Institute of Technology (MIT) Campus, Anna University, Chromepet, Chennai - 600 044",
+    "department": "Department of Electronics Engineering"
+  },
+  "privacy_and_security_policy": {
+    "public_contact": {
+      "email": "ashokkumar3132008@gmail.com",
+      "github_profile": "https://github.com/AshokKumar313",
+      "repository": "https://github.com/AshokKumar313/VoltCore-LMS-Portal"
+    },
+    "restricted_admin_metadata": {
+      "isolation_method": "Backend Environment Variables & RBAC",
+      "admin_email_env_key": "SECURE_ADMIN_EMAIL",
+      "admin_phone_env_key": "SECURE_ADMIN_PHONE",
+      "rule": "Never expose in public client bundles, response headers, or unauthenticated API endpoints."
+    }
+  },
+  "cloud_targets": {
+    "render": {
+      "blueprint_file": "deploy/render.yaml",
+      "service_type": "web",
+      "runtime": "python-3.11",
+      "preferred_region": "singapore",
+      "persistent_disk": {
+        "mount_path": "/data",
+        "size_gb": 1,
+        "sqlite_wal_path": "/data/voltcore_lms.db"
+      },
+      "health_check": {
+        "path": "/api/health",
+        "expected_status": 200,
+        "timeout_seconds": 5
+      }
+    },
+    "railway": {
+      "builder": "NIXPACKS",
+      "start_command": "python attendance_server.py",
+      "restart_policy_type": "ON_FAILURE",
+      "restart_policy_max_retries": 10,
+      "variables": {
+        "PORT": "5000",
+        "PYTHONUNBUFFERED": "1"
+      }
+    },
+    "fly_io": {
+      "app": "voltcore-apex-lms",
+      "primary_region": "sin",
+      "vm_size": "shared-cpu-1x",
+      "memory_mb": 512,
+      "mounts": [
+        {
+          "source": "voltcore_data",
+          "destination": "/data"
+        }
+      ]
+    },
+    "local_docker_desktop": {
+      "compose_file": "docker-compose.yml",
+      "services": ["api", "cache", "web", "ollama"],
+      "memory_budget_mb": 448,
+      "ollama_integration": {
+        "host_gateway": "host.docker.internal:11434",
+        "models": ["qwen2.5-coder:7b", "llama3:8b", "nomic-embed-text"]
+      }
+    }
+  },
+  "environment_variables_schema": {
+    "required": [
+      {
+        "name": "LMS_DB_PATH",
+        "type": "string",
+        "default": "./voltcore_lms.db",
+        "description": "Path to SQLite database with WAL journaling"
+      },
+      {
+        "name": "VOLTCORE_JWT_SECRET",
+        "type": "string",
+        "secret": true,
+        "description": "Cryptographic secret for signing session JWT tokens"
+      }
+    ],
+    "restricted": [
+      {
+        "name": "SECURE_ADMIN_EMAIL",
+        "type": "string",
+        "secret": true,
+        "description": "Private administrative email isolated via RBAC"
+      },
+      {
+        "name": "SECURE_ADMIN_PHONE",
+        "type": "string",
+        "secret": true,
+        "description": "Private administrative phone line isolated via RBAC"
+      }
+    ],
+    "optional": [
+      {
+        "name": "OLLAMA_BASE_URL",
+        "type": "string",
+        "default": "http://localhost:11434",
+        "description": "Endpoint for local Ollama LLM / embedding inference"
+      },
+      {
+        "name": "REDIS_HOST",
+        "type": "string",
+        "default": "cache",
+        "description": "Redis host for telemetry caching and rate limiting"
+      }
+    ]
+  }
+}

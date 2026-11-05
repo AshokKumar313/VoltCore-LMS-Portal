@@ -1,0 +1,50 @@
+# ========================================================================================
+# VoltCore Apex Academia - Enterprise Cloud Deployment Blueprint (Render.com)
+# Anna University / MIT Campus Standards (Department of Electronics Engineering)
+# ----------------------------------------------------------------------------------------
+# Blueprint: deploy/render.yaml
+# Platform Lead / Systems Architect: Ashok Kumar A (2023MITEC042)
+# Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+# Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
+# ========================================================================================
+
+services:
+  # 1. Flask Telemetry, SQLite WAL Database & Vector RAG Engine
+  - type: web
+    name: voltcore-apex-api
+    runtime: python
+    region: singapore # Closest low-latency region to Anna University (Chennai)
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python attendance_server.py
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+    # Persistent SSD Disk for SQLite WAL database & LittleFS spool backups
+    disk:
+      name: voltcore-storage
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LMS_DB_PATH
+        value: /data/voltcore_lms.db
+      - key: VOLTCORE_JWT_SECRET
+        generateValue: true
+      - key: PUBLIC_ADMIN_EMAIL
+        value: ashokkumar3132008@gmail.com
+      # Secured / Restricted Metadata - Injected securely via Render Dashboard, not hardcoded
+      - key: SECURE_ADMIN_EMAIL
+        sync: false
+      - key: SECURE_ADMIN_PHONE
+        sync: false
+      - key: PORT
+        value: 5000
+      - key: OLLAMA_BASE_URL
+        value: http://host.docker.internal:11434
+      - key: FLASK_ENV
+        value: production

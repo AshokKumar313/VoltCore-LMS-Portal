@@ -1,0 +1,31 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import WebUsbFlashingPanel from '../components/WebUsbFlashingPanel.jsx';
+---
+
+<MainLayout
+  title="WebUSB / WebSerial Firmware Flasher | VoltCore Apex Academia"
+  description="Flash compiled ESP32 and STM32 embedded firmware binaries (.bin) directly to physical hardware over USB via WebSerial without requiring local toolchain installations."
+  activeNav="simulation"
+>
+  <div class="space-y-6">
+    <!-- Breadcrumb & Header -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
+      <div class="flex items-center gap-2 text-slate-400">
+        <a href="/" class="hover:text-[#00F0B5] transition-colors">VoltCore</a>
+        <span>/</span>
+        <a href="/simulation" class="hover:text-[#00F0B5] transition-colors">Hardware Lab</a>
+        <span>/</span>
+        <span class="text-[#00F0B5]">WebUSB Firmware Flasher</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">
+          Direct-to-Silicon • WebSerial • 460.8k / 921.6k Baud
+        </span>
+      </div>
+    </div>
+
+    <!-- WebUSB Flashing React Component -->
+    <WebUsbFlashingPanel client:load />
+  </div>
+</MainLayout>

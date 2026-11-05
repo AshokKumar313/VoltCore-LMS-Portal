@@ -22,6 +22,7 @@ const PRECACHE_ASSETS = [
   '/attendance',
   '/autograder',
   '/careers',
+  '/flash-firmware',
   '/flashcards',
   '/fleet',
   '/gate-ece',

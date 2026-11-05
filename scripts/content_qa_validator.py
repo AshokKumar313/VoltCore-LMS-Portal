@@ -37,6 +37,7 @@ VALID_INTERNAL_ROUTES = {
     "/attendance",
     "/autograder",
     "/careers",
+    "/flash-firmware",
     "/flashcards",
     "/fleet",
     "/gate-ece",
