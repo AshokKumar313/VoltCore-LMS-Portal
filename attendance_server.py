@@ -851,6 +851,38 @@ if HAS_FLASK:
         res = physical_hil_manager.run_test_bench_assertions(port_id, user_id)
         return jsonify(res), 200
 
+    @app.route("/api/voice/parse", methods=["POST", "OPTIONS"])
+    def voice_parse_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.voice_command_router import voice_command_router
+        payload = request.get_json(silent=True) or {}
+        transcript = payload.get("transcript", "")
+        student_id = payload.get("student_id", "2023MITEC042")
+        role = payload.get("role", "Student")
+        res = voice_command_router.process_voice_query(transcript, student_id=student_id, actor_role=role)
+        return jsonify(res), 200
+
+    @app.route("/api/voice/formulas", methods=["GET"])
+    def voice_formulas_endpoint():
+        from backend.voice_command_router import voice_command_router
+        return jsonify(voice_command_router.get_all_formulas()), 200
+
+    @app.route("/api/voice/history", methods=["GET"])
+    def voice_history_endpoint():
+        from backend.voice_command_router import voice_command_router
+        limit = int(request.args.get("limit", 20))
+        return jsonify(voice_command_router.get_recent_logs(limit=limit)), 200
+
+    @app.route("/api/voice/overview", methods=["GET"])
+    def voice_overview_endpoint():
+        from backend.voice_command_router import voice_command_router
+        return jsonify(voice_command_router.get_voice_overview()), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -998,6 +1030,20 @@ else:
                 from backend.physical_hil_manager import physical_hil_manager
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(physical_hil_manager.get_lab_overview()).encode("utf-8"))
+            elif parsed.path == "/api/voice/formulas":
+                from backend.voice_command_router import voice_command_router
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(voice_command_router.get_all_formulas()).encode("utf-8"))
+            elif parsed.path == "/api/voice/history":
+                from backend.voice_command_router import voice_command_router
+                params = parse_qs(parsed.query)
+                limit = int(params.get("limit", [20])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(voice_command_router.get_recent_logs(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/voice/overview":
+                from backend.voice_command_router import voice_command_router
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(voice_command_router.get_voice_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1133,6 +1179,14 @@ else:
                 port_id = payload.get("port_id", "COM3")
                 user_id = payload.get("user_id", "2023MITEC042")
                 res = physical_hil_manager.run_test_bench_assertions(port_id, user_id)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/voice/parse":
+                from backend.voice_command_router import voice_command_router
+                transcript = payload.get("transcript", "")
+                student_id = payload.get("student_id", "2023MITEC042")
+                role = payload.get("role", "Student")
+                res = voice_command_router.process_voice_query(transcript, student_id=student_id, actor_role=role)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

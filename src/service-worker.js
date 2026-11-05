@@ -44,6 +44,7 @@ const PRECACHE_ASSETS = [
   '/teacher',
   '/telemetry',
   '/virtual-bench',
+  '/voice-lab',
   '/manifest.json',
   '/favicon.svg'
 ];

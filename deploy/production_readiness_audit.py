@@ -61,7 +61,8 @@ EXPECTED_STATIC_ROUTES = [
     "smart-lab",
     "teacher",
     "telemetry",
-    "virtual-bench"
+    "virtual-bench",
+    "voice-lab"
 ]
 
 RESTRICTED_METADATA_PATTERNS = [

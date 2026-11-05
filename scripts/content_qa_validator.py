@@ -58,7 +58,8 @@ VALID_INTERNAL_ROUTES = {
     "/smart-lab",
     "/teacher",
     "/telemetry",
-    "/virtual-bench"
+    "/virtual-bench",
+    "/voice-lab"
 }
 
 # Recognized authoritative citation standards

@@ -1,0 +1,110 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import VoiceAssistantWidget from '../components/VoiceAssistantWidget.jsx';
+
+// Voice Lab Assistant Metadata
+const voiceLabMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  workspace: "Voice-Enabled Hands-Free Lab Assistant & Acoustic Intent Dispatcher",
+  mode: "Web Speech API STT + Native SpeechSynthesis TTS + SQLite WAL"
+};
+---
+
+<MainLayout title={`Voice-Enabled Lab Assistant | ${voiceLabMetadata.lead} (MIT Campus)`} activeNav="voice-lab">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Voice Lab Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Voice Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🎙️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Voice-Enabled Hands-Free Lab Assistant
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 18 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {voiceLabMetadata.department} • {voiceLabMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{voiceLabMetadata.lead} ({voiceLabMetadata.rollNo})</span> • {voiceLabMetadata.workspace}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Audio Input:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">Web Speech STT</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Synthesis:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">SpeechSynthesis TTS</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Inference:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">&lt; 5ms Python Fast-Match</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Aesthetic -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Voice Assistant Island -->
+    <VoiceAssistantWidget client:load />
+
+    <!-- Acoustic Standards & ECE Regulation Capabilities -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
+          <span>⚡</span>
+          <h4>Dynamic Formula Evaluation</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Parses spoken physical values with engineering prefixes (microhenry, picofarad, kilohertz) to immediately solve RLC resonance, Nyquist sampling criteria, and channel capacity without manual calculator entry.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-2">
+          <span>🛠️</span>
+          <h4>Hands-Free Lab Bench Control</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Enables students working with probes and solder irons to vocally trigger physical HIL COM port scans, launch SPICE simulations, inspect DSO oscilloscopes, or verify thermal safety without touching keyboards.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-[#00F0B5]/30">
+        <div class="flex items-center gap-2 text-[#00F0B5] text-sm font-bold mb-2">
+          <span>🛡️</span>
+          <h4>Thermal &amp; Privacy Mandate Compliant</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Zero continuous CPU/GPU background loops. Operates via native W3C browser APIs and sub-millisecond SQLite WAL queries, strictly isolating private credentials and maintaining passive Victus cooling.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
