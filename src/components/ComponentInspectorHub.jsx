@@ -1473,3 +1473,4 @@ export default function ComponentInspectorHub() {
     </div>
   );
 }
+
