@@ -780,3 +780,4 @@ class AcademicManagementEngine:
 
 # Global Singleton
 academic_management_engine = AcademicManagementEngine()
+

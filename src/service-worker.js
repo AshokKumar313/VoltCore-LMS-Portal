@@ -25,6 +25,7 @@ const PRECACHE_ASSETS = [
   '/careers',
   '/cloud-deploy',
   '/collaboration',
+  '/ece-knowledge',
   '/enterprise-admin',
   '/exam-center',
   '/flash-firmware',

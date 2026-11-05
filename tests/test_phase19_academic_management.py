@@ -230,3 +230,4 @@ def test_privacy_invariants_no_leakage():
             content = f.read()
             for pattern in restricted_patterns:
                 assert pattern not in content, f"Restricted metadata leaked in {fpath}!"
+

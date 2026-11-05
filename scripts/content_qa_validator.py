@@ -40,6 +40,7 @@ VALID_INTERNAL_ROUTES = {
     "/careers",
     "/cloud-deploy",
     "/collaboration",
+    "/ece-knowledge",
     "/enterprise-admin",
     "/exam-center",
     "/flash-firmware",

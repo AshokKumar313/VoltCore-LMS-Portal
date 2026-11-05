@@ -964,6 +964,59 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
 
+    @app.route("/api/ece_knowledge/formulas", methods=["GET"])
+    def ece_knowledge_formulas_endpoint():
+        from backend.ece_knowledge_engine import ece_knowledge_engine
+        q = request.args.get("query")
+        sub = request.args.get("subject_code")
+        unit = int(request.args.get("unit_number")) if request.args.get("unit_number") else None
+        return jsonify(ece_knowledge_engine.search_formulas(query=q, subject_code=sub, unit_number=unit)), 200
+
+    @app.route("/api/ece_knowledge/components", methods=["GET"])
+    def ece_knowledge_components_endpoint():
+        from backend.ece_knowledge_engine import ece_knowledge_engine
+        q = request.args.get("query")
+        cat = request.args.get("category")
+        return jsonify(ece_knowledge_engine.search_components(query=q, category=cat)), 200
+
+    @app.route("/api/ece_knowledge/abbreviations", methods=["GET"])
+    def ece_knowledge_abbreviations_endpoint():
+        from backend.ece_knowledge_engine import ece_knowledge_engine
+        q = request.args.get("query")
+        cat = request.args.get("category")
+        return jsonify(ece_knowledge_engine.search_abbreviations(query=q, category=cat)), 200
+
+    @app.route("/api/ece_knowledge/overview", methods=["GET"])
+    def ece_knowledge_overview_endpoint():
+        from backend.ece_knowledge_engine import ece_knowledge_engine
+        return jsonify(ece_knowledge_engine.get_knowledge_overview()), 200
+
+    @app.route("/api/ece_knowledge/formula/add", methods=["POST", "OPTIONS"])
+    def ece_knowledge_formula_add_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.ece_knowledge_engine import ece_knowledge_engine
+        payload = request.get_json(silent=True) or {}
+        role = payload.get("role", "Faculty")
+        res = ece_knowledge_engine.add_custom_formula(
+            topic=payload.get("topic", "General"),
+            formula_name=payload.get("formula_name", ""),
+            subject_code=payload.get("subject_code", "EC3451"),
+            unit_number=int(payload.get("unit_number", 1)),
+            latex_repr=payload.get("latex_repr", ""),
+            plain_text=payload.get("plain_text", ""),
+            derivation_summary=payload.get("derivation_summary", ""),
+            variables=payload.get("variables", {}),
+            unit_result=payload.get("unit_result", ""),
+            actor_role=role
+        )
+        code = 200 if res.get("status") == "SUCCESS" else 403
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1154,6 +1207,33 @@ else:
                 sid = params.get("student_id", ["2023MITEC042"])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(academic_management_engine.get_syllabus_overview(student_id=sid)).encode("utf-8"))
+            elif parsed.path == "/api/ece_knowledge/formulas":
+                from backend.ece_knowledge_engine import ece_knowledge_engine
+                params = parse_qs(parsed.query)
+                q = params.get("query", [None])[0]
+                sub = params.get("subject_code", [None])[0]
+                unit_str = params.get("unit_number", [None])[0]
+                unit = int(unit_str) if unit_str else None
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_knowledge_engine.search_formulas(query=q, subject_code=sub, unit_number=unit)).encode("utf-8"))
+            elif parsed.path == "/api/ece_knowledge/components":
+                from backend.ece_knowledge_engine import ece_knowledge_engine
+                params = parse_qs(parsed.query)
+                q = params.get("query", [None])[0]
+                cat = params.get("category", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_knowledge_engine.search_components(query=q, category=cat)).encode("utf-8"))
+            elif parsed.path == "/api/ece_knowledge/abbreviations":
+                from backend.ece_knowledge_engine import ece_knowledge_engine
+                params = parse_qs(parsed.query)
+                q = params.get("query", [None])[0]
+                cat = params.get("category", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_knowledge_engine.search_abbreviations(query=q, category=cat)).encode("utf-8"))
+            elif parsed.path == "/api/ece_knowledge/overview":
+                from backend.ece_knowledge_engine import ece_knowledge_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_knowledge_engine.get_knowledge_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1334,6 +1414,24 @@ else:
                     venue=venue,
                     description=desc,
                     target_regulation=reg,
+                    actor_role=role
+                )
+                code = 200 if res.get("status") == "SUCCESS" else 403
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/ece_knowledge/formula/add":
+                from backend.ece_knowledge_engine import ece_knowledge_engine
+                role = payload.get("role", "Faculty")
+                res = ece_knowledge_engine.add_custom_formula(
+                    topic=payload.get("topic", "General"),
+                    formula_name=payload.get("formula_name", ""),
+                    subject_code=payload.get("subject_code", "EC3451"),
+                    unit_number=int(payload.get("unit_number", 1)),
+                    latex_repr=payload.get("latex_repr", ""),
+                    plain_text=payload.get("plain_text", ""),
+                    derivation_summary=payload.get("derivation_summary", ""),
+                    variables=payload.get("variables", {}),
+                    unit_result=payload.get("unit_result", ""),
                     actor_role=role
                 )
                 code = 200 if res.get("status") == "SUCCESS" else 403
