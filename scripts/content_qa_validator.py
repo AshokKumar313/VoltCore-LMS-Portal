@@ -46,6 +46,7 @@ VALID_INTERNAL_ROUTES = {
     "/learning-productivity",
     "/enterprise-admin",
     "/exam-center",
+    "/faculty-workspace",
     "/flash-firmware",
     "/flashcards",
     "/fleet",

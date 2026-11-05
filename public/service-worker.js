@@ -31,6 +31,7 @@ const PRECACHE_ASSETS = [
   '/learning-productivity',
   '/enterprise-admin',
   '/exam-center',
+  '/faculty-workspace',
   '/flash-firmware',
   '/flashcards',
   '/fleet',

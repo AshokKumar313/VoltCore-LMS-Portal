@@ -1518,6 +1518,118 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 400
         return jsonify(res), code
 
+    # ====================================================================================
+    # Phase 25: Faculty & Department Productivity Workspace Endpoints
+    # ====================================================================================
+
+    @app.route("/api/faculty/overview", methods=["GET"])
+    def faculty_overview_endpoint():
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        fid = request.args.get("faculty_id", "FAC_MIT_ECE_001")
+        return jsonify(faculty_productivity_engine.get_overview(fid)), 200
+
+    @app.route("/api/faculty/lesson_plans", methods=["GET", "POST", "OPTIONS"])
+    def faculty_lesson_plans_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        if request.method == "GET":
+            code = request.args.get("course_code")
+            unit = int(request.args.get("unit_number")) if request.args.get("unit_number") else None
+            return jsonify(faculty_productivity_engine.get_lesson_plans(code, unit)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            role = payload.get("role", "Faculty")
+            res = faculty_productivity_engine.create_lesson_plan(payload, actor_role=role)
+            status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+            return jsonify(res), status_code
+
+    @app.route("/api/faculty/lesson_plan/status", methods=["POST", "OPTIONS"])
+    def faculty_lesson_plan_status_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        pid = payload.get("plan_id", "")
+        status = payload.get("status", "COMPLETED")
+        hrs = float(payload.get("actual_hours")) if payload.get("actual_hours") is not None else None
+        notes = payload.get("notes")
+        role = payload.get("role", "Faculty")
+        res = faculty_productivity_engine.update_lesson_plan_status(pid, status, actual_hours=hrs, notes=notes, actor_role=role)
+        status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), status_code
+
+    @app.route("/api/faculty/templates", methods=["GET"])
+    def faculty_templates_endpoint():
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        code = request.args.get("course_code")
+        return jsonify(faculty_productivity_engine.get_templates(code)), 200
+
+    @app.route("/api/faculty/assignments", methods=["GET", "POST", "OPTIONS"])
+    def faculty_assignments_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        if request.method == "GET":
+            code = request.args.get("course_code")
+            return jsonify(faculty_productivity_engine.get_assignments(code)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            role = payload.get("role", "Faculty")
+            res = faculty_productivity_engine.create_assignment(payload, actor_role=role)
+            status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+            return jsonify(res), status_code
+
+    @app.route("/api/faculty/feedback", methods=["GET", "POST", "OPTIONS"])
+    def faculty_feedback_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        if request.method == "GET":
+            asgn_id = request.args.get("assignment_id")
+            sid = request.args.get("student_id")
+            return jsonify(faculty_productivity_engine.get_assignment_feedback(asgn_id, sid)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            role = payload.get("role", "Faculty")
+            res = faculty_productivity_engine.record_feedback(payload, actor_role=role)
+            status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+            return jsonify(res), status_code
+
+    @app.route("/api/faculty/meeting_minutes", methods=["GET", "POST", "OPTIONS"])
+    def faculty_meeting_minutes_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.faculty_productivity_engine import faculty_productivity_engine
+        if request.method == "GET":
+            return jsonify(faculty_productivity_engine.get_meeting_minutes()), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            role = payload.get("role", "Faculty")
+            res = faculty_productivity_engine.record_meeting_minutes(payload, actor_role=role)
+            status_code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+            return jsonify(res), status_code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1816,6 +1928,38 @@ else:
                 pid = params.get("proposal_id", [""])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(project_innovation_engine.get_milestones(pid)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/overview":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                fid = params.get("faculty_id", ["FAC_MIT_ECE_001"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_overview(fid)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/lesson_plans":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                code = params.get("course_code", [None])[0]
+                unit_raw = params.get("unit_number", [None])[0]
+                unit = int(unit_raw) if unit_raw else None
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_lesson_plans(code, unit)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/templates":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                code = params.get("course_code", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_templates(code)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/assignments":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                code = params.get("course_code", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_assignments(code)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/feedback":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                asgn_id = params.get("assignment_id", [None])[0]
+                sid = params.get("student_id", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_assignment_feedback(asgn_id, sid)).encode("utf-8"))
+            elif parsed.path == "/api/faculty/meeting_minutes":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(faculty_productivity_engine.get_meeting_minutes()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -2248,6 +2392,45 @@ else:
                 status = payload.get("status", "COMPLETED")
                 res = project_innovation_engine.update_milestone_status(mid, status)
                 code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/faculty/lesson_plans":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                role = payload.get("role", "Faculty")
+                res = faculty_productivity_engine.create_lesson_plan(payload, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/faculty/lesson_plan/status":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                pid = payload.get("plan_id", "")
+                status = payload.get("status", "COMPLETED")
+                hrs = float(payload.get("actual_hours")) if payload.get("actual_hours") is not None else None
+                notes = payload.get("notes")
+                role = payload.get("role", "Faculty")
+                res = faculty_productivity_engine.update_lesson_plan_status(pid, status, actual_hours=hrs, notes=notes, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/faculty/assignments":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                role = payload.get("role", "Faculty")
+                res = faculty_productivity_engine.create_assignment(payload, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/faculty/feedback":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                role = payload.get("role", "Faculty")
+                res = faculty_productivity_engine.record_feedback(payload, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/faculty/meeting_minutes":
+                from backend.faculty_productivity_engine import faculty_productivity_engine
+                role = payload.get("role", "Faculty")
+                res = faculty_productivity_engine.record_meeting_minutes(payload, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

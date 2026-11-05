@@ -1,0 +1,99 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import FacultyProductivityHub from '../components/FacultyProductivityHub.jsx';
+
+// Faculty & Department Productivity Workspace Metadata
+const facultyWorkspaceMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  departmentHead: "Dr. P. Nirmal Kumar (Professor & Head)",
+  workspace: "Faculty & Department Productivity Workspace",
+  scope: "Lecture Planning (Units I-V) + Templates + Assignments + Feedback Rubrics + MoM",
+  mode: "Continuous Assessment Attainment & Department Productivity Engine"
+};
+---
+
+<MainLayout title={`Faculty & Department Workspace | MIT Campus (Anna University)`} activeNav="faculty-workspace">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Faculty Workspace Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🏛️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Faculty &amp; Department Productivity Workspace
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 25 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {facultyWorkspaceMetadata.department} • {facultyWorkspaceMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              HOD: <span class="text-white font-bold">{facultyWorkspaceMetadata.departmentHead}</span> • Lead: {facultyWorkspaceMetadata.lead} ({facultyWorkspaceMetadata.rollNo})
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Syllabus Scope:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">Units I - V</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Continuous Assmt:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Rubric Grading</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-purple-500/30 text-xs">
+            <span class="text-slate-400">Department:</span>
+            <span class="text-purple-300 font-bold ml-1.5">Council MoM</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Storage:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">SQLite WAL Engine</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Ambient glow effects -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#00693E]/15 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#00F0B5]/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive React Island Hub -->
+    <FacultyProductivityHub client:load />
+
+    <!-- Academic Accreditation Footer -->
+    <div class="p-6 rounded-2xl bg-[#041026]/70 border border-slate-800 text-xs text-slate-400 space-y-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <span class="font-bold text-slate-200">
+          Anna University Regulation 2023 — Department of Electronics Engineering Quality Assurance Protocol
+        </span>
+        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+          MIT Campus Council Certified
+        </span>
+      </div>
+      <p class="leading-relaxed text-slate-400">
+        All lecture plans, continuous assessment rubrics, and lesson templates in this workspace conform to NBA criteria and Anna University Regulation 2023 outcome-based education (OBE) principles. Course outcome (CO1–CO5) mapping and Bloom's taxonomy levels are mandatory across all undergraduate ECE curricula.
+      </p>
+    </div>
+
+  </div>
+</MainLayout>
