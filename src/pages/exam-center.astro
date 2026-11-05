@@ -1,0 +1,106 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ExamSimulator from '../components/ExamSimulator.jsx';
+
+// Exam Center Metadata
+const examHall = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  hall: "Virtual Exam Hall 304 (Proctored / HIL Integrated)",
+  mode: "GATE ECE & Anna University Semester Simulation"
+};
+---
+
+<MainLayout title={`Examination Center | ${examHall.lead} (MIT Campus)`} activeNav="exam-center">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Examination Hall Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Exam Icon Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              📝
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813]"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Academic Examination Center
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 9 GATE ECE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {examHall.department} • {examHall.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Candidate: <span class="text-white font-bold">{examHall.lead} ({examHall.rollNo})</span> • {examHall.hall}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="flex items-center gap-3 text-xs">
+          <a
+            href="/gate-ece"
+            class="px-4 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-200 hover:text-white transition-all flex items-center gap-2"
+          >
+            <span>Question Bank</span>
+          </a>
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl bg-[#00693E]/50 hover:bg-[#00693E] text-[#00F0B5] hover:text-white border border-[#00F0B5]/30 font-bold transition-all flex items-center gap-2"
+          >
+            <span>Return to Hub</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Exam Simulator Island -->
+    <ExamSimulator client:load />
+
+    <!-- Information & Rubrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+      
+      <div class="glass-card rounded-2xl p-5 border border-[#00F0B5]/20 space-y-2">
+        <div class="font-bold text-white flex items-center gap-2">
+          <span class="text-[#00F0B5]">01</span> GATE ECE Marking
+        </div>
+        <p className="text-slate-400 leading-relaxed text-[11px]">
+          1-mark MCQs deduct 0.33 on incorrect response; 2-mark MCQs deduct 0.66. Numerical Answer Type (NAT) questions carry zero negative penalty.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border border-[#00F0B5]/20 space-y-2">
+        <div class="font-bold text-white flex items-center gap-2">
+          <span class="text-cyan-400">02</span> Course Outcomes
+        </div>
+        <p className="text-slate-400 leading-relaxed text-[11px]">
+          Continuous mapping across CO1 (Analog), CO2 (Digital), CO3 (Microprocessors), CO4 (FreeRTOS RTOS), and CO5 (IoT Topologies) fulfilling NBA Tier-1 accreditation.
+        </p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5 border border-[#00F0B5]/20 space-y-2">
+        <div class="font-bold text-white flex items-center gap-2">
+          <span class="text-amber-400">03</span> Thermal Protection
+        </div>
+        <p className="text-slate-400 leading-relaxed text-[11px]">
+          Zero continuous background timers; native window events and sub-millisecond evaluation protect HP Victus 15 thermals.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</MainLayout>

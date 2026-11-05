@@ -192,3 +192,4 @@ def get_wal_statistics(db_path: Optional[str] = None) -> Dict[str, Any]:
 
 # Global singleton pool for application-wide use
 sqlite_pool = SQLiteConnectionPool()
+
