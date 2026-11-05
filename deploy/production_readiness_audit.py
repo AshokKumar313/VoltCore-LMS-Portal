@@ -52,6 +52,7 @@ EXPECTED_STATIC_ROUTES = [
     "nptel-player",
     "profile",
     "research",
+    "security-hub",
     "settings",
     "simulation",
     "smart-lab",

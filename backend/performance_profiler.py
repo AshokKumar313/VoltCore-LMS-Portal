@@ -92,15 +92,44 @@ class SystemPerformanceProfiler:
         process_ram_mb = 0.0
         pid = os.getpid()
 
-        # Method 1: On Windows, use PowerShell Get-Process for true WorkingSet
+        # Method 1: On Windows, use Win32 API via ctypes (zero process overhead, <0.1ms)
         if self.os_type == "windows":
             try:
-                cmd = ["powershell", "-NoProfile", "-Command", f"(Get-Process -Id {pid}).WorkingSet64 / 1MB"]
-                out = subprocess.check_output(cmd, timeout=3.0).decode().strip()
-                process_ram_mb = round(float(out), 2)
+                import ctypes
+                from ctypes import wintypes
+                GetCurrentProcess = ctypes.windll.kernel32.GetCurrentProcess
+                GetCurrentProcess.restype = wintypes.HANDLE
+                class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+                    _fields_ = [
+                        ('cb', wintypes.DWORD),
+                        ('PageFaultCount', wintypes.DWORD),
+                        ('PeakWorkingSetSize', ctypes.c_size_t),
+                        ('WorkingSetSize', ctypes.c_size_t),
+                        ('QuotaPeakPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaPeakNonPagedPoolUsage', ctypes.c_size_t),
+                        ('QuotaNonPagedPoolUsage', ctypes.c_size_t),
+                        ('PagefileUsage', ctypes.c_size_t),
+                        ('PeakPagefileUsage', ctypes.c_size_t),
+                    ]
+                counters = PROCESS_MEMORY_COUNTERS()
+                counters.cb = ctypes.sizeof(PROCESS_MEMORY_COUNTERS)
+                ctypes.windll.psapi.GetProcessMemoryInfo.argtypes = [
+                    wintypes.HANDLE,
+                    ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+                    wintypes.DWORD
+                ]
+                if ctypes.windll.psapi.GetProcessMemoryInfo(GetCurrentProcess(), ctypes.byref(counters), counters.cb):
+                    process_ram_mb = round(counters.WorkingSetSize / (1024.0 * 1024.0), 2)
             except Exception:
-                # Fallback heuristic estimate
-                process_ram_mb = 28.5
+                pass
+            if process_ram_mb <= 0.0:
+                try:
+                    cmd = ["powershell", "-NoProfile", "-Command", f"(Get-Process -Id {pid}).WorkingSet64 / 1MB"]
+                    out = subprocess.check_output(cmd, timeout=3.0).decode().strip()
+                    process_ram_mb = round(float(out), 2)
+                except Exception:
+                    process_ram_mb = 28.5
         else:
             # On Linux/macOS, query /proc/self/status or resource module
             try:

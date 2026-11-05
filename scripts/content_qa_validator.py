@@ -49,6 +49,7 @@ VALID_INTERNAL_ROUTES = {
     "/nptel-player",
     "/profile",
     "/research",
+    "/security-hub",
     "/settings",
     "/simulation",
     "/smart-lab",
