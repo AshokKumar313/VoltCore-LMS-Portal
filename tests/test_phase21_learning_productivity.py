@@ -296,3 +296,4 @@ def test_privacy_invariants_no_credential_leakage(temp_engine):
 
     # Public metadata verification
     assert "Ashok" in overview_json or overview["student_id"] == DEFAULT_STUDENT_ID
+

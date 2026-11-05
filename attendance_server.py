@@ -1138,6 +1138,95 @@ if HAS_FLASK:
         )
         return jsonify(res), 200
 
+    @app.route("/api/digital/overview", methods=["GET"])
+    def digital_overview_endpoint():
+        from backend.digital_electronics_engine import digital_electronics_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(digital_electronics_engine.get_overview(sid)), 200
+
+    @app.route("/api/digital/presets", methods=["GET"])
+    def digital_presets_endpoint():
+        from backend.digital_electronics_engine import digital_electronics_engine
+        return jsonify(digital_electronics_engine.get_presets()), 200
+
+    @app.route("/api/digital/circuits", methods=["GET"])
+    def digital_circuits_endpoint():
+        from backend.digital_electronics_engine import digital_electronics_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(digital_electronics_engine.get_saved_circuits(sid)), 200
+
+    @app.route("/api/digital/convert_number", methods=["POST", "OPTIONS"])
+    def digital_convert_number_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.digital_electronics_engine import digital_electronics_engine
+        payload = request.get_json(silent=True) or {}
+        val = str(payload.get("value", "0"))
+        base = payload.get("from_base", "DECIMAL")
+        sid = payload.get("student_id", "2023MITEC042")
+        res = digital_electronics_engine.convert_number(val, base, sid)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/digital/truth_table", methods=["POST", "OPTIONS"])
+    def digital_truth_table_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.digital_electronics_engine import digital_electronics_engine
+        payload = request.get_json(silent=True) or {}
+        expr = payload.get("expression", "")
+        vars_list = payload.get("variables", None)
+        res = digital_electronics_engine.generate_truth_table(expr, vars_list)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/digital/kmap_solve", methods=["POST", "OPTIONS"])
+    def digital_kmap_solve_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.digital_electronics_engine import digital_electronics_engine
+        payload = request.get_json(silent=True) or {}
+        num_v = int(payload.get("num_variables", 3))
+        mins = payload.get("minterms", [])
+        dcs = payload.get("dont_cares", [])
+        vars_list = payload.get("variables", None)
+        res = digital_electronics_engine.solve_kmap(num_v, mins, dcs, vars_list)
+        return jsonify(res), 200
+
+    @app.route("/api/digital/circuit/save", methods=["POST", "OPTIONS"])
+    def digital_circuit_save_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.digital_electronics_engine import digital_electronics_engine
+        payload = request.get_json(silent=True) or {}
+        res = digital_electronics_engine.save_circuit(
+            student_id=payload.get("student_id", "2023MITEC042"),
+            title=payload.get("title", "Custom Design"),
+            expression=payload.get("expression", ""),
+            num_variables=int(payload.get("num_variables", 3)),
+            variables=payload.get("variables", ["A", "B", "C"]),
+            minterms=payload.get("minterms", []),
+            simplified_sop=payload.get("simplified_sop", ""),
+            actor_role=payload.get("role", "Student")
+        )
+        return jsonify(res), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1376,6 +1465,20 @@ else:
                 sid = params.get("student_id", ["2023MITEC042"])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(learning_productivity_engine.get_revision_queue(sid)).encode("utf-8"))
+            elif parsed.path == "/api/digital/overview":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(digital_electronics_engine.get_overview(sid)).encode("utf-8"))
+            elif parsed.path == "/api/digital/presets":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(digital_electronics_engine.get_presets()).encode("utf-8"))
+            elif parsed.path == "/api/digital/circuits":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(digital_electronics_engine.get_saved_circuits(sid)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1632,6 +1735,46 @@ else:
                     topic=payload.get("topic", ""),
                     confidence_level=int(payload.get("confidence_level", 3)),
                     initial_interval_days=int(payload.get("initial_interval_days", 3))
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/digital/convert_number":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                val = str(payload.get("value", "0"))
+                base = payload.get("from_base", "DECIMAL")
+                sid = payload.get("student_id", "2023MITEC042")
+                res = digital_electronics_engine.convert_number(val, base, sid)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/digital/truth_table":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                expr = payload.get("expression", "")
+                vars_list = payload.get("variables", None)
+                res = digital_electronics_engine.generate_truth_table(expr, vars_list)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/digital/kmap_solve":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                num_v = int(payload.get("num_variables", 3))
+                mins = payload.get("minterms", [])
+                dcs = payload.get("dont_cares", [])
+                vars_list = payload.get("variables", None)
+                res = digital_electronics_engine.solve_kmap(num_v, mins, dcs, vars_list)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/digital/circuit/save":
+                from backend.digital_electronics_engine import digital_electronics_engine
+                res = digital_electronics_engine.save_circuit(
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    title=payload.get("title", "Custom Design"),
+                    expression=payload.get("expression", ""),
+                    num_variables=int(payload.get("num_variables", 3)),
+                    variables=payload.get("variables", ["A", "B", "C"]),
+                    minterms=payload.get("minterms", []),
+                    simplified_sop=payload.get("simplified_sop", ""),
+                    actor_role=payload.get("role", "Student")
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

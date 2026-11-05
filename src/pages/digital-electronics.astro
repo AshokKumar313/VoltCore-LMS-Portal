@@ -1,0 +1,110 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import DigitalElectronicsHub from '../components/DigitalElectronicsHub.jsx';
+
+// Digital Electronics Learning Center Metadata
+const digitalMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  workspace: "Advanced Digital Electronics Learning Center & K-Map Solver",
+  mode: "Truth Table Analyzer + Base Converter + K-Map Solver + SQLite WAL"
+};
+---
+
+<MainLayout title={`Digital Electronics & K-Map Solver | ${digitalMetadata.lead} (MIT Campus)`} activeNav="digital-electronics">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Digital Electronics Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              ⚡
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Digital Electronics &amp; K-Map Solver
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 22 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {digitalMetadata.department} • {digitalMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{digitalMetadata.lead} ({digitalMetadata.rollNo})</span> • {digitalMetadata.workspace}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Course Code:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">EC3352 Digital Systems</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Minimization:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Quine-McCluskey / K-Map</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Conversion:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">7 Number Formats</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Aesthetic -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Digital Electronics Hub Island -->
+    <DigitalElectronicsHub client:load />
+
+    <!-- Academic Standards & Digital Systems Taxonomy -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-2">
+          <span>📊</span>
+          <h4>Truth Table & SOP Decomposition</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Parses arbitrary Boolean expressions into canonical sum of products (SOP) and product of sums (POS) with complete minterm and maxterm expansions.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
+          <span>🗺️</span>
+          <h4>Karnaugh Map Prime Implicants</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Interactive Gray-code grid solver for 2, 3, and 4 variables executing rapid Quine-McCluskey minimization with don't care group enlargement.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-[#00F0B5]/30">
+        <div class="flex items-center gap-2 text-[#00F0B5] text-sm font-bold mb-2">
+          <span>🛡️</span>
+          <h4>HP Victus Thermal Safety</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Sub-3 millisecond native Python bitwise operations with zero GPU consumption ensure whisper-quiet fans and cool passive operation on HP Victus hardware.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>

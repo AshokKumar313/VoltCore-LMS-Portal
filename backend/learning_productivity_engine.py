@@ -734,3 +734,4 @@ class LearningProductivityEngine:
 
 # Singleton instance for system-wide low-overhead dispatch
 learning_productivity_engine = LearningProductivityEngine()
+

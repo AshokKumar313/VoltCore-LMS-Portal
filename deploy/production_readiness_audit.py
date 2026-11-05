@@ -43,6 +43,7 @@ EXPECTED_STATIC_ROUTES = [
     "careers",
     "cloud-deploy",
     "collaboration",
+    "digital-electronics",
     "ece-knowledge",
     "learning-productivity",
     "enterprise-admin",
