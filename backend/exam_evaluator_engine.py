@@ -254,3 +254,4 @@ class ExamEvaluatorEngine:
 
 # Global evaluator singleton
 exam_evaluator = ExamEvaluatorEngine()
+

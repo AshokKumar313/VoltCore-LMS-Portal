@@ -33,6 +33,7 @@ const PRECACHE_ASSETS = [
   '/profile',
   '/settings',
   '/simulation',
+  '/smart-lab',
   '/teacher',
   '/telemetry',
   '/virtual-bench',

@@ -637,6 +637,28 @@ if HAS_FLASK:
         limit = int(request.args.get("limit", 50))
         return jsonify(get_changelog_history(module_code=mod_code, limit=limit)), 200
 
+    @app.route("/api/smart_lab/overview", methods=["GET"])
+    def smart_lab_overview_endpoint():
+        from backend.iot_telemetry_hub import smart_lab_hub
+        return jsonify(smart_lab_hub.get_lab_overview()), 200
+
+    @app.route("/api/smart_lab/book", methods=["POST", "OPTIONS"])
+    def smart_lab_book_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        from backend.iot_telemetry_hub import smart_lab_hub
+        payload = request.get_json(silent=True) or {}
+        eq_id = payload.get("equipment_id", "")
+        std_id = payload.get("student_id", "2023MITEC042")
+        result = smart_lab_hub.book_equipment(eq_id, student_id=std_id)
+        code = 200 if result.get("status") == "SUCCESS" else 400
+        return jsonify(result), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")

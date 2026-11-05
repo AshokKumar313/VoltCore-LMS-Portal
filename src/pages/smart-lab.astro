@@ -1,0 +1,110 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import SmartLabMonitor from '../components/SmartLabMonitor.jsx';
+
+// Smart Laboratory Metadata
+const labMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  labFacility: "Smart Embedded Systems & IoT Laboratory (Lab 304)",
+  telemetryMode: "Edge IoT MQTT & SQLite WAL Telemetry Hub"
+};
+---
+
+<MainLayout title={`Smart Laboratory & Telemetry Hub | ${labMetadata.lead} (MIT Campus)`} activeNav="smart-lab">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Smart Lab Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Lab Icon Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🔬
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                IoT Smart Laboratory & Equipment Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 10 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {labMetadata.department} • {labMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Lab Supervisor: <span class="text-white font-bold">{labMetadata.lead} ({labMetadata.rollNo})</span> • {labMetadata.labFacility}
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Status Pills -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Hub Protocol:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">MQTT / HTTP Keepalive</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Storage:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">SQLite WAL Ledger</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Auto Safety:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">Over-Current & Thermal Trip</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Aesthetic -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Smart Lab Island Component -->
+    <SmartLabMonitor client:load />
+
+    <!-- Laboratory Operating Procedures & Safety Matrix -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
+          <span>⚡</span>
+          <h4>Over-Current Trip Standards</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Rigol DP832A channels trip automatically at 3.10 A to protect breadboards and microcontrollers. All trips trigger an instant hardware alert and lock the power output.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-2">
+          <span>🔥</span>
+          <h4>Thermal & Tip Wear Monitoring</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Weller WT1010 soldering stations track cumulative tip duty cycles. Maintenance flags appear automatically at 200 operating hours to guarantee solder integrity.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-[#00F0B5] text-sm font-bold mb-2">
+          <span>🛡️</span>
+          <h4>RBAC Role Safety & Audit Logging</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Students can book available benches and file fault reports (+120 XP). Fault resolution and safety lock resets are strictly gated to Admin, Teacher, and Lab-Instructor roles.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
