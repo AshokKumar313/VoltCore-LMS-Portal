@@ -3941,6 +3941,88 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
         return jsonify(res), code
 
+
+    # ====================================================================================
+    # Phase 29: IoT Smart Laboratory & Equipment Telemetry Hub Endpoints
+    # ====================================================================================
+
+    @app.route("/api/iot/overview", methods=["GET"])
+    def iot_overview_endpoint():
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        return jsonify(iot_telemetry_engine.get_overview_metrics()), 200
+
+    @app.route("/api/iot/nodes", methods=["GET"])
+    def iot_nodes_endpoint():
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        return jsonify(iot_telemetry_engine.get_bench_nodes()), 200
+
+    @app.route("/api/iot/telemetry/ingest", methods=["POST", "OPTIONS"])
+    def iot_telemetry_ingest_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        payload = request.get_json(silent=True) or {}
+        nid = payload.get("node_id", "NODE_ESP32_BENCH_01")
+        v = float(payload.get("voltage_v", 12.0))
+        c = float(payload.get("current_a", 1.0))
+        t = float(payload.get("ambient_temp_c", 30.0))
+        r = payload.get("relay_state")
+        res = iot_telemetry_engine.ingest_telemetry_packet(nid, v, c, t, r)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/iot/telemetry/history", methods=["GET"])
+    def iot_telemetry_history_endpoint():
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        bench_id = request.args.get("bench_id")
+        limit = int(request.args.get("limit", 20))
+        return jsonify(iot_telemetry_engine.get_telemetry_history(bench_id, limit)), 200
+
+    @app.route("/api/iot/alerts", methods=["GET"])
+    def iot_alerts_endpoint():
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        status = request.args.get("status")
+        return jsonify(iot_telemetry_engine.get_threshold_alerts(status)), 200
+
+    @app.route("/api/iot/alerts/ack", methods=["POST", "OPTIONS"])
+    def iot_alerts_ack_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        payload = request.get_json(silent=True) or {}
+        aid = payload.get("alert_id", "")
+        notes = payload.get("notes", "Acknowledged by Lab Technician")
+        role = payload.get("role", "Admin")
+        res = iot_telemetry_engine.acknowledge_alert(aid, notes, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/iot/bench/relay", methods=["POST", "OPTIONS"])
+    def iot_bench_relay_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_telemetry_engine import iot_telemetry_engine
+        payload = request.get_json(silent=True) or {}
+        bid = payload.get("bench_id", "")
+        state = payload.get("target_state", "CLOSED")
+        actor = payload.get("actor_id", "2023MITEC042")
+        role = payload.get("role", "Admin")
+        res = iot_telemetry_engine.toggle_bench_relay(bid, state, actor_id=actor, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4360,6 +4442,25 @@ else:
                 from backend.platform_reliability_engine import platform_reliability_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(platform_reliability_engine.get_config_health_audits()).encode("utf-8"))
+            elif parsed.path == "/api/iot/overview":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_telemetry_engine.get_overview_metrics()).encode("utf-8"))
+            elif parsed.path == "/api/iot/nodes":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_telemetry_engine.get_bench_nodes()).encode("utf-8"))
+            elif parsed.path == "/api/iot/telemetry/history":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                bench_id = params.get("bench_id", [None])[0]
+                limit = int(params.get("limit", [20])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_telemetry_engine.get_telemetry_history(bench_id, limit)).encode("utf-8"))
+            elif parsed.path == "/api/iot/alerts":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                status = params.get("status", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_telemetry_engine.get_threshold_alerts(status)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -4941,6 +5042,36 @@ else:
                 from backend.platform_reliability_engine import platform_reliability_engine
                 role = payload.get("role", "Admin")
                 res = platform_reliability_engine.run_full_system_audit(actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/iot/telemetry/ingest":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                nid = payload.get("node_id", "NODE_ESP32_BENCH_01")
+                v = float(payload.get("voltage_v", 12.0))
+                c = float(payload.get("current_a", 1.0))
+                t = float(payload.get("ambient_temp_c", 30.0))
+                r = payload.get("relay_state")
+                res = iot_telemetry_engine.ingest_telemetry_packet(nid, v, c, t, r)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/iot/alerts/ack":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                aid = payload.get("alert_id", "")
+                notes = payload.get("notes", "Acknowledged by Lab Technician")
+                role = payload.get("role", "Admin")
+                res = iot_telemetry_engine.acknowledge_alert(aid, notes, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/iot/bench/relay":
+                from backend.iot_telemetry_engine import iot_telemetry_engine
+                bid = payload.get("bench_id", "")
+                state = payload.get("target_state", "CLOSED")
+                actor = payload.get("actor_id", "2023MITEC042")
+                role = payload.get("role", "Admin")
+                res = iot_telemetry_engine.toggle_bench_relay(bid, state, actor_id=actor, actor_role=role)
                 code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

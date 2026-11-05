@@ -77,7 +77,7 @@ jobs:
       - name: Execute Astro Production Build
         run: npm run build
 
-      - name: Verify All 37 Enterprise Static Routes
+      - name: Verify All 38 Enterprise Static Routes
         run: |
           test -f dist/index.html || exit 1
           test -f dist/academic-hub/index.html || exit 1
@@ -100,6 +100,7 @@ jobs:
           test -f dist/fleet/index.html || exit 1
           test -f dist/gate-ece/index.html || exit 1
           test -f dist/hardware-hil/index.html || exit 1
+          test -f dist/iot-lab/index.html || exit 1
           test -f dist/next-gen/index.html || exit 1
           test -f dist/nptel/index.html || exit 1
           test -f dist/nptel-player/index.html || exit 1
@@ -116,7 +117,7 @@ jobs:
           test -f dist/telemetry/index.html || exit 1
           test -f dist/virtual-bench/index.html || exit 1
           test -f dist/voice-lab/index.html || exit 1
-          echo "All 37 enterprise production routes verified."
+          echo "All 38 enterprise production routes verified."
 
   # ========================================================================================
   # Job 3: Docker Composition & Container Spec Validation

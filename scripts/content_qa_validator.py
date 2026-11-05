@@ -54,6 +54,7 @@ VALID_INTERNAL_ROUTES = {
     "/fleet",
     "/gate-ece",
     "/hardware-hil",
+    "/iot-lab",
     "/next-gen",
     "/nptel",
     "/nptel-player",

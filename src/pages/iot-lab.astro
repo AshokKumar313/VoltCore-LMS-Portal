@@ -1,0 +1,87 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import IotTelemetryHub from '../components/IotTelemetryHub.jsx';
+
+// IoT Smart Laboratory & Equipment Telemetry Hub Metadata
+const iotLabMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  facility: "Lab 304 Smart Electronics & IoT Testbed",
+  standards: "IEEE 1451 Sensor Telemetry • FreeRTOS ESP32 Nodes • SQLite WAL Ledger • Automated Safety Tripping",
+  mode: "8-Bench Workstation Matrix + Live Power Dissipation + Over-Temp/Current Tripping + Remote Relay Controls"
+};
+---
+
+<MainLayout title={`IoT Smart Laboratory Hub | Lab 304 | MIT Campus (Anna University)`} activeNav="iot-lab">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              📡
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                IoT Smart Laboratory &amp; Telemetry Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 29 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {iotLabMetadata.department} • {iotLabMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{iotLabMetadata.lead} ({iotLabMetadata.rollNo})</span> • {iotLabMetadata.facility}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Nodes:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">8 ESP32 Benches</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Safety Cutoff:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Auto Relay Trip</span>
+          </div>
+        </div>
+
+      </div>
+      
+      <!-- Facility Safety Bar -->
+      <div class="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-300 font-mono">
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>Automated Over-Current (&gt;3.0A) &amp; Over-Temp (&gt;65°C) Tripping</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[#00F0B5] font-bold">✓</span>
+          <span>Remote High-Voltage AC/DC Bench Relay Isolation</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-emerald-400 font-bold">✓</span>
+          <span>Thread-Safe SQLite WAL Historical Telemetry Ledger</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive IoT Telemetry Hub Island -->
+    <IotTelemetryHub client:load />
+
+  </div>
+</MainLayout>

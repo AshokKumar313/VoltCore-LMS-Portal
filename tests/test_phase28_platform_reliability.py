@@ -188,3 +188,4 @@ def test_privacy_invariants_no_credential_leakage():
             content = f.read()
             for token in forbidden_tokens:
                 assert token not in content, f"SECURITY ALERT: Private token '{token}' leaked in {fpath}"
+
