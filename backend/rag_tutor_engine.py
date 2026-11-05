@@ -227,7 +227,8 @@ if os.path.exists(MODULES_DIR):
 def query_rag_knowledge_base(
     query: str,
     student_id: str = "2023MITEC042",
-    mode: str = "chat"
+    mode: str = "chat",
+    **kwargs
 ) -> Dict[str, Any]:
     """
     Primary interface for student queries.
@@ -270,6 +271,11 @@ def query_rag_knowledge_base(
     # Standard RAG Query Synthesis
     synthesis = _synthesize_expert_response(query, results)
 
+    # Optional Ollama augmentation if service is active and requested
+    ollama_meta = None
+    if kwargs.get("use_ollama", False):
+        ollama_meta = query_ollama_engine(query, context="\n".join(retrieved_contexts[:2]))
+
     return {
         "status": "success",
         "mode": "rag",
@@ -277,10 +283,56 @@ def query_rag_knowledge_base(
         "student_id": student_id,
         "response": synthesis,
         "citations": citations,
+        "ollama": ollama_meta,
         "xp_awarded": 25,
         "architect": OWNER_METADATA["platform_lead"],
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+
+def query_ollama_engine(
+    prompt: str,
+    context: str = "",
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+    timeout_sec: float = 2.0
+) -> Optional[Dict[str, Any]]:
+    """
+    Attempts to query local Ollama model service (Qwen 2.5 Coder or Llama 3).
+    Returns structured response dict if Ollama is running, else returns None.
+    """
+    import urllib.request
+    import json
+
+    url = (base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip("/") + "/api/generate"
+    chosen_model = model or os.getenv("OLLAMA_PRIMARY_MODEL", "qwen2.5-coder:7b")
+
+    system_prompt = (
+        "You are VoltCore Apex Academia AI Tutor at MIT Campus, Anna University. "
+        "Strictly adhere to Anna University ECE Regulation 2023 syllabi."
+    )
+
+    full_prompt = f"Ground Truth Curriculum Context:\n{context}\n\nStudent Query: {prompt}" if context else prompt
+    payload = json.dumps({
+        "model": chosen_model,
+        "prompt": full_prompt,
+        "system": system_prompt,
+        "stream": False,
+        "options": {"temperature": 0.2, "top_p": 0.9}
+    }).encode("utf-8")
+
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return {
+                "model": chosen_model,
+                "response": data.get("response", ""),
+                "provider": "ollama_local",
+                "status": "connected"
+            }
+    except Exception:
+        return None
 
 
 def _synthesize_expert_response(query: str, top_results: List[Tuple[CurriculumDocumentChunk, float]]) -> str:

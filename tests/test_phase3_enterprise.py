@@ -220,6 +220,66 @@ def test_attendance_zscore_anomaly_and_nba_attainment():
         assert len(co["mapped_pos"]) > 0
 
 
+def test_docker_compose_and_ollama_specs():
+    """Verify docker-compose.yml structure, Ollama AI services, resource limits, and network isolation."""
+    dc_path = os.path.join(PROJECT_ROOT, "docker-compose.yml")
+    assert os.path.exists(dc_path), "docker-compose.yml must exist"
+
+    with open(dc_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Core Services
+    assert "api:" in content
+    assert "cache:" in content
+    assert "web:" in content
+    assert "ollama:" in content
+
+    # Memory Limits for HP Victus efficiency
+    assert "memory: 256M" in content
+    assert "memory: 64M" in content
+    assert "memory: 128M" in content
+
+    # Ollama Model Configs
+    assert "qwen2.5-coder" in content
+    assert "llama3" in content
+    assert "host.docker.internal" in content
+
+
+def test_ci_cd_workflow_pipeline():
+    """Verify GitHub Actions CI/CD workflow runs all test suites and validates 14 routes."""
+    workflow_path = os.path.join(PROJECT_ROOT, ".github", "workflows", "ci_cd.yml")
+    assert os.path.exists(workflow_path), ".github/workflows/ci_cd.yml must exist"
+
+    with open(workflow_path, "r", encoding="utf-8") as f:
+        wf = f.read()
+
+    assert "pytest tests/" in wf
+    assert "content_qa_validator.py" in wf
+    assert "npm run build" in wf
+    assert "dist/careers/index.html" in wf
+    assert "dist/virtual-bench/index.html" in wf
+    assert "dist/nptel-player/index.html" in wf
+
+
+def test_ollama_ai_integration():
+    """Verify Ollama query helper function with offline graceful fallback."""
+    from backend.rag_tutor_engine import query_ollama_engine, query_rag_knowledge_base
+
+    # Query Ollama with unreachable port (offline test)
+    offline_res = query_ollama_engine(
+        prompt="Explain RISC-V hazard forwarding",
+        base_url="http://127.0.0.1:59999",
+        timeout_sec=0.2
+    )
+    assert offline_res is None
+
+    # RAG knowledge base should still function seamlessly with use_ollama=True
+    rag_res = query_rag_knowledge_base("RISC-V hazard forwarding", use_ollama=True)
+    assert rag_res["status"] == "success"
+    assert "citations" in rag_res
+    assert len(rag_res["citations"]) > 0
+
+
 # ========================================================================================
 # UNITTEST TESTCASE WRAPPER
 # ========================================================================================
@@ -244,6 +304,15 @@ class TestPhase3Enterprise(unittest.TestCase):
 
     def test_07_zscore_and_nba(self):
         test_attendance_zscore_anomaly_and_nba_attainment()
+
+    def test_08_docker_compose_and_ollama_specs(self):
+        test_docker_compose_and_ollama_specs()
+
+    def test_09_ci_cd_workflow_pipeline(self):
+        test_ci_cd_workflow_pipeline()
+
+    def test_10_ollama_ai_integration(self):
+        test_ollama_ai_integration()
 
 
 # ========================================================================================

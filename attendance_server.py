@@ -384,10 +384,12 @@ def compute_nba_attainment_and_zscores() -> Dict[str, Any]:
 
 
 def handle_tutor_query(payload: Dict[str, Any]) -> tuple[Dict[str, Any], int]:
-    """Processes AI tutor queries and viva challenges using local RAG curriculum engine."""
+    """Processes AI tutor queries and viva challenges using local RAG curriculum engine and Ollama."""
     query = payload.get("query", "").strip()
     student_id = payload.get("student_id", "2023MITEC042")
     mode = payload.get("mode", "chat")
+    use_ollama = payload.get("use_ollama", False)
+    model = payload.get("model")
 
     if not query:
         return {
@@ -396,7 +398,13 @@ def handle_tutor_query(payload: Dict[str, Any]) -> tuple[Dict[str, Any], int]:
         }, 400
 
     try:
-        rag_data = query_rag_knowledge_base(query=query, student_id=student_id, mode=mode)
+        rag_data = query_rag_knowledge_base(
+            query=query,
+            student_id=student_id,
+            mode=mode,
+            use_ollama=use_ollama,
+            model=model
+        )
         return rag_data, 200
     except Exception as e:
         return {

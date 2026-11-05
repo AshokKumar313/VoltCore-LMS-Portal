@@ -8,10 +8,10 @@ on:
 
 jobs:
   # ========================================================================================
-  # Job 1: Backend Security, Cryptography & RAG Tests
+  # Job 1: Backend Security, Cryptography, RAG & Content QA Tests
   # ========================================================================================
   backend-tests:
-    name: Backend Security & Curriculum RAG Tests
+    name: Backend Security, Curriculum RAG & QA Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,21 +30,25 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov dulwich
 
-      - name: Execute Phase 1 Security Hardening Tests (PBKDF2 600K, Rate Limiter)
-        run: python tests/test_phase1_security.py
+      - name: Run Pytest Suite Across All Phases
+        run: |
+          pytest tests/ --verbose
 
-      - name: Execute Phase 2 Learning & RAG Engine Tests (BM25, SM-2, Module 8)
-        run: python tests/test_phase2_learning.py
-
-      - name: Execute Phase 3 Enterprise & LittleFS Fleet Tests
-        run: python tests/test_phase3_enterprise.py
+      - name: Execute Content QA & Anti-Hallucination Audit
+        run: |
+          python scripts/content_qa_validator.py
 
       - name: Security & Privacy Environment Leakage Audit
         run: |
           echo "Verifying private admin credentials are not exposed in public client bundles..."
           if grep -rn "ashokkumar2008313@gmail.com" src/components/Topbar.astro; then
             echo "ERROR: Private admin email found hardcoded in Topbar!"
+            exit 1
+          fi
+          if grep -rn "+91 9597382878" src/components/Topbar.astro; then
+            echo "ERROR: Private admin phone found hardcoded in Topbar!"
             exit 1
           fi
           echo "Privacy audit passed: Private admin credentials safely isolated."
@@ -73,14 +77,23 @@ jobs:
       - name: Execute Astro Production Build
         run: npm run build
 
-      - name: Verify Output Static Pages
+      - name: Verify All 14 Enterprise Static Routes
         run: |
           test -f dist/index.html || exit 1
+          test -f dist/attendance/index.html || exit 1
           test -f dist/autograder/index.html || exit 1
+          test -f dist/careers/index.html || exit 1
           test -f dist/flashcards/index.html || exit 1
-          test -f dist/teacher/index.html || exit 1
           test -f dist/fleet/index.html || exit 1
-          echo "All 7+ enterprise production routes verified."
+          test -f dist/gate-ece/index.html || exit 1
+          test -f dist/nptel/index.html || exit 1
+          test -f dist/nptel-player/index.html || exit 1
+          test -f dist/profile/index.html || exit 1
+          test -f dist/simulation/index.html || exit 1
+          test -f dist/teacher/index.html || exit 1
+          test -f dist/telemetry/index.html || exit 1
+          test -f dist/virtual-bench/index.html || exit 1
+          echo "All 14 enterprise production routes verified."
 
   # ========================================================================================
   # Job 3: Docker Composition & Container Spec Validation
@@ -96,4 +109,7 @@ jobs:
 
       - name: Validate Docker Compose Configuration
         run: docker compose config
+
+      - name: Validate Dockerfile.api Syntax
+        run: docker build -t voltcore-api:test -f Dockerfile.api .
 
