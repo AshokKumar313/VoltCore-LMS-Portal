@@ -1,0 +1,110 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import EnterpriseAdminDashboard from '../components/EnterpriseAdminDashboard.jsx';
+
+// Enterprise Administration Metadata
+const adminMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  workspace: "Enterprise Administration, NBA & NAAC Accreditation Center",
+  mode: "Automated CO-PO Attainment, Cryptographic Audit & Faculty Allocation"
+};
+---
+
+<MainLayout title={`Enterprise Administration & Accreditation | ${adminMetadata.lead} (MIT Campus)`} activeNav="enterprise-admin">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Enterprise Admin Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Enterprise Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🏛️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Enterprise Administration & Accreditation Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 13 ENTERPRISE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {adminMetadata.department} • {adminMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{adminMetadata.lead} ({adminMetadata.rollNo})</span> • {adminMetadata.workspace}
+            </div>
+          </div>
+        </div>
+
+        <!-- Administration Status Pills -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">NBA Status:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">85.7% Compliant</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">NAAC Projection:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Grade A++ (3.74 CGPA)</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Audit Trail:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">SHA-256 Chained</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Aesthetic -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Enterprise Admin Component Island -->
+    <EnterpriseAdminDashboard client:load />
+
+    <!-- Institutional Quality Assurance & Accreditation Protocols -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
+          <span>📊</span>
+          <h4>NBA Tier-1 Accreditation</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Automated Program Outcome (PO1-PO12, PSO1-PSO2) aggregation derives quantitative attainment from direct continuous assessments and exit surveys against the mandatory 70% threshold.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-2">
+          <span>🔒</span>
+          <h4>Cryptographic Audit Logs</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Administrative modifications, Course Outcome approvals, and department allocations are chained with SHA-256 blocks, ensuring verifiable transparency for statutory inspections.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-[#00F0B5] text-sm font-bold mb-2">
+          <span>⚡</span>
+          <h4>Multi-Department Course Matrix</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Real-time collision detection prevents faculty double-booking and room collisions across Lab 304 HIL facilities, CAD suites, and smart lecture theaters across Anna University.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>

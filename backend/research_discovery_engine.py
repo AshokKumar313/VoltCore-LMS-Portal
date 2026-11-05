@@ -495,3 +495,4 @@ class ResearchDiscoveryEngine:
 
 # Global Research Discovery Engine Singleton
 research_discovery_engine = ResearchDiscoveryEngine()
+
