@@ -30,6 +30,7 @@ const PRECACHE_ASSETS = [
   '/nptel',
   '/nptel-player',
   '/profile',
+  '/settings',
   '/simulation',
   '/teacher',
   '/telemetry',

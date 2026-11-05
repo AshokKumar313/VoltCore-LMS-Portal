@@ -129,3 +129,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     sys.exit(run_diagnostics(strict=args.strict, json_mode=args.json, db_path=args.db_path))
+

@@ -88,10 +88,10 @@ class TestPhase7ProductionHardening(unittest.TestCase):
         self.assertEqual(profile["platform_metadata"]["lead"], "Ashok Kumar A (2023MITEC042)")
 
     def test_production_readiness_static_routes(self):
-        """All 16 production static routes must exist in dist/."""
+        """All enterprise production static routes must exist in dist/."""
         report = self.auditor.audit_static_routes()
         self.assertTrue(report["passed"], f"Missing routes: {report.get('missing_routes')}")
-        self.assertEqual(report["verified_count"], 16)
+        self.assertEqual(report["verified_count"], len(EXPECTED_STATIC_ROUTES))
         self.assertEqual(len(report["missing_routes"]), 0)
 
     def test_production_readiness_privacy_invariants(self):

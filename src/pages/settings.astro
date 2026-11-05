@@ -1,0 +1,170 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import CloudSyncStatus from '../components/CloudSyncStatus.jsx';
+
+// Settings Page Metadata
+const systemMeta = {
+  platformLead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  campus: "Chromepet, Chennai - 600 044",
+  publicEmail: "ashokkumar3132008@gmail.com",
+  githubRepo: "https://github.com/AshokKumar313",
+  thermalProfile: "HP Victus 15-fa2xxx Low-Overhead Safe (< 300MB RAM)",
+  databaseEngine: "SQLite WAL (Write-Ahead Logging) + 8MB RAM Cache",
+  concurrencyLimiter: "10-Thread Pool with Bounded Write Semaphore (Max 4 Writers)"
+};
+---
+
+<MainLayout title={`System Settings & Cloud Sync | ${systemMeta.platformLead}`} activeNav="settings">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Settings Identity Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Gear Icon Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              ⚙
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813]"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                System Preferences & Cloud Sync
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 8 CLOUD STAGING
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {systemMeta.platformLead} ({systemMeta.rollNo}) • {systemMeta.department}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              {systemMeta.institution} • {systemMeta.campus}
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="flex items-center gap-3 text-xs">
+          <a
+            href="/profile"
+            class="px-4 py-2 rounded-xl bg-[#041026] hover:bg-[#020813] border border-slate-700 text-slate-200 hover:text-white transition-all flex items-center gap-2"
+          >
+            <span>View Student Profile</span>
+          </a>
+          <a
+            href="/"
+            class="px-4 py-2 rounded-xl bg-[#00693E]/50 hover:bg-[#00693E] text-[#00F0B5] hover:text-white border border-[#00F0B5]/30 font-bold transition-all flex items-center gap-2"
+          >
+            <span>Return to Hub</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Cloud Sync & Offline Spool Manager Island -->
+    <CloudSyncStatus client:load />
+
+    <!-- Staging Configuration & Thermal Architecture Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+      
+      {/* Thermal & Hardware Safety Guard */}
+      <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <span class="font-bold text-slate-200 text-sm flex items-center gap-2">
+            <span>🛡️ Hardware Safety & Thermal Guard</span>
+          </span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-[#00F0B5] text-[10px] font-bold border border-[#00F0B5]/30">
+            HP VICTUS SAFE
+          </span>
+        </div>
+
+        <div class="space-y-3 text-slate-300">
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Target Environment:</span>
+            <span class="text-white font-bold">{systemMeta.thermalProfile}</span>
+          </div>
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Memory Cap Policy:</span>
+            <span class="text-emerald-400 font-bold">&le; 450MB Total Container Budget</span>
+          </div>
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Continuous Polling:</span>
+            <span class="text-[#00F0B5] font-bold">DISABLED (Event-Driven Only)</span>
+          </div>
+          <div class="flex justify-between items-center py-1">
+            <span class="text-slate-400">Fan Acoustic Impact:</span>
+            <span class="text-emerald-400">Zero (Passive Cooling Maintained)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* High-Concurrency SQLite WAL Engine */}
+      <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <span class="font-bold text-slate-200 text-sm flex items-center gap-2">
+            <span>⚡ SQLite WAL & Concurrency Architecture</span>
+          </span>
+          <span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 text-[10px] font-bold border border-cyan-500/30">
+            ZERO LOCK CONTENTION
+          </span>
+        </div>
+
+        <div class="space-y-3 text-slate-300">
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Storage Engine:</span>
+            <span class="text-white font-bold">{systemMeta.databaseEngine}</span>
+          </div>
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Connection Pool:</span>
+            <span class="text-cyan-300 font-bold">{systemMeta.concurrencyLimiter}</span>
+          </div>
+          <div class="flex justify-between items-center py-1 border-b border-slate-800/60">
+            <span class="text-slate-400">Busy Timeout:</span>
+            <span class="text-emerald-400 font-bold">5,000 ms (Jittered Backoff)</span>
+          </div>
+          <div class="flex justify-between items-center py-1">
+            <span class="text-slate-400">Transaction Durability:</span>
+            <span class="text-white">PRAGMA synchronous = NORMAL</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Security, Privacy & RBAC Isolation Ledger -->
+    <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4 text-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <span class="font-bold text-slate-200 text-sm flex items-center gap-2">
+          <span>🔒 Project Ownership & Data Privacy Specification</span>
+        </span>
+        <span class="text-[#00F0B5] font-bold">RBAC HARDENED</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-300">
+        <div class="space-y-2 p-4 rounded-xl bg-[#020813] border border-slate-800">
+          <div class="text-[11px] font-bold text-[#00F0B5]">PUBLIC CLIENT METADATA</div>
+          <div>Platform Lead: <span class="text-white font-bold">{systemMeta.platformLead}</span></div>
+          <div>Public Email: <a href={`mailto:${systemMeta.publicEmail}`} class="text-[#00F0B5] hover:underline">{systemMeta.publicEmail}</a></div>
+          <div>GitHub Repo: <a href={systemMeta.githubRepo} target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">{systemMeta.githubRepo}</a></div>
+        </div>
+
+        <div class="space-y-2 p-4 rounded-xl bg-[#020813] border border-slate-800">
+          <div class="text-[11px] font-bold text-amber-400">RESTRICTED BACKEND CREDENTIALS</div>
+          <div>Admin Private Email: <span class="text-slate-400">[ISOLATED VIA SECURE_ADMIN_EMAIL]</span></div>
+          <div>Admin Telemetry Phone: <span class="text-slate-400">[ISOLATED VIA SECURE_ADMIN_PHONE]</span></div>
+          <div class="text-[10px] text-emerald-400">Enforced by get_admin_audit_metadata() & zero client exposure.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>

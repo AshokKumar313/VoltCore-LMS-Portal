@@ -45,6 +45,7 @@ VALID_INTERNAL_ROUTES = {
     "/nptel",
     "/nptel-player",
     "/profile",
+    "/settings",
     "/simulation",
     "/teacher",
     "/telemetry",
