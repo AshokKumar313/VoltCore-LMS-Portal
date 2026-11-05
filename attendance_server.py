@@ -1017,6 +1017,127 @@ if HAS_FLASK:
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
 
+    @app.route("/api/productivity/overview", methods=["GET"])
+    def productivity_overview_endpoint():
+        from backend.learning_productivity_engine import learning_productivity_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(learning_productivity_engine.get_productivity_overview(sid)), 200
+
+    @app.route("/api/productivity/streaks", methods=["GET"])
+    def productivity_streaks_endpoint():
+        from backend.learning_productivity_engine import learning_productivity_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(learning_productivity_engine.get_streak_metrics(sid)), 200
+
+    @app.route("/api/productivity/session/log", methods=["POST", "OPTIONS"])
+    def productivity_session_log_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.learning_productivity_engine import learning_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        res = learning_productivity_engine.log_study_session(
+            student_id=payload.get("student_id", "2023MITEC042"),
+            subject_code=payload.get("subject_code", "ECE_GENERAL"),
+            topic=payload.get("topic", "Self Study"),
+            duration_minutes=int(payload.get("duration_minutes", 25)),
+            session_type=payload.get("session_type", "POMODORO_25"),
+            focus_score=int(payload.get("focus_score", 5)),
+            notes=payload.get("notes", ""),
+            distraction_free_mode=bool(payload.get("distraction_free_mode", False)),
+            completed_at=payload.get("completed_at")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/productivity/bookmarks", methods=["GET"])
+    def productivity_bookmarks_endpoint():
+        from backend.learning_productivity_engine import learning_productivity_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        sub = request.args.get("subject_code")
+        return jsonify(learning_productivity_engine.get_bookmarks(sid, sub)), 200
+
+    @app.route("/api/productivity/bookmarks/add", methods=["POST", "OPTIONS"])
+    def productivity_bookmarks_add_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.learning_productivity_engine import learning_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        res = learning_productivity_engine.add_bookmark(
+            student_id=payload.get("student_id", "2023MITEC042"),
+            subject_code=payload.get("subject_code", "EC3451"),
+            topic=payload.get("topic", ""),
+            resource_url=payload.get("resource_url", "/modules"),
+            tags=payload.get("tags", []),
+            notes=payload.get("notes", ""),
+            priority=payload.get("priority", "MEDIUM")
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/productivity/bookmarks/delete", methods=["POST", "OPTIONS"])
+    def productivity_bookmarks_delete_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.learning_productivity_engine import learning_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        success = learning_productivity_engine.delete_bookmark(
+            bookmark_id=payload.get("bookmark_id", ""),
+            student_id=payload.get("student_id", "2023MITEC042")
+        )
+        return jsonify({"status": "SUCCESS" if success else "NOT_FOUND"}), 200
+
+    @app.route("/api/productivity/revision_queue", methods=["GET"])
+    def productivity_revision_queue_endpoint():
+        from backend.learning_productivity_engine import learning_productivity_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(learning_productivity_engine.get_revision_queue(sid)), 200
+
+    @app.route("/api/productivity/revision_queue/update", methods=["POST", "OPTIONS"])
+    def productivity_revision_queue_update_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.learning_productivity_engine import learning_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        res = learning_productivity_engine.update_revision_item(
+            queue_id=payload.get("queue_id", ""),
+            student_id=payload.get("student_id", "2023MITEC042"),
+            confidence_level=int(payload.get("confidence_level", 3))
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/productivity/revision_queue/add", methods=["POST", "OPTIONS"])
+    def productivity_revision_queue_add_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.learning_productivity_engine import learning_productivity_engine
+        payload = request.get_json(silent=True) or {}
+        res = learning_productivity_engine.add_revision_item(
+            student_id=payload.get("student_id", "2023MITEC042"),
+            subject_code=payload.get("subject_code", "EC3451"),
+            topic=payload.get("topic", ""),
+            confidence_level=int(payload.get("confidence_level", 3)),
+            initial_interval_days=int(payload.get("initial_interval_days", 3))
+        )
+        return jsonify(res), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1234,6 +1355,27 @@ else:
                 from backend.ece_knowledge_engine import ece_knowledge_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(ece_knowledge_engine.get_knowledge_overview()).encode("utf-8"))
+            elif parsed.path == "/api/productivity/overview":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(learning_productivity_engine.get_productivity_overview(sid)).encode("utf-8"))
+            elif parsed.path == "/api/productivity/streaks":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(learning_productivity_engine.get_streak_metrics(sid)).encode("utf-8"))
+            elif parsed.path == "/api/productivity/bookmarks":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                sub = params.get("subject_code", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(learning_productivity_engine.get_bookmarks(sid, sub)).encode("utf-8"))
+            elif parsed.path == "/api/productivity/revision_queue":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(learning_productivity_engine.get_revision_queue(sid)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -1436,6 +1578,62 @@ else:
                 )
                 code = 200 if res.get("status") == "SUCCESS" else 403
                 self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/productivity/session/log":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                res = learning_productivity_engine.log_study_session(
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    subject_code=payload.get("subject_code", "ECE_GENERAL"),
+                    topic=payload.get("topic", "Self Study"),
+                    duration_minutes=int(payload.get("duration_minutes", 25)),
+                    session_type=payload.get("session_type", "POMODORO_25"),
+                    focus_score=int(payload.get("focus_score", 5)),
+                    notes=payload.get("notes", ""),
+                    distraction_free_mode=bool(payload.get("distraction_free_mode", False)),
+                    completed_at=payload.get("completed_at")
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/productivity/bookmarks/add":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                res = learning_productivity_engine.add_bookmark(
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    subject_code=payload.get("subject_code", "EC3451"),
+                    topic=payload.get("topic", ""),
+                    resource_url=payload.get("resource_url", "/modules"),
+                    tags=payload.get("tags", []),
+                    notes=payload.get("notes", ""),
+                    priority=payload.get("priority", "MEDIUM")
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/productivity/bookmarks/delete":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                success = learning_productivity_engine.delete_bookmark(
+                    bookmark_id=payload.get("bookmark_id", ""),
+                    student_id=payload.get("student_id", "2023MITEC042")
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({"status": "SUCCESS" if success else "NOT_FOUND"}).encode("utf-8"))
+            elif parsed.path == "/api/productivity/revision_queue/update":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                res = learning_productivity_engine.update_revision_item(
+                    queue_id=payload.get("queue_id", ""),
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    confidence_level=int(payload.get("confidence_level", 3))
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/productivity/revision_queue/add":
+                from backend.learning_productivity_engine import learning_productivity_engine
+                res = learning_productivity_engine.add_revision_item(
+                    student_id=payload.get("student_id", "2023MITEC042"),
+                    subject_code=payload.get("subject_code", "EC3451"),
+                    topic=payload.get("topic", ""),
+                    confidence_level=int(payload.get("confidence_level", 3)),
+                    initial_interval_days=int(payload.get("initial_interval_days", 3))
+                )
+                self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)

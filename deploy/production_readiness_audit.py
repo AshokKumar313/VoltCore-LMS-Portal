@@ -44,6 +44,7 @@ EXPECTED_STATIC_ROUTES = [
     "cloud-deploy",
     "collaboration",
     "ece-knowledge",
+    "learning-productivity",
     "enterprise-admin",
     "exam-center",
     "flash-firmware",
