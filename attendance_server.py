@@ -659,6 +659,26 @@ if HAS_FLASK:
         code = 200 if result.get("status") == "SUCCESS" else 400
         return jsonify(result), code
 
+    @app.route("/api/collaboration/overview", methods=["GET"])
+    def collaboration_overview_endpoint():
+        from backend.collaboration_hub import collaboration_hub
+        return jsonify(collaboration_hub.get_collaboration_overview()), 200
+
+    @app.route("/api/collaboration/portfolio/like", methods=["POST", "OPTIONS"])
+    def collaboration_like_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.collaboration_hub import collaboration_hub
+        payload = request.get_json(silent=True) or {}
+        prj_id = payload.get("project_id", "")
+        res = collaboration_hub.like_project(prj_id)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -748,6 +768,10 @@ else:
                 limit = int(params.get("limit", [50])[0])
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(get_changelog_history(module_code=mod_code, limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/collaboration/overview":
+                from backend.collaboration_hub import collaboration_hub
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(collaboration_hub.get_collaboration_overview()).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -803,6 +827,20 @@ else:
                 res_data, status_code = update_content_status_entry(payload)
                 self._set_cors_headers(status_code)
                 self.wfile.write(json.dumps(res_data).encode("utf-8"))
+            elif parsed.path == "/api/collaboration/portfolio/like":
+                from backend.collaboration_hub import collaboration_hub
+                prj_id = payload.get("project_id", "")
+                res = collaboration_hub.like_project(prj_id)
+                self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 400)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/collaboration/group/join":
+                from backend.collaboration_hub import collaboration_hub
+                gid = payload.get("group_id", "")
+                sid = payload.get("student_id", "2023MITEC042")
+                sname = payload.get("student_name", "Ashok Kumar A")
+                res = collaboration_hub.join_study_group(gid, sid, sname)
+                self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 400)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))

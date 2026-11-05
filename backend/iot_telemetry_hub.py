@@ -364,3 +364,4 @@ class SmartLabTelemetryHub:
 
 # Global Smart Lab Hub singleton
 smart_lab_hub = SmartLabTelemetryHub()
+

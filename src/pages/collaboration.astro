@@ -1,0 +1,110 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import StudentPortfolioHub from '../components/StudentPortfolioHub.jsx';
+
+// Collaboration Hub Metadata
+const collabMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  hubName: "Student Engineering Portfolio & Peer Collaboration Workspace",
+  mode: "Peer Code Review, Study Cohorts & Silicon Leaderboard"
+};
+---
+
+<MainLayout title={`Student Experience & Collaboration | ${collabMetadata.lead} (MIT Campus)`} activeNav="collaboration">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Collaboration Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Hub Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🤝
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Student Experience & Collaboration Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                PHASE 11 APEX
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {collabMetadata.department} • {collabMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{collabMetadata.lead} ({collabMetadata.rollNo})</span> • {collabMetadata.hubName}
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry & Collaboration Status Pills -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Database Engine:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">SQLite WAL Ledgers</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">XP Multiplier:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">⚡ 2.5x Active</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Verification:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">Lab 304 HIL Bench</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Aesthetic -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Student Portfolio Hub React Island -->
+    <StudentPortfolioHub client:load />
+
+    <!-- Academic Collaboration Ethics & Rubric Standards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
+          <span>🚀</span>
+          <h4>Hardware-Verified Portfolios</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Student engineering showcases verified on physical Lab 304 test benches receive verified badges, increased leaderboard weighting, and direct visibility for campus recruitment pathways.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-cyan-400 text-sm font-bold mb-2">
+          <span>⚖️</span>
+          <h4>4-Factor Peer Rubric Scoring</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Peer code reviews evaluate MISRA C modularity, timing loop bounds, SRAM zero-copy efficiency, and test bench coverage. Scores above 7.0/10 award +150 XP to contributors.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
+        <div class="flex items-center gap-2 text-[#00F0B5] text-sm font-bold mb-2">
+          <span>🏆</span>
+          <h4>Silicon Grandmaster Tiering</h4>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Real-time XP streaks and tournament tiers encourage daily revision, Wokwi sketch creation, and study cohort participation without high memory overhead on student machines.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>

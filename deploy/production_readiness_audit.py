@@ -40,6 +40,7 @@ EXPECTED_STATIC_ROUTES = [
     "attendance",
     "autograder",
     "careers",
+    "collaboration",
     "exam-center",
     "flash-firmware",
     "flashcards",
