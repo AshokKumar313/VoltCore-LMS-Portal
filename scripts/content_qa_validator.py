@@ -56,6 +56,7 @@ VALID_INTERNAL_ROUTES = {
     "/nptel-player",
     "/physical-lab",
     "/profile",
+    "/project-innovation",
     "/research",
     "/security-hub",
     "/settings",

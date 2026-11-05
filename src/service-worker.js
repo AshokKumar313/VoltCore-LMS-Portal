@@ -41,6 +41,7 @@ const PRECACHE_ASSETS = [
   '/nptel-player',
   '/physical-lab',
   '/profile',
+  '/project-innovation',
   '/research',
   '/security-hub',
   '/settings',

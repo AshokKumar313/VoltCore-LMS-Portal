@@ -1376,6 +1376,148 @@ if HAS_FLASK:
         )
         return jsonify(res), 200
 
+    # ====================================================================================
+    # Phase 24: Engineering Project & Innovation Center Endpoints
+    # ====================================================================================
+
+    @app.route("/api/projects/overview", methods=["GET"])
+    def projects_overview_endpoint():
+        from backend.project_innovation_engine import project_innovation_engine
+        sid = request.args.get("student_id", "2023MITEC042")
+        return jsonify(project_innovation_engine.get_overview(sid)), 200
+
+    @app.route("/api/projects/ideas", methods=["GET"])
+    def projects_ideas_endpoint():
+        from backend.project_innovation_engine import project_innovation_engine
+        domain = request.args.get("domain")
+        diff = request.args.get("difficulty")
+        return jsonify(project_innovation_engine.get_innovation_ideas(domain, diff)), 200
+
+    @app.route("/api/projects/proposals", methods=["GET", "POST", "OPTIONS"])
+    def projects_proposals_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        if request.method == "GET":
+            sid = request.args.get("student_id", "2023MITEC042")
+            return jsonify(project_innovation_engine.get_proposals(sid)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            role = payload.get("role", "Student")
+            res = project_innovation_engine.create_proposal(payload, actor_role=role)
+            code = 200 if res.get("status") == "SUCCESS" else 400
+            return jsonify(res), code
+
+    @app.route("/api/projects/proposal/detail", methods=["GET"])
+    def projects_proposal_detail_endpoint():
+        from backend.project_innovation_engine import project_innovation_engine
+        pid = request.args.get("proposal_id", "")
+        detail = project_innovation_engine.get_proposal_detail(pid)
+        if not detail:
+            return jsonify({"status": "ERROR", "message": "Proposal not found"}), 404
+        return jsonify({"status": "SUCCESS", "proposal": detail}), 200
+
+    @app.route("/api/projects/proposal/status", methods=["POST", "OPTIONS"])
+    def projects_proposal_status_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        payload = request.get_json(silent=True) or {}
+        pid = payload.get("proposal_id", "")
+        status = payload.get("status", "")
+        role = payload.get("role", "Student")
+        res = project_innovation_engine.update_proposal_status(pid, status, actor_role=role)
+        code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+        return jsonify(res), code
+
+    @app.route("/api/projects/bom_calc", methods=["POST", "OPTIONS"])
+    def projects_bom_calc_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        payload = request.get_json(silent=True) or {}
+        items = payload.get("items", [])
+        tax = float(payload.get("tax_buffer_percent", 18.0))
+        contingency = float(payload.get("contingency_percent", 10.0))
+        res = project_innovation_engine.calculate_bom(items, tax, contingency)
+        return jsonify(res), 200
+
+    @app.route("/api/projects/bom/save", methods=["POST", "OPTIONS"])
+    def projects_bom_save_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        payload = request.get_json(silent=True) or {}
+        pid = payload.get("proposal_id", "")
+        items = payload.get("items", [])
+        res = project_innovation_engine.save_bom_items(pid, items)
+        return jsonify(res), 200
+
+    @app.route("/api/projects/check_compatibility", methods=["POST", "OPTIONS"])
+    def projects_check_compatibility_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        payload = request.get_json(silent=True) or {}
+        mcu = payload.get("mcu_name", "ESP32-WROOM-32")
+        components = payload.get("components", [])
+        res = project_innovation_engine.check_compatibility(mcu, components)
+        return jsonify(res), 200
+
+    @app.route("/api/projects/milestones", methods=["GET", "POST", "OPTIONS"])
+    def projects_milestones_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        if request.method == "GET":
+            pid = request.args.get("proposal_id", "")
+            return jsonify(project_innovation_engine.get_milestones(pid)), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            res = project_innovation_engine.add_milestone(payload)
+            code = 200 if res.get("status") == "SUCCESS" else 400
+            return jsonify(res), code
+
+    @app.route("/api/projects/milestone/status", methods=["POST", "OPTIONS"])
+    def projects_milestone_status_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.project_innovation_engine import project_innovation_engine
+        payload = request.get_json(silent=True) or {}
+        mid = payload.get("milestone_id", "")
+        status = payload.get("status", "COMPLETED")
+        res = project_innovation_engine.update_milestone_status(mid, status)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -1643,6 +1785,37 @@ else:
                 sid = params.get("student_id", ["2023MITEC042"])[0]
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(analog_comm_engine.get_saved_calculations(sid)).encode("utf-8"))
+            elif parsed.path == "/api/projects/overview":
+                from backend.project_innovation_engine import project_innovation_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(project_innovation_engine.get_overview(sid)).encode("utf-8"))
+            elif parsed.path == "/api/projects/ideas":
+                from backend.project_innovation_engine import project_innovation_engine
+                domain = params.get("domain", [None])[0]
+                diff = params.get("difficulty", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(project_innovation_engine.get_innovation_ideas(domain, diff)).encode("utf-8"))
+            elif parsed.path == "/api/projects/proposals":
+                from backend.project_innovation_engine import project_innovation_engine
+                sid = params.get("student_id", ["2023MITEC042"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(project_innovation_engine.get_proposals(sid)).encode("utf-8"))
+            elif parsed.path == "/api/projects/proposal/detail":
+                from backend.project_innovation_engine import project_innovation_engine
+                pid = params.get("proposal_id", [""])[0]
+                detail = project_innovation_engine.get_proposal_detail(pid)
+                if not detail:
+                    self._set_cors_headers(404)
+                    self.wfile.write(json.dumps({"status": "ERROR", "message": "Proposal not found"}).encode("utf-8"))
+                else:
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "proposal": detail}).encode("utf-8"))
+            elif parsed.path == "/api/projects/milestones":
+                from backend.project_innovation_engine import project_innovation_engine
+                pid = params.get("proposal_id", [""])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(project_innovation_engine.get_milestones(pid)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -2024,6 +2197,58 @@ else:
                     subject_code=payload.get("subject_code", "EC3451")
                 )
                 self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/proposals":
+                from backend.project_innovation_engine import project_innovation_engine
+                role = payload.get("role", "Student")
+                res = project_innovation_engine.create_proposal(payload, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/proposal/status":
+                from backend.project_innovation_engine import project_innovation_engine
+                pid = payload.get("proposal_id", "")
+                status = payload.get("status", "")
+                role = payload.get("role", "Student")
+                res = project_innovation_engine.update_proposal_status(pid, status, actor_role=role)
+                code = 200 if res.get("status") == "SUCCESS" else (403 if res.get("status") == "FORBIDDEN" else 400)
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/bom_calc":
+                from backend.project_innovation_engine import project_innovation_engine
+                items = payload.get("items", [])
+                tax = float(payload.get("tax_buffer_percent", 18.0))
+                contingency = float(payload.get("contingency_percent", 10.0))
+                res = project_innovation_engine.calculate_bom(items, tax, contingency)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/bom/save":
+                from backend.project_innovation_engine import project_innovation_engine
+                pid = payload.get("proposal_id", "")
+                items = payload.get("items", [])
+                res = project_innovation_engine.save_bom_items(pid, items)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/check_compatibility":
+                from backend.project_innovation_engine import project_innovation_engine
+                mcu = payload.get("mcu_name", "ESP32-WROOM-32")
+                components = payload.get("components", [])
+                res = project_innovation_engine.check_compatibility(mcu, components)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/milestones":
+                from backend.project_innovation_engine import project_innovation_engine
+                res = project_innovation_engine.add_milestone(payload)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/projects/milestone/status":
+                from backend.project_innovation_engine import project_innovation_engine
+                mid = payload.get("milestone_id", "")
+                status = payload.get("status", "COMPLETED")
+                res = project_innovation_engine.update_milestone_status(mid, status)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)

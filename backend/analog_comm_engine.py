@@ -724,3 +724,4 @@ def datetime_now_iso() -> str:
 
 # Global Singleton for system-wide low-overhead dispatch
 analog_comm_engine = AnalogCommEngine()
+
