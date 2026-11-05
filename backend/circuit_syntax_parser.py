@@ -102,3 +102,4 @@ class CircuitSyntaxParser:
             "connection_count": len(connections),
             "status": "PASS" if len(errors) == 0 else "FAIL"
         }
+

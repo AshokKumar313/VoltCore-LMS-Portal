@@ -1,5 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import SystemStatusWidget from '../components/SystemStatusWidget.jsx';
 
 // Student Profile Constants for Ashok Kumar A
 const profile = {
@@ -134,6 +135,9 @@ const profile = {
         <div class="text-[10px] text-slate-400 mt-1">IAM: Anna University MIT Campus</div>
       </div>
     </div>
+
+    <!-- Client Health, Offline PWA & Thermal Guard HUD -->
+    <SystemStatusWidget client:idle />
 
     <!-- Academic Modules & Transcript Table -->
     <div class="glass-card rounded-2xl p-6 border border-[#00F0B5]/20 space-y-4 font-mono text-xs">

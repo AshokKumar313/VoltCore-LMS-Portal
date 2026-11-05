@@ -448,9 +448,17 @@ if HAS_FLASK:
             "status": "HEALTHY",
             "port": 5000,
             "database": "voltcore_lms.db",
+            "journal_mode": "wal",
             "timestamp": datetime.utcnow().isoformat(),
-            "target_node": "ESP32-WROOM-32 / FreeRTOS"
+            "target_node": "ESP32-WROOM-32 / FreeRTOS",
+            "thermal_guard": "HP Victus 15-fa2xxx Low-Overhead Safe"
         }), 200
+
+    @app.route("/api/system/metrics", methods=["GET"])
+    def system_metrics_endpoint():
+        from backend.performance_profiler import performance_profiler
+        profile = performance_profiler.collect_full_profile()
+        return jsonify(profile), 200
 
     @app.route("/api/attendance", methods=["GET", "POST", "OPTIONS"])
     def attendance_endpoint():
