@@ -4643,6 +4643,76 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    # ==================== PHASE 39: Cloud IoT MQTT Broker & WebSerial / WebUSB HIL ====================
+    @app.route("/api/mqtt-hil/simulate-stream", methods=["POST"])
+    def mqtt_hil_simulate_stream_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        payload = request.get_json(silent=True) or {}
+        dev = payload.get("device_id", "ESP32_WROOM_32")
+        transport = payload.get("transport_mode", "WEBSERIAL")
+        baud = int(payload.get("baud_rate", 115200))
+        qos = int(payload.get("qos_level", 1))
+        pkts = int(payload.get("num_packets", 20))
+        student = payload.get("student_id", "2023MITEC042")
+
+        res = mqtt_hil_engine.simulate_hil_stream(
+            device_id=dev,
+            transport_mode=transport,
+            baud_rate=baud,
+            qos_level=qos,
+            num_packets=pkts,
+            student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/mqtt-hil/publish", methods=["POST"])
+    def mqtt_hil_publish_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        payload = request.get_json(silent=True) or {}
+        dev = payload.get("device_id", "ESP32_WROOM_32")
+        topic = payload.get("topic", "voltcore/mit/ece/lab304/esp32_01/command")
+        data = payload.get("payload")
+        qos = int(payload.get("qos_level", 1))
+        student = payload.get("student_id", "2023MITEC042")
+
+        res = mqtt_hil_engine.publish_mqtt_message(
+            device_id=dev,
+            topic=topic,
+            payload=data,
+            qos_level=qos,
+            student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/mqtt-hil/devices", methods=["GET"])
+    def mqtt_hil_devices_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        return jsonify(mqtt_hil_engine.get_available_devices()), 200
+
+    @app.route("/api/mqtt-hil/sessions", methods=["GET"])
+    def mqtt_hil_sessions_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(mqtt_hil_engine.get_session_history(limit=limit)), 200
+
+    @app.route("/api/mqtt-hil/packets", methods=["GET"])
+    def mqtt_hil_packets_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        sess = request.args.get("session_id")
+        limit = int(request.args.get("limit", 50))
+        return jsonify(mqtt_hil_engine.get_packet_logs(session_id=sess, limit=limit)), 200
+
+    @app.route("/api/mqtt-hil/export-csv", methods=["GET"])
+    def mqtt_hil_export_csv_endpoint():
+        from backend.mqtt_hil_engine import mqtt_hil_engine
+        sess = request.args.get("session_id")
+        csv_data = mqtt_hil_engine.export_session_csv(session_id=sess)
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_mqtt_hil_session.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -5250,6 +5320,31 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_tinyml_benchmarks.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/devices":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(mqtt_hil_engine.get_available_devices()).encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/sessions":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(mqtt_hil_engine.get_session_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/packets":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                sess = params.get("session_id", [None])[0]
+                limit = int(params.get("limit", [50])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(mqtt_hil_engine.get_packet_logs(session_id=sess, limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/export-csv":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                sess = params.get("session_id", [None])[0]
+                csv_str = mqtt_hil_engine.export_session_csv(session_id=sess)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_mqtt_hil_session.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -6128,6 +6223,42 @@ else:
                     model_key=model,
                     precision_mode=precision,
                     custom_matrix=custom_matrix
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/simulate-stream":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                dev = payload.get("device_id", "ESP32_WROOM_32")
+                transport = payload.get("transport_mode", "WEBSERIAL")
+                baud = int(payload.get("baud_rate", 115200))
+                qos = int(payload.get("qos_level", 1))
+                pkts = int(payload.get("num_packets", 20))
+                student = payload.get("student_id", "2023MITEC042")
+
+                res = mqtt_hil_engine.simulate_hil_stream(
+                    device_id=dev,
+                    transport_mode=transport,
+                    baud_rate=baud,
+                    qos_level=qos,
+                    num_packets=pkts,
+                    student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/mqtt-hil/publish":
+                from backend.mqtt_hil_engine import mqtt_hil_engine
+                dev = payload.get("device_id", "ESP32_WROOM_32")
+                topic = payload.get("topic", "voltcore/mit/ece/lab304/esp32_01/command")
+                data = payload.get("payload")
+                qos = int(payload.get("qos_level", 1))
+                student = payload.get("student_id", "2023MITEC042")
+
+                res = mqtt_hil_engine.publish_mqtt_message(
+                    device_id=dev,
+                    topic=topic,
+                    payload=data,
+                    qos_level=qos,
+                    student_id=student
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

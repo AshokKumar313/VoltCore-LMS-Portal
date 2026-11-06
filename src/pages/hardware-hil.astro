@@ -2,6 +2,7 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import HwTestBenchLive from '../components/HwTestBenchLive.jsx';
 import PeripheralBusHub from '../components/PeripheralBusHub.jsx';
+import MqttHilDashboardHub from '../components/MqttHilDashboardHub.jsx';
 ---
 
 <MainLayout
@@ -31,6 +32,9 @@ import PeripheralBusHub from '../components/PeripheralBusHub.jsx';
 
     <!-- Phase 36: Peripheral Bus Protocols Analyzer Island -->
     <PeripheralBusHub client:load />
+
+    <!-- Phase 39: Cloud IoT MQTT Broker & WebSerial / WebUSB HIL Dashboard Island -->
+    <MqttHilDashboardHub client:load />
   </div>
 </MainLayout>
 
