@@ -1,0 +1,98 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import FacultyAdminHub from '../components/FacultyAdminHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase O: Faculty & Administrative Management Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 351–360:
+ *   - Feature 351: Faculty Dashboard (Teaching Load, Student Strength, Quick Stats)
+ *   - Feature 352: Student Performance Analytics (GPA distribution, Internals, At-Risk Alert)
+ *   - Feature 353: Assignment Grading Suite (Rubric-based evaluation, Grade release)
+ *   - Feature 354: Attendance Management Portal (Session attendance, 75% cutoff rule)
+ *   - Feature 355: Course Material Upload Manager (Notes, Lab manuals, Question banks)
+ *   - Feature 356: Announcement Broadcast System (Audience targeting, Urgent broadcasts)
+ *   - Feature 357: Student Progress Report Generator (AU Reg 2023 Dossier, Grades O to U)
+ *   - Feature 358: Department Notice Board (Accreditation NBA/NAAC, Faculty circulars)
+ *   - Feature 359: Timetable & Schedule Manager (7-period slots, Lab rooms, Faculty in-charge)
+ *   - Feature 360: Faculty Office Hours Scheduler (In-person & Virtual booking slots)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Faculty & Administrative Management Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Course Allocations, 4-Pillar Rubrics & AU Attendance Enforcement"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="faculty-admin">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-teal-500 via-blue-500 to-indigo-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-teal-400">
+              🏛️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-teal-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                Phase O • Features 351–360
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                AU Reg 2023 ECE
+              </span>
+              <span class="text-xs text-slate-400">
+                Lead: <strong class="text-slate-200">{pageMetadata.lead} ({pageMetadata.rollNo})</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Faculty & Administrative Management Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/30">
+                v1.0-LIVE
+              </span>
+            </h1>
+            <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Integrated administrative governance system covering faculty workload distribution, student performance analytics, 4-pillar laboratory rubric grading, Anna University 75% attendance cutoff enforcement, progress dossiers, and weekly master timetables.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-teal-500/30 text-xs text-teal-300">
+            <span class="h-2 w-2 rounded-full bg-teal-400"></span>
+            4-Pillar Lab Rubrics (30/30/20/20)
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-blue-500/30 text-xs text-blue-300">
+            <span class="h-2 w-2 rounded-full bg-blue-400"></span>
+            AU 75% Attendance Radar
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            AU Reg 2023 Grade Dossiers
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <FacultyAdminHub client:load />
+
+  </div>
+</MainLayout>
