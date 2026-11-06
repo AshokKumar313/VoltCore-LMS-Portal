@@ -4299,6 +4299,61 @@ if HAS_FLASK:
         node_id = payload.get("node_id")
         return jsonify(iot_sensor_simulator_engine.clear_simulated_readings(node_id=node_id)), 200
 
+    # ====================================================================================
+    # Phase 33: RTOS Task Scheduler & Context Switch Benchmarker Endpoints
+    # ====================================================================================
+
+    @app.route("/api/rtos/simulate", methods=["POST", "OPTIONS"])
+    def rtos_simulate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.rtos_scheduler_engine import rtos_scheduler_engine
+        payload = request.get_json(silent=True) or {}
+        tasks = payload.get("tasks")
+        mode = payload.get("mode", "PREEMPTIVE_PRIORITY")
+        mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+        duration = int(payload.get("total_duration_ms", 50))
+        student = payload.get("student_id", "2023MITEC042")
+        res = rtos_scheduler_engine.simulate_scheduler(
+            tasks=tasks, mode=mode, mcu_target=mcu,
+            total_duration_ms=duration, student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/rtos/benchmark", methods=["POST", "OPTIONS"])
+    def rtos_benchmark_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.rtos_scheduler_engine import rtos_scheduler_engine
+        payload = request.get_json(silent=True) or {}
+        mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+        res = rtos_scheduler_engine.benchmark_mcu_hardware(mcu_key=mcu)
+        return jsonify(res), 200
+
+    @app.route("/api/rtos/history", methods=["GET"])
+    def rtos_history_endpoint():
+        from backend.rtos_scheduler_engine import rtos_scheduler_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(rtos_scheduler_engine.get_simulation_history(limit=limit)), 200
+
+    @app.route("/api/rtos/export-csv", methods=["GET"])
+    def rtos_export_csv_endpoint():
+        from backend.rtos_scheduler_engine import rtos_scheduler_engine
+        csv_data = rtos_scheduler_engine.export_benchmark_csv()
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_rtos_benchmarks.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4784,6 +4839,20 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_sensor_telemetry.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/rtos/history":
+                from backend.rtos_scheduler_engine import rtos_scheduler_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(rtos_scheduler_engine.get_simulation_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/rtos/export-csv":
+                from backend.rtos_scheduler_engine import rtos_scheduler_engine
+                csv_str = rtos_scheduler_engine.export_benchmark_csv()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_rtos_benchmarks.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -5519,6 +5588,25 @@ else:
                 from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
                 node_id = payload.get("node_id")
                 res = iot_sensor_simulator_engine.clear_simulated_readings(node_id=node_id)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/rtos/simulate":
+                from backend.rtos_scheduler_engine import rtos_scheduler_engine
+                tasks = payload.get("tasks")
+                mode = payload.get("mode", "PREEMPTIVE_PRIORITY")
+                mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+                duration = int(payload.get("total_duration_ms", 50))
+                student = payload.get("student_id", "2023MITEC042")
+                res = rtos_scheduler_engine.simulate_scheduler(
+                    tasks=tasks, mode=mode, mcu_target=mcu,
+                    total_duration_ms=duration, student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/rtos/benchmark":
+                from backend.rtos_scheduler_engine import rtos_scheduler_engine
+                mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+                res = rtos_scheduler_engine.benchmark_mcu_hardware(mcu_key=mcu)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

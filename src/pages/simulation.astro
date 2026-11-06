@@ -2,6 +2,7 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import WokwiSandbox from '../components/WokwiSandbox.astro';
 import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
+import RtosSchedulerHub from '../components/RtosSchedulerHub.jsx';
 ---
 
 <MainLayout title="Hardware & Analog Simulation Laboratory | VoltCore Apex" activeNav="simulation">
@@ -172,6 +173,23 @@ import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Section 4: FreeRTOS Task Scheduler & Context Switch Simulator (Phase 33) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#6E9248] to-[#CF8F1E] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            4. FreeRTOS Task Scheduler &amp; Context Switch Simulator
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-olive-300 hidden sm:inline">
+          Preemptive Priority &amp; Hardware Interrupt Latency Benchmarks
+        </span>
+      </div>
+
+      <RtosSchedulerHub client:load />
     </section>
 
   </div>
