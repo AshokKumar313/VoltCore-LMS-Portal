@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import WokwiSandbox from '../components/WokwiSandbox.astro';
 import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
 import RtosSchedulerHub from '../components/RtosSchedulerHub.jsx';
+import DmaNvicHub from '../components/DmaNvicHub.jsx';
 ---
 
 <MainLayout title="Hardware & Analog Simulation Laboratory | VoltCore Apex" activeNav="simulation">
@@ -190,6 +191,23 @@ import RtosSchedulerHub from '../components/RtosSchedulerHub.jsx';
       </div>
 
       <RtosSchedulerHub client:load />
+    </section>
+
+    <!-- Section 5: ARM Cortex-M NVIC & Direct Memory Access (DMA) Simulator (Phase 37) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#8B5CF6] to-[#10B981] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            5. ARM Cortex-M NVIC &amp; Direct Memory Access (DMA) Simulator
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-purple-300 hidden sm:inline">
+          Interrupt Tail-Chaining &amp; AHB Bus Matrix Cycle-Stealing Benchmarks
+        </span>
+      </div>
+
+      <DmaNvicHub client:load />
     </section>
 
   </div>

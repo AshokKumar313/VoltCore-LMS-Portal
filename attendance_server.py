@@ -4551,6 +4551,54 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    @app.route("/api/dma-nvic/simulate", methods=["POST", "OPTIONS"])
+    def dma_nvic_simulate_endpoint():
+        if request.method == "OPTIONS":
+            return "", 204
+        from backend.dma_nvic_engine import dma_nvic_engine
+        payload = request.get_json(silent=True) or {}
+        mcu = payload.get("mcu_target", "STM32F401RE")
+        prio_grp = int(payload.get("priority_group", 3))
+        irqs = payload.get("trigger_interrupts")
+        dma_m = payload.get("dma_mode", "CIRCULAR_BUFFER")
+        d_width = int(payload.get("data_width_bytes", 2))
+        buf_size = int(payload.get("buffer_size_items", 512))
+        clk_mhz = float(payload.get("core_clock_mhz", 84.0))
+        conc_cpu = bool(payload.get("enable_concurrent_cpu", True))
+        student = payload.get("student_id", "2023MITEC042")
+
+        res = dma_nvic_engine.simulate_nvic_and_dma(
+            mcu_key=mcu, priority_group=prio_grp, trigger_interrupts=irqs,
+            dma_mode=dma_m, data_width_bytes=d_width, buffer_size_items=buf_size,
+            core_clock_mhz=clk_mhz, enable_concurrent_cpu=conc_cpu, student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/dma-nvic/presets", methods=["GET"])
+    def dma_nvic_presets_endpoint():
+        from backend.dma_nvic_engine import dma_nvic_engine
+        return jsonify({
+            "mcus": dma_nvic_engine.get_available_mcus(),
+            "interrupts": dma_nvic_engine.get_interrupt_catalog()
+        }), 200
+
+    @app.route("/api/dma-nvic/history", methods=["GET"])
+    def dma_nvic_history_endpoint():
+        from backend.dma_nvic_engine import dma_nvic_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(dma_nvic_engine.get_simulation_history(limit=limit)), 200
+
+    @app.route("/api/dma-nvic/export-csv", methods=["GET"])
+    def dma_nvic_export_csv_endpoint():
+        from backend.dma_nvic_engine import dma_nvic_engine
+        mcu = request.args.get("mcu_target", "STM32F401RE")
+        csv_data = dma_nvic_engine.export_dma_csv(mcu_key=mcu)
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_dma_nvic_timeline.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -5114,6 +5162,28 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_bus_protocol_traces.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/dma-nvic/presets":
+                from backend.dma_nvic_engine import dma_nvic_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({
+                    "mcus": dma_nvic_engine.get_available_mcus(),
+                    "interrupts": dma_nvic_engine.get_interrupt_catalog()
+                }).encode("utf-8"))
+            elif parsed.path == "/api/dma-nvic/history":
+                from backend.dma_nvic_engine import dma_nvic_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(dma_nvic_engine.get_simulation_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/dma-nvic/export-csv":
+                from backend.dma_nvic_engine import dma_nvic_engine
+                mcu = params.get("mcu_target", ["STM32F401RE"])[0]
+                csv_str = dma_nvic_engine.export_dma_csv(mcu_key=mcu)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_dma_nvic_timeline.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -5959,6 +6029,25 @@ else:
                         device_name=dev,
                         student_id=student
                     )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/dma-nvic/simulate":
+                from backend.dma_nvic_engine import dma_nvic_engine
+                mcu = payload.get("mcu_target", "STM32F401RE")
+                prio_grp = int(payload.get("priority_group", 3))
+                irqs = payload.get("trigger_interrupts")
+                dma_m = payload.get("dma_mode", "CIRCULAR_BUFFER")
+                d_width = int(payload.get("data_width_bytes", 2))
+                buf_size = int(payload.get("buffer_size_items", 512))
+                clk_mhz = float(payload.get("core_clock_mhz", 84.0))
+                conc_cpu = bool(payload.get("enable_concurrent_cpu", True))
+                student = payload.get("student_id", "2023MITEC042")
+
+                res = dma_nvic_engine.simulate_nvic_and_dma(
+                    mcu_key=mcu, priority_group=prio_grp, trigger_interrupts=irqs,
+                    dma_mode=dma_m, data_width_bytes=d_width, buffer_size_items=buf_size,
+                    core_clock_mhz=clk_mhz, enable_concurrent_cpu=conc_cpu, student_id=student
+                )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
