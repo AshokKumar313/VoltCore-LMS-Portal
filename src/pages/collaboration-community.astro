@@ -1,0 +1,98 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import CollaborationCommunityHub from '../components/CollaborationCommunityHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase M: Collaboration & Community Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 331–340:
+ *   - Feature 331: Student Discussion Forums (ECE Topics, Threads, Upvoting, Solution Marking)
+ *   - Feature 332: Subject-Wise Question Community (Anna Univ Reg 2023 Core Codes)
+ *   - Feature 333: Study Group Creator (Virtual rooms, schedules, peer join/leave)
+ *   - Feature 334: Collaborative Notes Workspace (Markdown notes, revision tags, export)
+ *   - Feature 335: Peer Assignment Review (Rubric-based evaluation, weighted scoring)
+ *   - Feature 336: Project Team Discussion Board (Channels, sprint tasks, status boards)
+ *   - Feature 337: Faculty Doubt-Clearing Portal (Direct query to professors, priority queues)
+ *   - Feature 338: Shared Resource Library (SPICE netlists, Verilog TB, MATLAB, notes)
+ *   - Feature 339: Student Knowledge Contribution Points (Karma, badges, leaderboard)
+ *   - Feature 340: Academic Announcement Feed (Anna University & MIT Campus circulars)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Collaboration & Community Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Peer Study Groups, Rubric Reviews & Faculty Doubt Portals"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="collaboration-community">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-cyan-500 via-purple-500 to-indigo-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-cyan-400">
+              🤝
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-cyan-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                Phase M • Features 331–340
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                AU Reg 2023 ECE
+              </span>
+              <span class="text-xs text-slate-400">
+                Lead: <strong class="text-slate-200">{pageMetadata.lead} ({pageMetadata.rollNo})</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Collaboration & Community Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                v1.0-LIVE
+              </span>
+            </h1>
+            <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Integrated peer discussion forums, subject-wise Anna University communities, rubric-based peer assignment reviews, collaborative notes, faculty doubt portals, and knowledge contribution karma points.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            Peer Study Groups & Rooms
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            Rubric Peer Reviews (40/35/25)
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            Faculty Doubts & Office Hours
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <CollaborationCommunityHub client:load />
+
+  </div>
+</MainLayout>
