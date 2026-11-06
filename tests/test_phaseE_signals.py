@@ -232,3 +232,20 @@ def test_persistence_methods(engine):
     sims = engine.get_simulations("2023MITEC042")
     assert len(sims) >= 1
     assert sims[0]["operation_type"] == "SAMPLING_ANALYSIS"
+
+    # Test modulation experiment persistence
+    exp = engine.save_modulation_experiment(
+        student_id="2023MITEC042",
+        mod_type="FM_WBFM",
+        carrier_freq_hz=100000.0,
+        message_freq_hz=1000.0,
+        bandwidth_hz=6000.0,
+        modulation_index=2.0
+    )
+    assert exp["status"] == "success"
+    assert exp["experiment_id"] > 0
+
+    experiments = engine.get_modulation_experiments("2023MITEC042")
+    assert len(experiments) >= 1
+    assert experiments[0]["mod_type"] == "FM_WBFM"
+

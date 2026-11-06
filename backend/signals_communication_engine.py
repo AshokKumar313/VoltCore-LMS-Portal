@@ -707,3 +707,57 @@ class SignalsCommunicationEngine:
                 return results
             finally:
                 conn.close()
+
+    def save_modulation_experiment(
+        self,
+        student_id: str,
+        mod_type: str,
+        carrier_freq_hz: float,
+        message_freq_hz: float,
+        bandwidth_hz: float,
+        modulation_index: float
+    ) -> Dict[str, Any]:
+        """Record a modulation experiment to SQLite WAL ledger."""
+        with self._lock:
+            conn = self._get_connection()
+            try:
+                now = datetime.now(timezone.utc).isoformat()
+                cur = conn.execute("""
+                    INSERT INTO modulation_experiments (student_id, mod_type, carrier_freq_hz, message_freq_hz, bandwidth_hz, modulation_index, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    student_id,
+                    mod_type,
+                    carrier_freq_hz,
+                    message_freq_hz,
+                    bandwidth_hz,
+                    modulation_index,
+                    now
+                ))
+                conn.commit()
+                return {
+                    "status": "success",
+                    "experiment_id": cur.lastrowid,
+                    "student_id": student_id,
+                    "mod_type": mod_type,
+                    "created_at": now
+                }
+            finally:
+                conn.close()
+
+    def get_modulation_experiments(self, student_id: str = "2023MITEC042", limit: int = 10) -> List[Dict[str, Any]]:
+        """Retrieve recent modulation experiments for a student."""
+        with self._lock:
+            conn = self._get_connection()
+            try:
+                cur = conn.execute("""
+                    SELECT id, student_id, mod_type, carrier_freq_hz, message_freq_hz, bandwidth_hz, modulation_index, created_at
+                    FROM modulation_experiments
+                    WHERE student_id = ?
+                    ORDER BY id DESC
+                    LIMIT ?
+                """, (student_id, limit))
+                return [dict(row) for row in cur.fetchall()]
+            finally:
+                conn.close()
+

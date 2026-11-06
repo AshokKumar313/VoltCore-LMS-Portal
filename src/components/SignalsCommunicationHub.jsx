@@ -275,6 +275,59 @@ export default function SignalsCommunicationHub() {
     };
   }, [digitalSnrDb]);
 
+  // Transformed Wave Points
+  const transformWave = useMemo(() => {
+    const origPts = [];
+    const transPts = [];
+    for (let i = 0; i <= 100; i++) {
+      const t = (i / 100) * 2.0 - 1.0; // -1.0 to +1.0 s
+      const origVal = Math.max(0, 1.0 - Math.abs(t) / 0.5);
+      const tArg = (timeReversed ? -1 : 1) * (timeScaleA * t - timeShiftT0);
+      const transVal = Math.max(0, 1.0 - Math.abs(tArg) / 0.5);
+      origPts.push({ t, val: origVal });
+      transPts.push({ t, val: transVal });
+    }
+    return { origPts, transPts };
+  }, [timeScaleA, timeShiftT0, timeReversed]);
+
+  // Discrete Stem Points
+  const stemPoints = useMemo(() => {
+    const pts = [];
+    const omega = 2 * Math.PI * (analogFreq / samplingRateFs);
+    for (let n = 0; n < 24; n++) {
+      const val = Math.cos(omega * n);
+      pts.push({ n, val });
+    }
+    return pts;
+  }, [analogFreq, samplingRateFs]);
+
+  // Modulated Analog Waveform
+  const modWaveform = useMemo(() => {
+    const pts = [];
+    const ac = modCarrierAmp;
+    const am = modMessageAmp;
+    const fc = 40.0;
+    const fm = 4.0;
+    const m = am / ac;
+    const kf = modKf / 150.0;
+
+    for (let i = 0; i <= 150; i++) {
+      const t = (i / 150.0) * 0.5;
+      let y = 0;
+      let env = ac;
+      if (analogModType === "AM") {
+        env = Math.max(0, ac * (1 + m * Math.cos(2 * Math.PI * fm * t)));
+        y = env * Math.cos(2 * Math.PI * fc * t);
+      } else {
+        const phase = 2 * Math.PI * fc * t + (kf * am / fm) * Math.sin(2 * Math.PI * fm * t);
+        y = ac * Math.cos(phase);
+        env = ac;
+      }
+      pts.push({ t, y, env });
+    }
+    return pts;
+  }, [analogModType, modCarrierAmp, modMessageAmp, modKf]);
+
   const handleSaveExperiment = () => {
     setSaveStatus("Saved signal experiment to SQLite WAL ledger!");
     setTimeout(() => setSaveStatus(""), 4000);
@@ -588,6 +641,41 @@ export default function SignalsCommunicationHub() {
                     {timeReversed && "Step 3: Reflect across vertical axis t = 0."}
                   </div>
                 </div>
+
+                {/* SVG Visualizer for Original vs Transformed Waveform */}
+                <div className="h-36 bg-slate-950 rounded-xl border border-slate-800 p-2 relative overflow-hidden">
+                  <svg className="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+                    <line x1="0" y1="90" x2="300" y2="90" stroke="#334155" strokeWidth="1" />
+                    <line x1="150" y1="0" x2="150" y2="100" stroke="#334155" strokeWidth="1" />
+                    {/* Original Wave x(t) */}
+                    <path
+                      d={transformWave.origPts.map((pt, idx) => {
+                        const x = ((pt.t + 1.0) / 2.0) * 300;
+                        const y = 90 - pt.val * 75;
+                        return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+                      }).join(" ")}
+                      fill="none"
+                      stroke="#475569"
+                      strokeWidth="2"
+                      strokeDasharray="4 3"
+                    />
+                    {/* Transformed Wave y(t) */}
+                    <path
+                      d={transformWave.transPts.map((pt, idx) => {
+                        const x = ((pt.t + 1.0) / 2.0) * 300;
+                        const y = 90 - pt.val * 75;
+                        return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+                      }).join(" ")}
+                      fill="none"
+                      stroke="#818CF8"
+                      strokeWidth="2.5"
+                    />
+                  </svg>
+                  <div className="absolute top-2 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 flex gap-2">
+                    <span className="text-slate-500">--- x(t)</span>
+                    <span className="text-indigo-400">― y(t)</span>
+                  </div>
+                </div>
               </div>
 
               {/* Feature 254: Continuous vs Discrete Signals */}
@@ -638,6 +726,26 @@ export default function SignalsCommunicationHub() {
                   <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
                     <span className="text-[10px] text-slate-400 uppercase block">Fundamental N</span>
                     <span className="text-base font-bold text-emerald-400">{discretePeriod.n} samples</span>
+                  </div>
+                </div>
+
+                {/* SVG Discrete Stem Plot */}
+                <div className="h-32 bg-slate-950 rounded-xl border border-slate-800 p-2 relative overflow-hidden">
+                  <svg className="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
+                    <line x1="0" y1="40" x2="300" y2="40" stroke="#334155" strokeWidth="1" />
+                    {stemPoints.map((pt, idx) => {
+                      const x = (idx / 23) * 280 + 10;
+                      const y = 40 - pt.val * 30;
+                      return (
+                        <g key={idx}>
+                          <line x1={x} y1="40" x2={x} y2={y} stroke="#10B981" strokeWidth="1.5" />
+                          <circle cx={x} cy={y} r="3" fill="#34D399" />
+                        </g>
+                      );
+                    })}
+                  </svg>
+                  <div className="absolute top-1 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
+                    Discrete Stem Samples x[n] = cos(ωn)
                   </div>
                 </div>
 
@@ -868,6 +976,41 @@ export default function SignalsCommunicationHub() {
                     </span>
                   </div>
                 </div>
+
+                {/* SVG Frequency Spectrum Visualizer */}
+                <div className="h-32 bg-slate-950 rounded-xl border border-slate-800 p-2 relative overflow-hidden">
+                  <svg className="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
+                    <line x1="0" y1="70" x2="300" y2="70" stroke="#334155" strokeWidth="1" />
+                    {/* Nyquist folding boundary (fs/2) */}
+                    <line x1="150" y1="10" x2="150" y2="70" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="3 3" />
+                    {/* Original Signal Peak */}
+                    <line
+                      x1={Math.min(290, Math.max(10, (sampleSignalFreq / (sampleFs || 1)) * 300))}
+                      y1="70"
+                      x2={Math.min(290, Math.max(10, (sampleSignalFreq / (sampleFs || 1)) * 300))}
+                      y2="20"
+                      stroke="#818CF8"
+                      strokeWidth="3"
+                    />
+                    {/* Alias Tone Peak if Aliasing */}
+                    {samplingAnalysis.isAliased && (
+                      <line
+                        x1={Math.min(290, Math.max(10, (parseFloat(samplingAnalysis.aliasFreq) / (sampleFs || 1)) * 300))}
+                        y1="70"
+                        x2={Math.min(290, Math.max(10, (parseFloat(samplingAnalysis.aliasFreq) / (sampleFs || 1)) * 300))}
+                        y2="30"
+                        stroke="#F43F5E"
+                        strokeWidth="2.5"
+                        strokeDasharray="4 2"
+                      />
+                    )}
+                  </svg>
+                  <div className="absolute top-1 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800 flex gap-2">
+                    <span className="text-indigo-400">| f_sig</span>
+                    <span className="text-amber-400">: fs/2</span>
+                    {samplingAnalysis.isAliased && <span className="text-rose-400">| f_alias</span>}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -937,6 +1080,41 @@ export default function SignalsCommunicationHub() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Operating State:</span>
                     <span className="text-emerald-400 font-bold">{analogMod.state}</span>
+                  </div>
+                </div>
+
+                {/* SVG Modulated Waveform Plot */}
+                <div className="h-32 bg-slate-950 rounded-xl border border-slate-800 p-2 relative overflow-hidden">
+                  <svg className="w-full h-full" viewBox="0 0 300 80" preserveAspectRatio="none">
+                    <line x1="0" y1="40" x2="300" y2="40" stroke="#334155" strokeWidth="1" />
+                    {/* Carrier wave */}
+                    <path
+                      d={modWaveform.map((pt, idx) => {
+                        const x = (idx / 150) * 300;
+                        const y = 40 - (pt.y / 25.0) * 35;
+                        return `${idx === 0 ? "M" : "L"} ${x} ${Math.max(5, Math.min(75, y))}`;
+                      }).join(" ")}
+                      fill="none"
+                      stroke="#818CF8"
+                      strokeWidth="1.5"
+                    />
+                    {/* AM Envelope */}
+                    {analogModType === "AM" && (
+                      <path
+                        d={modWaveform.map((pt, idx) => {
+                          const x = (idx / 150) * 300;
+                          const y = 40 - (pt.env / 25.0) * 35;
+                          return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
+                        }).join(" ")}
+                        fill="none"
+                        stroke="#F59E0B"
+                        strokeWidth="1"
+                        strokeDasharray="3 2"
+                      />
+                    )}
+                  </svg>
+                  <div className="absolute top-1 right-2 text-[10px] font-mono text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-800">
+                    {analogModType === "AM" ? "AM Carrier & Envelope" : "FM Instantaneous Frequency"}
                   </div>
                 </div>
               </div>
