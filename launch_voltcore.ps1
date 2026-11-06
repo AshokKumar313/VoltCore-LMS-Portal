@@ -26,3 +26,4 @@ Write-Host "  ALL SYSTEMS OPERATIONAL!" -ForegroundColor Green
 Write-Host "  - Web Portal:   http://localhost:4321" -ForegroundColor White
 Write-Host "  - REST Gateway: http://localhost:5000" -ForegroundColor White
 Write-Host "===============================================================================" -ForegroundColor Cyan
+

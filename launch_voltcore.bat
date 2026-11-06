@@ -29,3 +29,4 @@ echo   - REST Gateway:    http://localhost:5000
 echo   Leave the two terminal windows running while using the portal.
 echo ===============================================================================
 pause
+

@@ -24,6 +24,28 @@ export default {
           cyan: '#00D8F6',
           purple: '#9D4EDD',
           amber: '#FFB703',
+        },
+        olive: {
+          950: '#12180C',
+          900: '#1C2612',
+          800: '#2A3A1C',
+          700: '#3D5228',
+          600: '#547037',
+          500: '#6E9248',
+          400: '#8AB45C',
+          300: '#ABCF80',
+          accent: '#84A950',
+        },
+        mustard: {
+          950: '#211704',
+          900: '#362507',
+          800: '#52390B',
+          700: '#785311',
+          600: '#A37117',
+          500: '#CF8F1E',
+          400: '#E5A93C',
+          300: '#F5C56B',
+          accent: '#FFC83B',
         }
       },
       fontFamily: {
@@ -35,6 +57,9 @@ export default {
         'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
         'emerald-glow': '0 0 30px rgba(0, 240, 181, 0.22)',
         'cyber-glow': '0 0 25px rgba(0, 216, 246, 0.25)',
+        'olive-glow': '0 0 30px rgba(110, 146, 72, 0.32)',
+        'mustard-glow': '0 0 30px rgba(229, 169, 60, 0.32)',
+        'jewel-glow': '0 0 35px rgba(207, 143, 30, 0.25)',
       },
       backgroundImage: {
         'radial-gradient': 'radial-gradient(circle at 50% 0%, rgba(0, 240, 181, 0.12) 0%, rgba(2, 8, 19, 0) 70%)',

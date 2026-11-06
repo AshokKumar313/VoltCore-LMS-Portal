@@ -2,6 +2,7 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import WokwiSandbox from '../components/WokwiSandbox.astro';
 import XPProgressionWidget from '../components/XPProgressionWidget.jsx';
+import EceCourseworkGrid from '../components/EceCourseworkGrid.jsx';
 
 // Student Profile Constants for MIT Campus, Anna University
 const student = {
@@ -30,10 +31,11 @@ const student = {
         <div class="max-w-2xl space-y-3">
           
           <div class="flex flex-wrap items-center gap-2">
-            <span class="px-3 py-1 rounded-full bg-[#00693E]/60 border border-[#00F0B5]/40 text-[#00F0B5] text-xs font-mono font-bold tracking-wider uppercase">
-              Anna University R2021 Regulation
+            <span class="jewel-badge-olive">
+              <span class="h-1.5 w-1.5 rounded-full bg-olive-400 animate-pulse"></span>
+              Anna University ECE R2023
             </span>
-            <span class="px-2.5 py-1 rounded-full bg-[#020813] border border-slate-700 text-slate-300 text-xs font-mono">
+            <span class="jewel-badge-mustard">
               MIT Campus Chromepet
             </span>
             <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[#00F0B5] text-xs font-mono">
@@ -107,6 +109,11 @@ const student = {
 
       </div>
     </div>
+  </section>
+
+  <!-- Section: ECE Coursework Grid & Live Assessment Center (Phase 31) -->
+  <section class="mb-12">
+    <EceCourseworkGrid client:load />
   </section>
 
   <!-- Section: Real-Time XP & Curriculum Modules Progression Widget -->

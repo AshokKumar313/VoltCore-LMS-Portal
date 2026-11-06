@@ -4126,6 +4126,91 @@ if HAS_FLASK:
         from backend.component_inspector_engine import component_inspector_engine
         return jsonify(component_inspector_engine.get_catalogs()), 200
 
+    # ====================================================================================
+    # Phase 31: ECE Coursework Assessment & Telemetry Verification Endpoints
+    # ====================================================================================
+
+    @app.route("/api/assessment/verify-logic", methods=["POST", "OPTIONS"])
+    def assessment_verify_logic_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.ece_assignment_engine import ece_assignment_engine
+        payload = request.get_json(silent=True) or {}
+        circuit_type = payload.get("circuit_type", "FULL_ADDER")
+        code_str = payload.get("code_or_expression", "")
+        student_id = payload.get("student_id", "2023MITEC042")
+        res = ece_assignment_engine.verify_combinational_logic(circuit_type, code_str, student_id=student_id)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/assessment/verify-debounce", methods=["POST", "OPTIONS"])
+    def assessment_verify_debounce_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.ece_assignment_engine import ece_assignment_engine
+        payload = request.get_json(silent=True) or {}
+        code_str = payload.get("code", "")
+        sampling = float(payload.get("sampling_period_ms", 5.0))
+        threshold = float(payload.get("debounce_threshold_ms", 30.0))
+        student_id = payload.get("student_id", "2023MITEC042")
+        res = ece_assignment_engine.verify_button_debouncing(code_str, sampling, threshold, student_id=student_id)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/assessment/verify-timing", methods=["POST", "OPTIONS"])
+    def assessment_verify_timing_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.ece_assignment_engine import ece_assignment_engine
+        payload = request.get_json(silent=True) or {}
+        code_str = payload.get("code", "")
+        student_id = payload.get("student_id", "2023MITEC042")
+        res = ece_assignment_engine.verify_non_blocking_timing(code_str, student_id=student_id)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/assessment/verify-ir-interrupt", methods=["POST", "OPTIONS"])
+    def assessment_verify_ir_interrupt_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.ece_assignment_engine import ece_assignment_engine
+        payload = request.get_json(silent=True) or {}
+        code_str = payload.get("code", "")
+        student_id = payload.get("student_id", "2023MITEC042")
+        res = ece_assignment_engine.verify_ir_proximity_interrupt(code_str, student_id=student_id)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/assessment/history", methods=["GET"])
+    def assessment_history_endpoint():
+        from backend.ece_assignment_engine import ece_assignment_engine
+        student_id = request.args.get("student_id", "2023MITEC042")
+        limit = int(request.args.get("limit", 20))
+        return jsonify(ece_assignment_engine.get_student_assessment_history(student_id=student_id, limit=limit)), 200
+
+    @app.route("/api/assessment/telemetry", methods=["GET"])
+    def assessment_telemetry_endpoint():
+        from backend.ece_assignment_engine import ece_assignment_engine
+        exp_type = request.args.get("experiment_type")
+        limit = int(request.args.get("limit", 25))
+        return jsonify(ece_assignment_engine.get_telemetry_logs(experiment_type=exp_type, limit=limit)), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4579,6 +4664,18 @@ else:
                 from backend.component_inspector_engine import component_inspector_engine
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(component_inspector_engine.get_catalogs()).encode("utf-8"))
+            elif parsed.path == "/api/assessment/history":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                student_id = params.get("student_id", ["2023MITEC042"])[0]
+                limit = int(params.get("limit", [20])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_assignment_engine.get_student_assessment_history(student_id=student_id, limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/assessment/telemetry":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                exp_type = params.get("experiment_type", [None])[0]
+                limit = int(params.get("limit", [25])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ece_assignment_engine.get_telemetry_logs(experiment_type=exp_type, limit=limit)).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -5239,6 +5336,41 @@ else:
                 res = component_inspector_engine.evaluate_ic_thermal_dissipation(
                     pkg, pwr, amb, theta_ja_custom=th_ja, target_max_tj_c=target_tj, actor_id=actor
                 )
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/assessment/verify-logic":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                circuit_type = payload.get("circuit_type", "FULL_ADDER")
+                code_str = payload.get("code_or_expression", "")
+                student_id = payload.get("student_id", "2023MITEC042")
+                res = ece_assignment_engine.verify_combinational_logic(circuit_type, code_str, student_id=student_id)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/assessment/verify-debounce":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                code_str = payload.get("code", "")
+                sampling = float(payload.get("sampling_period_ms", 5.0))
+                threshold = float(payload.get("debounce_threshold_ms", 30.0))
+                student_id = payload.get("student_id", "2023MITEC042")
+                res = ece_assignment_engine.verify_button_debouncing(code_str, sampling, threshold, student_id=student_id)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/assessment/verify-timing":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                code_str = payload.get("code", "")
+                student_id = payload.get("student_id", "2023MITEC042")
+                res = ece_assignment_engine.verify_non_blocking_timing(code_str, student_id=student_id)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/assessment/verify-ir-interrupt":
+                from backend.ece_assignment_engine import ece_assignment_engine
+                code_str = payload.get("code", "")
+                student_id = payload.get("student_id", "2023MITEC042")
+                res = ece_assignment_engine.verify_ir_proximity_interrupt(code_str, student_id=student_id)
                 code = 200 if res.get("status") == "SUCCESS" else 400
                 self._set_cors_headers(code)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
