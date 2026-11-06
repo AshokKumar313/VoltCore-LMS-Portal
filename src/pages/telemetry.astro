@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import LiveTelemetryStream from '../components/LiveTelemetryStream.jsx';
+import IoTSensorSimulatorHub from '../components/IoTSensorSimulatorHub.jsx';
 ---
 
 <MainLayout
@@ -8,7 +9,7 @@ import LiveTelemetryStream from '../components/LiveTelemetryStream.jsx';
   description="Real-time Server-Sent Events (SSE) telemetry gateway streaming ESP32 RFID scans, student XP dispatches, fleet heartbeats, and TinyML vibration anomalies."
   activeNav="telemetry"
 >
-  <div class="space-y-6">
+  <div class="space-y-8">
     <!-- Breadcrumb & Header -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800 text-xs font-mono">
       <div class="flex items-center gap-2 text-slate-400">
@@ -16,17 +17,27 @@ import LiveTelemetryStream from '../components/LiveTelemetryStream.jsx';
         <span>/</span>
         <span class="text-[#00F0B5]">Hardware Telemetry</span>
         <span>/</span>
-        <span class="text-slate-500">Live SSE Stream</span>
+        <span class="text-slate-500">Live SSE Stream &amp; Sensor Simulator</span>
       </div>
       <div class="flex items-center gap-3">
+        <span class="jewel-badge-olive">
+          Anna University ECE R2023
+        </span>
         <span class="px-2.5 py-1 rounded bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30">
-          SSE Port 5000 /api/telemetry/stream
+          REST Port 5000 /api/sensor-sim
         </span>
       </div>
     </div>
 
+    <!-- Interactive IoT Sensor Telemetry Simulator (Phase 32) -->
+    <section>
+      <IoTSensorSimulatorHub client:load />
+    </section>
+
     <!-- Live Telemetry Stream React Component -->
-    <LiveTelemetryStream client:load />
+    <section class="pt-6 border-t border-slate-800">
+      <LiveTelemetryStream client:load />
+    </section>
   </div>
 </MainLayout>
 

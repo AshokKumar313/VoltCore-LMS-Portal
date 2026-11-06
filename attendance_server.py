@@ -4211,6 +4211,94 @@ if HAS_FLASK:
         limit = int(request.args.get("limit", 25))
         return jsonify(ece_assignment_engine.get_telemetry_logs(experiment_type=exp_type, limit=limit)), 200
 
+    # ====================================================================================
+    # Phase 32: IoT Sensor Telemetry Simulator Endpoints (Zero Polling Loops)
+    # ====================================================================================
+
+    @app.route("/api/sensor-sim/generate", methods=["POST", "OPTIONS"])
+    def sensor_sim_generate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        payload = request.get_json(silent=True) or {}
+        count = int(payload.get("burst_count", 1))
+        node_id = payload.get("node_id", "ESP32_LAB304_DHT22_IR")
+        student_id = payload.get("student_id", "2023MITEC042")
+        baseline_temp = float(payload.get("baseline_temp_c", 27.5))
+        baseline_hum = float(payload.get("baseline_humidity_pct", 58.0))
+        trigger_ir = bool(payload.get("trigger_ir_event", False))
+
+        if count > 1:
+            res = iot_sensor_simulator_engine.generate_burst_readings(
+                count=count, node_id=node_id, student_id=student_id,
+                baseline_temp_c=baseline_temp, baseline_humidity_pct=baseline_hum
+            )
+            return jsonify({"status": "SUCCESS", "count": len(res), "readings": res}), 200
+        else:
+            res = iot_sensor_simulator_engine.generate_simulated_reading(
+                node_id=node_id, student_id=student_id,
+                baseline_temp_c=baseline_temp, baseline_humidity_pct=baseline_hum,
+                trigger_ir_event=trigger_ir
+            )
+            return jsonify(res), 200
+
+    @app.route("/api/sensor-sim/ingest", methods=["POST", "OPTIONS"])
+    def sensor_sim_ingest_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        payload = request.get_json(silent=True) or {}
+        res = iot_sensor_simulator_engine.ingest_custom_reading(payload)
+        code = 200 if res.get("status") == "SUCCESS" else 400
+        return jsonify(res), code
+
+    @app.route("/api/sensor-sim/readings", methods=["GET"])
+    def sensor_sim_readings_endpoint():
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        node_id = request.args.get("node_id")
+        limit = int(request.args.get("limit", 30))
+        offset = int(request.args.get("offset", 0))
+        return jsonify(iot_sensor_simulator_engine.get_telemetry_readings(node_id=node_id, limit=limit, offset=offset)), 200
+
+    @app.route("/api/sensor-sim/stats", methods=["GET"])
+    def sensor_sim_stats_endpoint():
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        node_id = request.args.get("node_id")
+        return jsonify(iot_sensor_simulator_engine.get_telemetry_statistics(node_id=node_id)), 200
+
+    @app.route("/api/sensor-sim/export-csv", methods=["GET"])
+    def sensor_sim_export_csv_endpoint():
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        node_id = request.args.get("node_id")
+        limit = int(request.args.get("limit", 500))
+        csv_data = iot_sensor_simulator_engine.export_telemetry_csv(node_id=node_id, limit=limit)
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_sensor_telemetry.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
+    @app.route("/api/sensor-sim/clear", methods=["POST", "OPTIONS"])
+    def sensor_sim_clear_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+        payload = request.get_json(silent=True) or {}
+        node_id = payload.get("node_id")
+        return jsonify(iot_sensor_simulator_engine.clear_simulated_readings(node_id=node_id)), 200
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4676,6 +4764,29 @@ else:
                 limit = int(params.get("limit", [25])[0])
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(ece_assignment_engine.get_telemetry_logs(experiment_type=exp_type, limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/readings":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                node_id = params.get("node_id", [None])[0]
+                limit = int(params.get("limit", [30])[0])
+                offset = int(params.get("offset", [0])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_sensor_simulator_engine.get_telemetry_readings(node_id=node_id, limit=limit, offset=offset)).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/stats":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                node_id = params.get("node_id", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(iot_sensor_simulator_engine.get_telemetry_statistics(node_id=node_id)).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/export-csv":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                node_id = params.get("node_id", [None])[0]
+                limit = int(params.get("limit", [500])[0])
+                csv_str = iot_sensor_simulator_engine.export_telemetry_csv(node_id=node_id, limit=limit)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_sensor_telemetry.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -5373,6 +5484,42 @@ else:
                 res = ece_assignment_engine.verify_ir_proximity_interrupt(code_str, student_id=student_id)
                 code = 200 if res.get("status") == "SUCCESS" else 400
                 self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/generate":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                count = int(payload.get("burst_count", 1))
+                node_id = payload.get("node_id", "ESP32_LAB304_DHT22_IR")
+                student_id = payload.get("student_id", "2023MITEC042")
+                baseline_temp = float(payload.get("baseline_temp_c", 27.5))
+                baseline_hum = float(payload.get("baseline_humidity_pct", 58.0))
+                trigger_ir = bool(payload.get("trigger_ir_event", False))
+
+                if count > 1:
+                    res = iot_sensor_simulator_engine.generate_burst_readings(
+                        count=count, node_id=node_id, student_id=student_id,
+                        baseline_temp_c=baseline_temp, baseline_humidity_pct=baseline_hum
+                    )
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "count": len(res), "readings": res}).encode("utf-8"))
+                else:
+                    res = iot_sensor_simulator_engine.generate_simulated_reading(
+                        node_id=node_id, student_id=student_id,
+                        baseline_temp_c=baseline_temp, baseline_humidity_pct=baseline_hum,
+                        trigger_ir_event=trigger_ir
+                    )
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/ingest":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                res = iot_sensor_simulator_engine.ingest_custom_reading(payload)
+                code = 200 if res.get("status") == "SUCCESS" else 400
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/sensor-sim/clear":
+                from backend.iot_sensor_simulator_engine import iot_sensor_simulator_engine
+                node_id = payload.get("node_id")
+                res = iot_sensor_simulator_engine.clear_simulated_readings(node_id=node_id)
+                self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
                 self._set_cors_headers(404)
