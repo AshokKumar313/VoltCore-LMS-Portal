@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import DigitalElectronicsHub from '../components/DigitalElectronicsHub.jsx';
+import FpgaSynthesisHub from '../components/FpgaSynthesisHub.jsx';
 
 // Digital Electronics Learning Center Metadata
 const digitalMetadata = {
@@ -72,6 +73,9 @@ const digitalMetadata = {
 
     <!-- Interactive Digital Electronics Hub Island -->
     <DigitalElectronicsHub client:load />
+
+    <!-- Phase 35: Interactive FPGA VHDL/Verilog Synthesis & Logic Analyzer Simulator -->
+    <FpgaSynthesisHub client:load />
 
     <!-- Academic Standards & Digital Systems Taxonomy -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

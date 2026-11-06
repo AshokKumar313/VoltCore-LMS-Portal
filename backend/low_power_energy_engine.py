@@ -449,3 +449,4 @@ class LowPowerEnergyEngine:
 
 # Singleton Instance
 low_power_energy_engine = LowPowerEnergyEngine()
+

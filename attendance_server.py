@@ -4419,6 +4419,74 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    @app.route("/api/fpga/synthesize", methods=["POST", "OPTIONS"])
+    def fpga_synthesize_endpoint():
+        if request.method == "OPTIONS":
+            return "", 204
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        payload = request.get_json(silent=True) or {}
+        target = payload.get("target_fpga", "XILINX_ARTIX7_XC7A35T")
+        mod = payload.get("module_key", "CLOCK_DIVIDER_COUNTER")
+        hdl = payload.get("hdl_type", "VERILOG")
+        clk = float(payload.get("target_clock_mhz", 100.0))
+        student = payload.get("student_id", "2023MITEC042")
+        res = fpga_synthesis_engine.synthesize_module(
+            target_fpga=target, module_key=mod, hdl_type=hdl,
+            target_clock_mhz=clk, student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/fpga/generate-traces", methods=["POST", "OPTIONS"])
+    def fpga_generate_traces_endpoint():
+        if request.method == "OPTIONS":
+            return "", 204
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        payload = request.get_json(silent=True) or {}
+        mod = payload.get("module_key", "CLOCK_DIVIDER_COUNTER")
+        cycles = int(payload.get("cycles", 32))
+        clk_ns = float(payload.get("clock_period_ns", 10.0))
+        synth_id = payload.get("synthesis_id")
+        res = fpga_synthesis_engine.generate_logic_analyzer_traces(
+            module_key=mod, cycles=cycles, clk_period_ns=clk_ns, synthesis_id=synth_id
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/fpga/targets", methods=["GET"])
+    def fpga_targets_endpoint():
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        return jsonify(fpga_synthesis_engine.get_available_targets()), 200
+
+    @app.route("/api/fpga/modules", methods=["GET"])
+    def fpga_modules_endpoint():
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        return jsonify(fpga_synthesis_engine.get_available_modules()), 200
+
+    @app.route("/api/fpga/source", methods=["GET"])
+    def fpga_source_endpoint():
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        mod = request.args.get("module_key", "CLOCK_DIVIDER_COUNTER")
+        hdl = request.args.get("hdl_type", "VERILOG")
+        return jsonify(fpga_synthesis_engine.get_module_source(mod, hdl)), 200
+
+    @app.route("/api/fpga/history", methods=["GET"])
+    def fpga_history_endpoint():
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(fpga_synthesis_engine.get_synthesis_history(limit=limit)), 200
+
+    @app.route("/api/fpga/export-csv", methods=["GET"])
+    def fpga_export_csv_endpoint():
+        from backend.fpga_synthesis_engine import fpga_synthesis_engine
+        mod = request.args.get("module_key", "CLOCK_DIVIDER_COUNTER")
+        cycles = int(request.args.get("cycles", 32))
+        clk_ns = float(request.args.get("clock_period_ns", 10.0))
+        csv_data = fpga_synthesis_engine.export_traces_csv(module_key=mod, cycles=cycles, clk_period_ns=clk_ns)
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_logic_analyzer_traces.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4932,6 +5000,37 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_energy_profiles.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/fpga/targets":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(fpga_synthesis_engine.get_available_targets()).encode("utf-8"))
+            elif parsed.path == "/api/fpga/modules":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(fpga_synthesis_engine.get_available_modules()).encode("utf-8"))
+            elif parsed.path == "/api/fpga/source":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                mod = params.get("module_key", ["CLOCK_DIVIDER_COUNTER"])[0]
+                hdl = params.get("hdl_type", ["VERILOG"])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(fpga_synthesis_engine.get_module_source(mod, hdl)).encode("utf-8"))
+            elif parsed.path == "/api/fpga/history":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(fpga_synthesis_engine.get_synthesis_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/fpga/export-csv":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                mod = params.get("module_key", ["CLOCK_DIVIDER_COUNTER"])[0]
+                cycles = int(params.get("cycles", [32])[0])
+                clk_ns = float(params.get("clock_period_ns", [10.0])[0])
+                csv_str = fpga_synthesis_engine.export_traces_csv(module_key=mod, cycles=cycles, clk_period_ns=clk_ns)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_logic_analyzer_traces.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -5714,6 +5813,30 @@ else:
                 eff = float(payload.get("battery_efficiency", 0.85))
                 res = low_power_energy_engine.generate_discharge_curve(
                     battery_key=bat, avg_current_ma=current, battery_efficiency=eff
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/fpga/synthesize":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                target = payload.get("target_fpga", "XILINX_ARTIX7_XC7A35T")
+                mod = payload.get("module_key", "CLOCK_DIVIDER_COUNTER")
+                hdl = payload.get("hdl_type", "VERILOG")
+                clk = float(payload.get("target_clock_mhz", 100.0))
+                student = payload.get("student_id", "2023MITEC042")
+                res = fpga_synthesis_engine.synthesize_module(
+                    target_fpga=target, module_key=mod, hdl_type=hdl,
+                    target_clock_mhz=clk, student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/fpga/generate-traces":
+                from backend.fpga_synthesis_engine import fpga_synthesis_engine
+                mod = payload.get("module_key", "CLOCK_DIVIDER_COUNTER")
+                cycles = int(payload.get("cycles", 32))
+                clk_ns = float(payload.get("clock_period_ns", 10.0))
+                synth_id = payload.get("synthesis_id")
+                res = fpga_synthesis_engine.generate_logic_analyzer_traces(
+                    module_key=mod, cycles=cycles, clk_period_ns=clk_ns, synthesis_id=synth_id
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
