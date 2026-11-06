@@ -52,6 +52,8 @@ export default {
           amber: '#F59E0B',
           cyan: '#06B6D4',
           indigo: '#6366F1',
+          primary: 'var(--course-primary, #00F0B5)',
+          accent: 'var(--course-accent, #00693E)',
         }
       },
       fontFamily: {

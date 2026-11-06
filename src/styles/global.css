@@ -378,8 +378,45 @@
 
   /* ==========================================================================
      COURSE ACCENT PROFILES & HARDWARE-ACCELERATED GLOW BORDERS
-     Anna University Regulation 2023 - Priority Course Themes
+     Anna University Regulation 2023 - Priority Course Themes & CSS Variables
      ========================================================================== */
+
+  /* Per-Course Dynamic CSS Variables */
+  [data-course="EC23S01"] {
+    --course-primary: #00F0B5;
+    --course-accent: #00693E;
+    --course-glow: rgba(0, 240, 181, 0.35);
+    --course-border: rgba(0, 240, 181, 0.3);
+    --course-badge-bg: rgba(0, 105, 62, 0.45);
+    --course-badge-text: #00F0B5;
+  }
+
+  [data-course="EC23C03"] {
+    --course-primary: #F59E0B;
+    --course-accent: #B45309;
+    --course-glow: rgba(245, 158, 11, 0.35);
+    --course-border: rgba(245, 158, 11, 0.3);
+    --course-badge-bg: rgba(180, 83, 9, 0.45);
+    --course-badge-text: #FCD34D;
+  }
+
+  [data-course="EC23E04"] {
+    --course-primary: #06B6D4;
+    --course-accent: #0891B2;
+    --course-glow: rgba(6, 182, 212, 0.35);
+    --course-border: rgba(6, 182, 212, 0.3);
+    --course-badge-bg: rgba(8, 145, 178, 0.45);
+    --course-badge-text: #67E8F9;
+  }
+
+  [data-course="EC8702"] {
+    --course-primary: #6366F1;
+    --course-accent: #4338CA;
+    --course-glow: rgba(99, 102, 241, 0.35);
+    --course-border: rgba(99, 102, 241, 0.3);
+    --course-badge-bg: rgba(67, 56, 202, 0.45);
+    --course-badge-text: #A5B4FC;
+  }
 
   /* EC23S01: Numerical and Signal Processing Practice Through Python */
   .course-card-emerald {

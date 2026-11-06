@@ -27,7 +27,8 @@ const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V"];
 
 export function DspWaveformSvg({ className = "w-6 h-6", primaryColor = "#00F0B5" }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DSP Waveform & Discrete Stem Spectrum">
+      <title>Discrete Signal Processing Waveform & FFT Spectrum</title>
       {/* Background Spectral FFT Frequency Bins */}
       <rect x="8" y="44" width="4" height="12" rx="1" fill={primaryColor} fillOpacity="0.25" />
       <rect x="16" y="32" width="4" height="24" rx="1" fill={primaryColor} fillOpacity="0.35" />
@@ -59,7 +60,8 @@ export function DspWaveformSvg({ className = "w-6 h-6", primaryColor = "#00F0B5"
 
 export function SemiconductorBandgapSvg({ className = "w-6 h-6", primaryColor = "#F59E0B" }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Semiconductor Bandgap & Carrier Recombination">
+      <title>Semiconductor Energy Bandgap & Carrier Dynamics</title>
       {/* Conduction Band (Ec) Upper Block */}
       <path d="M8 12 H56" stroke={primaryColor} strokeWidth="2.5" strokeLinecap="round" />
       <rect x="8" y="6" width="48" height="6" fill={primaryColor} fillOpacity="0.25" rx="1" />
@@ -92,7 +94,8 @@ export function SemiconductorBandgapSvg({ className = "w-6 h-6", primaryColor = 
 
 export function LaserResonatorSvg({ className = "w-6 h-6", primaryColor = "#06B6D4" }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Laser Optical Resonator Cavity">
+      <title>Laser Resonator Cavity & Coherent Wavefronts</title>
       {/* Optical Cavity Axis */}
       <line x1="4" y1="32" x2="60" y2="32" stroke="#475569" strokeWidth="1" strokeDasharray="3 2" />
       {/* Left Highly Reflective Mirror (M1, Concave) */}
@@ -119,7 +122,8 @@ export function LaserResonatorSvg({ className = "w-6 h-6", primaryColor = "#06B6
 
 export function ArmCortexMicrocontrollerSvg({ className = "w-6 h-6", primaryColor = "#6366F1" }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ARM Cortex-M Microcontroller Architecture">
+      <title>ARM Cortex-M Embedded Microcontroller Architecture</title>
       {/* QFP Package External Leads */}
       <line x1="20" y1="6" x2="20" y2="12" stroke="#94A3B8" strokeWidth="1.8" />
       <line x1="28" y1="6" x2="28" y2="12" stroke="#94A3B8" strokeWidth="1.8" />
@@ -290,7 +294,10 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
   }, [rtosC1, rtosT1, rtosC2, rtosT2]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6 font-sans text-slate-200">
+    <div
+      data-course={currentCourse.code}
+      className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6 font-sans text-slate-200"
+    >
       
       {/* --------------------------------------------------------------------- */}
       {/* 1. DYNAMIC BREADCRUMB TRAIL (STATE-PRESERVING DEEP LINK ROUTING) */}
@@ -307,16 +314,27 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
         <span className="text-slate-600">/</span>
         <button
           onClick={() => setActiveTab("overview")}
-          className="font-bold hover:underline transition-all flex items-center gap-1"
+          className="font-bold hover:underline transition-all flex items-center gap-1.5"
           style={{ color: theme.primaryColor }}
+          title={`Switch to ${currentCourse.code} Overview`}
         >
           <DepartmentalBadgeIcon code={currentCourse.code} className="w-3.5 h-3.5 inline" primaryColor={theme.primaryColor} />
           <span>{currentCourse.code}</span>
         </button>
         <span className="text-slate-600">/</span>
-        <span className="text-white font-semibold">
+        <button
+          onClick={() => { setActiveTab("syllabus"); setUnitSubTab("topics"); }}
+          className="text-white font-semibold hover:underline transition-all"
+          title={`Jump to Unit ${ROMAN_NUMERALS[selectedUnitIndex]}`}
+        >
           Unit {ROMAN_NUMERALS[selectedUnitIndex]}: {currentUnit.title}
-        </span>
+        </button>
+        {activeTab !== "overview" && activeTab !== "syllabus" && (
+          <>
+            <span className="text-slate-600">/</span>
+            <span className="text-slate-300 capitalize">{activeTab}</span>
+          </>
+        )}
       </nav>
 
       {/* --------------------------------------------------------------------- */}
