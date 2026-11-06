@@ -1,0 +1,99 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import PerformanceOptimizationHub from '../components/PerformanceOptimizationHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase R: Performance, Asset Optimization & Caching Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead & Systems Architect: Ashok Kumar A
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+ * Features 381–390:
+ *   - Feature 381: Page Load Speed Monitor (Core Web Vitals: LCP, INP, CLS, TTFB, FCP)
+ *   - Feature 382: Static Asset Compression Manager (Gzip vs Brotli compression ratios)
+ *   - Feature 383: SQLite Query Cache Visualizer (LRU Query Cache with hit/miss telemetry)
+ *   - Feature 384: JavaScript Bundle Analyzer (Vite/Astro chunk breakdown & budget audit)
+ *   - Feature 385: Image Optimization Audit Tool (WebP/AVIF format converter & srcset generator)
+ *   - Feature 386: Client-Side Hydration Profiler (React 19 Island partial hydration timings)
+ *   - Feature 387: Memory Footprint Inspector (DOM node count, JS heap & process memory)
+ *   - Feature 388: HTTP Cache Header Inspector (RFC 7234 immutable caching & ETag validator)
+ *   - Feature 389: Service Worker Offline Cache Manager (Pre-cache manifest & strategy router)
+ *   - Feature 390: Platform Performance Scorecard & Platform Lead Showcase (Lighthouse 100 audit)
+ * Hardware Safe: Zero background polling loops, SQLite WAL mode, passive CPU footprint.
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Performance, Asset Optimization & Caching Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Core Web Vitals, SQLite LRU Cache, Brotli & Offline Service Worker"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="performance-optimization">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              ⚡
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Phase R • Features 381–390
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                Lighthouse 100 / 100
+              </span>
+              <span class="text-xs text-slate-400">
+                Architectural Lead: <strong class="text-slate-200">{pageMetadata.lead}</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Performance, Asset Optimization & Caching Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                v1.0-LIGHTNING
+              </span>
+            </h1>
+            <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. High-speed asset delivery pipeline featuring Core Web Vitals telemetry, Gzip/Brotli compression ratios, SQLite in-memory LRU query caching, Vite bundle chunk auditing, partial island hydration profiling, and offline PWA service worker policies.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            Core Web Vitals &lt; 0.8s LCP
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            SQLite LRU Query Caching
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            Brotli &amp; AVIF Optimization
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <PerformanceOptimizationHub client:load />
+
+  </div>
+</MainLayout>
