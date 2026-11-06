@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import StudentProjectsHub from '../components/StudentProjectsHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase K: Student Projects & Portfolios Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 311–320:
+ *   - Feature 311: ECE Project Idea Generator (Tailored domains, difficulty, timelines)
+ *   - Feature 312: Project Proposal Template Library (Anna University formal submission)
+ *   - Feature 313: Project Milestone Timeline (Review 0 to Review 3 & External Viva)
+ *   - Feature 314: Project Team Role Manager (Team allocation & CRediT responsibilities)
+ *   - Feature 315: Component Cost Calculator (Multi-currency INR/USD, tax, contingency)
+ *   - Feature 316: Project Bill of Materials (BOM) Generator (MPN, footprints, vendor links)
+ *   - Feature 317: Project Documentation Checklist (Anna University Reg 2023 thesis audit)
+ *   - Feature 318: GitHub Project Link Integration (Repo parsing, commits, license check)
+ *   - Feature 319: Project Demo Submission Portal (Video bench links, live demo rubric)
+ *   - Feature 320: Digital Student Project Portfolio (Showcase gallery, badges, PDF digest)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Student Projects & Portfolios Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Capstone Projects, BOM Costing & Digital Engineering Portfolios"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="student-projects">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-cyan-400">
+              🛠️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-cyan-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Student Projects & Portfolios Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/40">
+                PHASE K (FEATURES 311–320)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              Anna University / MIT Campus • ECE Dept • Reg 2023 • Lead: Ashok Kumar A (<span class="text-cyan-300">{pageMetadata.rollNo}</span>)
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">
+              Capstone Idea Generator • BOM Costing • Milestones • Thesis Checklist • Digital Portfolio
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col items-start md:items-end gap-2 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            Proposal & 4-Phase Review Milestones
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            Industrial BOM & GST Calculator
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Thesis Audit & Verified Portfolio
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main React Island -->
+    <StudentProjectsHub client:load />
+
+  </div>
+</MainLayout>
