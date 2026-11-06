@@ -408,3 +408,4 @@ class CapstonePortfolioEngine:
 
 # Singleton Instance
 capstone_portfolio_engine = CapstonePortfolioEngine()
+
