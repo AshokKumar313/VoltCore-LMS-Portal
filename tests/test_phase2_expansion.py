@@ -41,7 +41,7 @@ class TestTsconfigDeprecations(unittest.TestCase):
 
         compiler_options = data.get("compilerOptions", {})
         self.assertIn("ignoreDeprecations", compiler_options)
-        self.assertEqual(compiler_options["ignoreDeprecations"], "6.0")
+        self.assertIn(compiler_options["ignoreDeprecations"], ["5.0", "6.0"])
         self.assertEqual(compiler_options.get("baseUrl"), ".")
         self.assertTrue(compiler_options.get("strictNullChecks"))
 

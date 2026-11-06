@@ -1,0 +1,93 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import CourseShellHub from '../components/CourseShellHub.jsx';
+
+// Modular Course Shell Metadata
+const courseShellMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "Lead Systems Architect",
+  workspace: "Modular Course Shell & Rigor Workbench",
+  standards: "Anna University R2023 Curriculum • Bloom's Taxonomy Taxonomy Level 1-5 • Client-Side Physics Computation • Zero-Daemon Execution",
+  mode: "EC23S01 Python DSP • EC23C03 Diode IV • EC23E04 Laser Cavity • EC8702 FreeRTOS Schedulability"
+};
+---
+
+<MainLayout title={`Modular Course Experience | MIT Campus (Anna University)`} activeNav="course-hub">
+  <div class="space-y-8 font-mono">
+    
+    <!-- Hero Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🎓
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Modular Course Shell &amp; Rigor Workbench
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
+                REGULATION 2023 ECE
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {courseShellMetadata.department} • {courseShellMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Curriculum Architecture: <span class="text-white font-bold">ECE Undergraduate • MIT Campus</span> • {courseShellMetadata.workspace}
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Courses:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">4 Priority R2023</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Computation:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Client-Side KaTeX &amp; Sim</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Thermals:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">Zero Daemons</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Background Glow Accent -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#00F0B5]/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Course Shell Container -->
+    <CourseShellHub client:load />
+
+    <!-- Academic Integrity & Verification Footer -->
+    <div class="p-4 rounded-2xl bg-[#020813]/60 border border-slate-800 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span>Course Shell Schema v1.4.0 • Anna University ECE Regulation 2023 Syllabus Aligned</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-500">
+        <span>Lead Architect: Ashok Kumar A</span>
+        <span>•</span>
+        <a href="https://github.com/AshokKumar313/VoltCore-LMS-Portal" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:underline">
+          GitHub Repository
+        </a>
+      </div>
+    </div>
+
+  </div>
+</MainLayout>
