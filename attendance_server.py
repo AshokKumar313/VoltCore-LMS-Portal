@@ -4713,6 +4713,75 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    # ==================== PHASE 40: ECE Capstone Portfolio & Viva-Voce Simulator ====================
+    @app.route("/api/capstone/generate", methods=["POST"])
+    def capstone_generate_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        payload = request.get_json(silent=True) or {}
+        student_id = payload.get("student_id", "2023MITEC042")
+        student_name = payload.get("student_name", "Ashok Kumar A")
+        roll_no = payload.get("roll_no", "2023MITEC042")
+        viva_score = float(payload.get("viva_score_pct", 96.5))
+        evals = payload.get("evaluations")
+
+        res = capstone_portfolio_engine.generate_capstone_portfolio(
+            student_id=student_id,
+            student_name=student_name,
+            roll_no=roll_no,
+            viva_score_pct=viva_score,
+            evaluations=evals
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/capstone/viva-evaluate", methods=["POST"])
+    def capstone_viva_evaluate_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        payload = request.get_json(silent=True) or {}
+        q_id = payload.get("question_id", "VIVA_ANA_01")
+        resp_text = payload.get("student_response", "")
+        custom_score = payload.get("custom_score")
+
+        res = capstone_portfolio_engine.evaluate_viva_response(
+            question_id=q_id,
+            student_response=resp_text,
+            custom_score=custom_score
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/capstone/viva-questions", methods=["GET"])
+    def capstone_viva_questions_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        domain = request.args.get("domain")
+        return jsonify(capstone_portfolio_engine.get_viva_question_bank(domain=domain)), 200
+
+    @app.route("/api/capstone/history", methods=["GET"])
+    def capstone_history_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(capstone_portfolio_engine.get_portfolio_history(limit=limit)), 200
+
+    @app.route("/api/capstone/export-json", methods=["GET"])
+    def capstone_export_json_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        p_id = request.args.get("portfolio_id")
+        json_data = capstone_portfolio_engine.export_portfolio_json(portfolio_id=p_id)
+        resp = make_response(json_data)
+        resp.headers["Content-Type"] = "application/json; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_capstone_portfolio.json"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
+    @app.route("/api/capstone/export-markdown", methods=["GET"])
+    def capstone_export_markdown_endpoint():
+        from backend.capstone_portfolio_engine import capstone_portfolio_engine
+        p_id = request.args.get("portfolio_id")
+        md_data = capstone_portfolio_engine.export_portfolio_ieee_markdown(portfolio_id=p_id)
+        resp = make_response(md_data)
+        resp.headers["Content-Type"] = "text/markdown; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_capstone_report.md"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -5348,6 +5417,36 @@ else:
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/capstone/viva-questions":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                dom = params.get("domain", [None])[0]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(capstone_portfolio_engine.get_viva_question_bank(domain=dom)).encode("utf-8"))
+            elif parsed.path == "/api/capstone/history":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(capstone_portfolio_engine.get_portfolio_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/capstone/export-json":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                p_id = params.get("portfolio_id", [None])[0]
+                json_str = capstone_portfolio_engine.export_portfolio_json(portfolio_id=p_id)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_capstone_portfolio.json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json_str.encode("utf-8"))
+            elif parsed.path == "/api/capstone/export-markdown":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                p_id = params.get("portfolio_id", [None])[0]
+                md_str = capstone_portfolio_engine.export_portfolio_ieee_markdown(portfolio_id=p_id)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_capstone_report.md")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(md_str.encode("utf-8"))
             else:
                 self._set_cors_headers(404)
                 self.wfile.write(json.dumps({"error": "Endpoint not found"}).encode("utf-8"))
@@ -6259,6 +6358,36 @@ else:
                     payload=data,
                     qos_level=qos,
                     student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/capstone/generate":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                student_id = payload.get("student_id", "2023MITEC042")
+                student_name = payload.get("student_name", "Ashok Kumar A")
+                roll_no = payload.get("roll_no", "2023MITEC042")
+                viva_score = float(payload.get("viva_score_pct", 96.5))
+                evals = payload.get("evaluations")
+
+                res = capstone_portfolio_engine.generate_capstone_portfolio(
+                    student_id=student_id,
+                    student_name=student_name,
+                    roll_no=roll_no,
+                    viva_score_pct=viva_score,
+                    evaluations=evals
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/capstone/viva-evaluate":
+                from backend.capstone_portfolio_engine import capstone_portfolio_engine
+                q_id = payload.get("question_id", "VIVA_ANA_01")
+                resp_text = payload.get("student_response", "")
+                custom_score = payload.get("custom_score")
+
+                res = capstone_portfolio_engine.evaluate_viva_response(
+                    question_id=q_id,
+                    student_response=resp_text,
+                    custom_score=custom_score
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
