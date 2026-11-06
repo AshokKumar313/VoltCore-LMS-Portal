@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import PracticalLaboratoryHub from '../components/PracticalLaboratoryHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase H: Practical Laboratory Learning Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 281–290:
+ *   - Feature 281: Virtual Breadboard Learning Interface & Netlist Continuity Validator
+ *   - Feature 282: Component Identification Trainer (BJT, Regulator, IC Notch, Diode/LED)
+ *   - Feature 283: Resistor Colour Code Calculator (4-Band, 5-Band, 6-Band & PPM/K)
+ *   - Feature 284: Electronic Component Selection Guide (Wattage, Voltage Derating, PIV)
+ *   - Feature 285: Circuit Troubleshooting Decision Tree (Power, Ground, Open, Short)
+ *   - Feature 286: Laboratory Safety Checklist & High-Voltage/ESD Protection Protocols
+ *   - Feature 287: Practical Experiment Preparation Guide (Anna University Reg 2023 ECE Labs)
+ *   - Feature 288: Experiment Observation Notebook (Tabular Input/Output, Error % Math)
+ *   - Feature 289: Virtual Instrument Reading Practice (Oscilloscope V/div, Time/div, DMM)
+ *   - Feature 290: Laboratory Report Generator (Standard IEEE/Anna University Lab Record)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Practical Laboratory Learning Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Hands-on Breadboard, Test Bench & Virtual Instrumentation"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="practical-laboratory">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-yellow-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-amber-400">
+              🔬
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-amber-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Practical Laboratory Learning Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40">
+                PHASE H (FEATURES 281–290)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {pageMetadata.department} • {pageMetadata.campus}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.mode}
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-xs">
+            <span class="text-slate-400">Bench Hardware:</span>
+            <span class="text-amber-400 font-bold ml-1.5">Breadboard & DMM</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-orange-500/30 text-xs">
+            <span class="text-slate-400">Diagnostics:</span>
+            <span class="text-orange-400 font-bold ml-1.5">Fault Decision Tree</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-yellow-500/30 text-xs">
+            <span class="text-slate-400">Academics:</span>
+            <span class="text-yellow-400 font-bold ml-1.5">AU Reg 2023 Records</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Practical Laboratory Hub Island -->
+    <PracticalLaboratoryHub client:load />
+
+  </div>
+</MainLayout>
