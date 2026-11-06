@@ -1,0 +1,87 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import TextbookReaderHub from '../components/TextbookReaderHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase B: Advanced Course Content & ECE Textbooks
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 211–215:
+ *   - Feature 211: Interactive ECE Textbook Reader (Sedra & Smith, Yiu, Warden)
+ *   - Feature 212: Bookmark Manager with Chapter Offsets
+ *   - Feature 213: PDF & Markdown Annotation Workspace
+ *   - Feature 214: Component Specification Comparison Table (ESP32, STM32F4, RP2040, nRF52)
+ *   - Feature 215: Technical Block & Circuit Diagram Library Viewer
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "ECE Textbook Reader & Datasheet Library | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Textbooks + Margin Annotations + Silicon Matrix + Schematic Viewer"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="textbook-library">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-amber-400">
+              📖
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-amber-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                ECE Textbook Reader & Datasheet Library
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40">
+                PHASE B (FEATURES 211–215)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {pageMetadata.department} • {pageMetadata.campus}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.mode}
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-xs">
+            <span class="text-slate-400">Curated:</span>
+            <span class="text-amber-400 font-bold ml-1.5">3 Core Textbooks</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Silicon Matrix:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">4 Microcontrollers</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-purple-500/30 text-xs">
+            <span class="text-slate-400">Schematics:</span>
+            <span class="text-purple-400 font-bold ml-1.5">Layered View</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Textbook Reader & Datasheet Hub Island -->
+    <TextbookReaderHub client:load />
+
+  </div>
+</MainLayout>
