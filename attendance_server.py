@@ -4599,6 +4599,50 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    # ==================== PHASE 38: TinyML & Edge AI Neural Network Inference ====================
+    @app.route("/api/tinyml/benchmark", methods=["POST"])
+    def tinyml_benchmark_endpoint():
+        from backend.tinyml_engine import tinyml_engine
+        payload = request.get_json(silent=True) or {}
+        mcu = payload.get("target_mcu", "ESP32_S3")
+        model = payload.get("model_key", "KEYWORD_SPOTTING_DSCNN")
+        precision = payload.get("precision_mode", "INT8")
+        custom_matrix = payload.get("custom_matrix")
+
+        res = tinyml_engine.run_benchmark(
+            target_mcu=mcu,
+            model_key=model,
+            precision_mode=precision,
+            custom_matrix=custom_matrix
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/tinyml/models", methods=["GET"])
+    def tinyml_models_endpoint():
+        from backend.tinyml_engine import tinyml_engine
+        return jsonify(tinyml_engine.get_models()), 200
+
+    @app.route("/api/tinyml/targets", methods=["GET"])
+    def tinyml_targets_endpoint():
+        from backend.tinyml_engine import tinyml_engine
+        return jsonify(tinyml_engine.get_target_mcus()), 200
+
+    @app.route("/api/tinyml/history", methods=["GET"])
+    def tinyml_history_endpoint():
+        from backend.tinyml_engine import tinyml_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(tinyml_engine.get_benchmark_history(limit=limit)), 200
+
+    @app.route("/api/tinyml/export-csv", methods=["GET"])
+    def tinyml_export_csv_endpoint():
+        from backend.tinyml_engine import tinyml_engine
+        csv_data = tinyml_engine.export_benchmarks_csv()
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_tinyml_benchmarks.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -5184,6 +5228,28 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_dma_nvic_timeline.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/tinyml/models":
+                from backend.tinyml_engine import tinyml_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(tinyml_engine.get_models()).encode("utf-8"))
+            elif parsed.path == "/api/tinyml/targets":
+                from backend.tinyml_engine import tinyml_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(tinyml_engine.get_target_mcus()).encode("utf-8"))
+            elif parsed.path == "/api/tinyml/history":
+                from backend.tinyml_engine import tinyml_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(tinyml_engine.get_benchmark_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/tinyml/export-csv":
+                from backend.tinyml_engine import tinyml_engine
+                csv_str = tinyml_engine.export_benchmarks_csv()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_tinyml_benchmarks.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -6047,6 +6113,21 @@ else:
                     mcu_key=mcu, priority_group=prio_grp, trigger_interrupts=irqs,
                     dma_mode=dma_m, data_width_bytes=d_width, buffer_size_items=buf_size,
                     core_clock_mhz=clk_mhz, enable_concurrent_cpu=conc_cpu, student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/tinyml/benchmark":
+                from backend.tinyml_engine import tinyml_engine
+                mcu = payload.get("target_mcu", "ESP32_S3")
+                model = payload.get("model_key", "KEYWORD_SPOTTING_DSCNN")
+                precision = payload.get("precision_mode", "INT8")
+                custom_matrix = payload.get("custom_matrix")
+
+                res = tinyml_engine.run_benchmark(
+                    target_mcu=mcu,
+                    model_key=model,
+                    precision_mode=precision,
+                    custom_matrix=custom_matrix
                 )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

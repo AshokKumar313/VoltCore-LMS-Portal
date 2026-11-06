@@ -4,6 +4,7 @@ import WokwiSandbox from '../components/WokwiSandbox.astro';
 import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
 import RtosSchedulerHub from '../components/RtosSchedulerHub.jsx';
 import DmaNvicHub from '../components/DmaNvicHub.jsx';
+import TinyMlEngineHub from '../components/TinyMlEngineHub.jsx';
 ---
 
 <MainLayout title="Hardware & Analog Simulation Laboratory | VoltCore Apex" activeNav="simulation">
@@ -208,6 +209,23 @@ import DmaNvicHub from '../components/DmaNvicHub.jsx';
       </div>
 
       <DmaNvicHub client:load />
+    </section>
+
+    <!-- Section 6: TinyML & Edge AI Neural Network Inference Engine (Phase 38) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#10B981] to-[#38BDF8] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            6. TinyML &amp; Edge AI Neural Network Inference Engine
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-emerald-300 hidden sm:inline">
+          INT8 Quantization • Depthwise Separable Convolutions • Flash &amp; Tensor Arena SRAM Profiler
+        </span>
+      </div>
+
+      <TinyMlEngineHub client:load />
     </section>
 
   </div>
