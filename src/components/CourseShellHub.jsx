@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
+import CourseQuizEngine from './CourseQuizEngine';
 
 /**
  * ========================================================================================
@@ -456,6 +457,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
             { id: "overview", label: "Overview", icon: "📋" },
             { id: "syllabus", label: "Syllabus (Units I-V)", icon: "📖" },
             { id: "lessons", label: "Lesson Library & Notes", icon: "📚" },
+            { id: "quizzes", label: "Quizzes & Assessments", icon: "📝" },
             { id: "outcomes", label: "Course Outcomes (CO-PO)", icon: "🎯" },
             { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗" },
             { id: "simulator", label: "Lab Simulator", icon: "⚡" },
@@ -731,6 +733,17 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
           themeColor={theme.primaryColor}
           themeFamily={theme.themeFamily}
           onLaunchSimulator={() => setActiveTab("simulator")}
+        />
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB: QUIZZES, ASSESSMENTS & AUTOMATED EXPLANATIONS (PHASE 7) */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "quizzes" && (
+        <CourseQuizEngine
+          courseCode={currentCourse.code}
+          themeColor={theme.primaryColor}
+          themeFamily={theme.themeFamily}
         />
       )}
 
