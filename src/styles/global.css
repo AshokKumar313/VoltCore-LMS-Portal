@@ -5,20 +5,291 @@
 @layer base {
   :root {
     color-scheme: dark;
+    --theme-primary: #00F0B5;
+    --theme-accent: #10B981;
+    --theme-bg: #020813;
+    --theme-bg-gradient: radial-gradient(circle at 50% 0%, rgba(0, 240, 181, 0.12) 0%, rgba(2, 8, 19, 1) 75%);
+    --theme-surface: rgba(4, 16, 38, 0.78);
+    --theme-card: rgba(6, 23, 53, 0.65);
+    --theme-border: rgba(0, 240, 181, 0.22);
+    --theme-text: #F1F5F9;
+    --theme-text-muted: #94A3B8;
+    --theme-glow: 0 0 25px rgba(0, 240, 181, 0.25);
   }
 
   html {
-    background-color: #020813;
-    color: #f1f5f9;
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
   }
 
   body {
-    background-color: #020813;
-    color: #f1f5f9;
+    background: var(--theme-bg-gradient);
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
   }
+}
+
+/* ==========================================================================
+   18 VIBRANT & COLORFUL THEMES (Non-Black Focus)
+   ========================================================================== */
+
+/* 1. Cyber Emerald & Mint */
+[data-theme="cyber-emerald"], body[data-theme="cyber-emerald"] {
+  --theme-primary: #00F0B5;
+  --theme-accent: #10B981;
+  --theme-bg: #03261f;
+  --theme-bg-gradient: linear-gradient(135deg, #03261f 0%, #063d32 50%, #021a15 100%);
+  --theme-surface: rgba(4, 46, 38, 0.82);
+  --theme-card: rgba(6, 61, 50, 0.7);
+  --theme-border: rgba(0, 240, 181, 0.38);
+  --theme-text: #E6FFFA;
+  --theme-text-muted: #80DFCB;
+  --theme-glow: 0 0 26px rgba(0, 240, 181, 0.35);
+}
+
+/* 2. Electric Violet & Magenta */
+[data-theme="electric-violet"], body[data-theme="electric-violet"] {
+  --theme-primary: #A855F7;
+  --theme-accent: #EC4899;
+  --theme-bg: #160d33;
+  --theme-bg-gradient: linear-gradient(135deg, #160d33 0%, #291557 50%, #100826 100%);
+  --theme-surface: rgba(33, 19, 74, 0.85);
+  --theme-card: rgba(45, 24, 99, 0.7);
+  --theme-border: rgba(168, 85, 247, 0.4);
+  --theme-text: #FAF5FF;
+  --theme-text-muted: #D8B4FE;
+  --theme-glow: 0 0 28px rgba(168, 85, 247, 0.4);
+}
+
+/* 3. Sunset Crimson & Amber */
+[data-theme="sunset-crimson"], body[data-theme="sunset-crimson"] {
+  --theme-primary: #F97316;
+  --theme-accent: #F43F5E;
+  --theme-bg: #260a14;
+  --theme-bg-gradient: linear-gradient(135deg, #260a14 0%, #4c1122 50%, #1c050c 100%);
+  --theme-surface: rgba(56, 17, 30, 0.85);
+  --theme-card: rgba(74, 20, 38, 0.7);
+  --theme-border: rgba(249, 115, 22, 0.4);
+  --theme-text: #FFF5F5;
+  --theme-text-muted: #FCA5A5;
+  --theme-glow: 0 0 28px rgba(249, 115, 22, 0.4);
+}
+
+/* 4. Oceanic Sapphire & Cyan */
+[data-theme="oceanic-azure"], body[data-theme="oceanic-azure"] {
+  --theme-primary: #00D8F6;
+  --theme-accent: #3B82F6;
+  --theme-bg: #061b33;
+  --theme-bg-gradient: linear-gradient(135deg, #061b33 0%, #0c2d52 50%, #031122 100%);
+  --theme-surface: rgba(10, 39, 71, 0.85);
+  --theme-card: rgba(13, 51, 94, 0.7);
+  --theme-border: rgba(0, 216, 246, 0.38);
+  --theme-text: #F0F9FF;
+  --theme-text-muted: #93C5FD;
+  --theme-glow: 0 0 26px rgba(0, 216, 246, 0.38);
+}
+
+/* 5. Imperial Gold & Warm Mustard */
+[data-theme="golden-mustard"], body[data-theme="golden-mustard"] {
+  --theme-primary: #FFC83B;
+  --theme-accent: #F59E0B;
+  --theme-bg: #241503;
+  --theme-bg-gradient: linear-gradient(135deg, #241503 0%, #3d2306 50%, #170d01 100%);
+  --theme-surface: rgba(54, 32, 7, 0.88);
+  --theme-card: rgba(74, 43, 8, 0.7);
+  --theme-border: rgba(255, 200, 59, 0.42);
+  --theme-text: #FFFBEB;
+  --theme-text-muted: #FDE68A;
+  --theme-glow: 0 0 28px rgba(255, 200, 59, 0.4);
+}
+
+/* 6. Tokyo Cyberpunk Neon */
+[data-theme="tokyo-neon"], body[data-theme="tokyo-neon"] {
+  --theme-primary: #FF007F;
+  --theme-accent: #00F5FF;
+  --theme-bg: #140524;
+  --theme-bg-gradient: linear-gradient(135deg, #140524 0%, #2b0b47 50%, #0c0217 100%);
+  --theme-surface: rgba(35, 11, 59, 0.88);
+  --theme-card: rgba(50, 15, 84, 0.7);
+  --theme-border: rgba(255, 0, 127, 0.45);
+  --theme-text: #FFF0F8;
+  --theme-text-muted: #F472B6;
+  --theme-glow: 0 0 32px rgba(255, 0, 127, 0.45);
+}
+
+/* 7. Nordic Glacial Frost */
+[data-theme="nordic-frost"], body[data-theme="nordic-frost"] {
+  --theme-primary: #38BDF8;
+  --theme-accent: #7DD3FC;
+  --theme-bg: #071c2c;
+  --theme-bg-gradient: linear-gradient(135deg, #071c2c 0%, #0f3450 50%, #04121d 100%);
+  --theme-surface: rgba(12, 45, 71, 0.85);
+  --theme-card: rgba(18, 62, 97, 0.7);
+  --theme-border: rgba(56, 189, 248, 0.4);
+  --theme-text: #F0F9FF;
+  --theme-text-muted: #BAE6FD;
+  --theme-glow: 0 0 26px rgba(56, 189, 248, 0.35);
+}
+
+/* 8. Lush Forest & Olive Sage */
+[data-theme="forest-sage"], body[data-theme="forest-sage"] {
+  --theme-primary: #84A950;
+  --theme-accent: #10B981;
+  --theme-bg: #092112;
+  --theme-bg-gradient: linear-gradient(135deg, #092112 0%, #133b20 50%, #05140a 100%);
+  --theme-surface: rgba(17, 51, 28, 0.85);
+  --theme-card: rgba(24, 71, 39, 0.7);
+  --theme-border: rgba(132, 169, 80, 0.42);
+  --theme-text: #F0FDF4;
+  --theme-text-muted: #86EFAC;
+  --theme-glow: 0 0 28px rgba(132, 169, 80, 0.38);
+}
+
+/* 9. Solar Flare & Plasma */
+[data-theme="solar-flare"], body[data-theme="solar-flare"] {
+  --theme-primary: #FACC15;
+  --theme-accent: #FB923C;
+  --theme-bg: #2b1003;
+  --theme-bg-gradient: linear-gradient(135deg, #2b1003 0%, #4a1d06 50%, #1a0801 100%);
+  --theme-surface: rgba(61, 25, 7, 0.88);
+  --theme-card: rgba(82, 34, 9, 0.7);
+  --theme-border: rgba(250, 204, 21, 0.45);
+  --theme-text: #FEFCE8;
+  --theme-text-muted: #FED7AA;
+  --theme-glow: 0 0 30px rgba(250, 204, 21, 0.45);
+}
+
+/* 10. Kyoto Sakura Blossom */
+[data-theme="cherry-blossom"], body[data-theme="cherry-blossom"] {
+  --theme-primary: #F472B6;
+  --theme-accent: #FB7185;
+  --theme-bg: #260614;
+  --theme-bg-gradient: linear-gradient(135deg, #260614 0%, #470d27 50%, #18030c 100%);
+  --theme-surface: rgba(56, 13, 33, 0.85);
+  --theme-card: rgba(77, 18, 46, 0.7);
+  --theme-border: rgba(244, 114, 182, 0.42);
+  --theme-text: #FDF2F8;
+  --theme-text-muted: #FBCFE8;
+  --theme-glow: 0 0 28px rgba(244, 114, 182, 0.38);
+}
+
+/* 11. Cambridge Academic Pastel (Light / Ivory Variant) */
+[data-theme="pastel-academic"], body[data-theme="pastel-academic"] {
+  color-scheme: light;
+  --theme-primary: #6366F1;
+  --theme-accent: #10B981;
+  --theme-bg: #F5F3EC;
+  --theme-bg-gradient: linear-gradient(135deg, #F5F3EC 0%, #E9E6DC 50%, #FAF8F2 100%);
+  --theme-surface: rgba(255, 255, 255, 0.94);
+  --theme-card: rgba(245, 243, 235, 0.92);
+  --theme-border: rgba(99, 102, 241, 0.35);
+  --theme-text: #1E293B;
+  --theme-text-muted: #64748B;
+  --theme-glow: 0 0 24px rgba(99, 102, 241, 0.22);
+}
+
+/* 12. Oxford Collegiate Navy & Gold */
+[data-theme="oxford-navy"], body[data-theme="oxford-navy"] {
+  --theme-primary: #EAB308;
+  --theme-accent: #3B82F6;
+  --theme-bg: #09152b;
+  --theme-bg-gradient: linear-gradient(135deg, #09152b 0%, #122447 50%, #050d1c 100%);
+  --theme-surface: rgba(16, 34, 69, 0.88);
+  --theme-card: rgba(23, 49, 99, 0.7);
+  --theme-border: rgba(234, 179, 8, 0.42);
+  --theme-text: #F8FAFC;
+  --theme-text-muted: #94A3B8;
+  --theme-glow: 0 0 28px rgba(234, 179, 8, 0.35);
+}
+
+/* 13. 80s Retro Synthwave */
+[data-theme="synthwave-80s"], body[data-theme="synthwave-80s"] {
+  --theme-primary: #FF1493;
+  --theme-accent: #00E5FF;
+  --theme-bg: #190524;
+  --theme-bg-gradient: linear-gradient(135deg, #190524 0%, #330b4a 50%, #0e0214 100%);
+  --theme-surface: rgba(43, 11, 64, 0.88);
+  --theme-card: rgba(61, 16, 89, 0.7);
+  --theme-border: rgba(255, 20, 147, 0.45);
+  --theme-text: #FFF0F9;
+  --theme-text-muted: #F472B6;
+  --theme-glow: 0 0 32px rgba(255, 20, 147, 0.45);
+}
+
+/* 14. Matrix Phosphor CRT */
+[data-theme="matrix-terminal"], body[data-theme="matrix-terminal"] {
+  --theme-primary: #22C55E;
+  --theme-accent: #4ADE80;
+  --theme-bg: #04190c;
+  --theme-bg-gradient: linear-gradient(135deg, #04190c 0%, #082e16 50%, #020d06 100%);
+  --theme-surface: rgba(8, 38, 19, 0.88);
+  --theme-card: rgba(12, 54, 27, 0.7);
+  --theme-border: rgba(34, 197, 94, 0.42);
+  --theme-text: #F0FDF4;
+  --theme-text-muted: #86EFAC;
+  --theme-glow: 0 0 30px rgba(34, 197, 94, 0.45);
+}
+
+/* 15. Lavender Amethyst Glow */
+[data-theme="lavender-dream"], body[data-theme="lavender-dream"] {
+  --theme-primary: #C084FC;
+  --theme-accent: #818CF8;
+  --theme-bg: #170f2b;
+  --theme-bg-gradient: linear-gradient(135deg, #170f2b 0%, #291b4a 50%, #0e091c 100%);
+  --theme-surface: rgba(36, 24, 66, 0.85);
+  --theme-card: rgba(51, 34, 94, 0.7);
+  --theme-border: rgba(192, 132, 252, 0.42);
+  --theme-text: #FAF5FF;
+  --theme-text-muted: #D8B4FE;
+  --theme-glow: 0 0 28px rgba(192, 132, 252, 0.38);
+}
+
+/* 16. Autumn Harvest Copper */
+[data-theme="autumn-copper"], body[data-theme="autumn-copper"] {
+  --theme-primary: #EA580C;
+  --theme-accent: #F59E0B;
+  --theme-bg: #261005;
+  --theme-bg-gradient: linear-gradient(135deg, #261005 0%, #451d09 50%, #170902 100%);
+  --theme-surface: rgba(59, 26, 9, 0.88);
+  --theme-card: rgba(79, 35, 12, 0.7);
+  --theme-border: rgba(234, 88, 12, 0.42);
+  --theme-text: #FFF7ED;
+  --theme-text-muted: #FDBA74;
+  --theme-glow: 0 0 28px rgba(234, 88, 12, 0.38);
+}
+
+/* 17. Modern Pristine Canvas (Light Dynamic Variant) */
+[data-theme="clean-canvas"], body[data-theme="clean-canvas"] {
+  color-scheme: light;
+  --theme-primary: #2563EB;
+  --theme-accent: #059669;
+  --theme-bg: #F8FAFC;
+  --theme-bg-gradient: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 50%, #FFFFFF 100%);
+  --theme-surface: rgba(255, 255, 255, 0.96);
+  --theme-card: rgba(241, 245, 249, 0.92);
+  --theme-border: rgba(37, 99, 235, 0.32);
+  --theme-text: #0F172A;
+  --theme-text-muted: #475569;
+  --theme-glow: 0 0 24px rgba(37, 99, 235, 0.2);
+}
+
+/* 18. Cosmic Chromatic Nebula */
+[data-theme="cosmic-nebula"], body[data-theme="cosmic-nebula"] {
+  --theme-primary: #D946EF;
+  --theme-accent: #06B6D4;
+  --theme-bg: #110826;
+  --theme-bg-gradient: linear-gradient(135deg, #110826 0%, #240f47 50%, #0a0417 100%);
+  --theme-surface: rgba(31, 14, 59, 0.88);
+  --theme-card: rgba(45, 21, 84, 0.7);
+  --theme-border: rgba(217, 70, 239, 0.45);
+  --theme-text: #FDF4FF;
+  --theme-text-muted: #E879F9;
+  --theme-glow: 0 0 32px rgba(217, 70, 239, 0.42);
 }
 
 @layer utilities {
@@ -73,28 +344,29 @@
     border: 1px solid rgba(229, 169, 60, 0.4);
   }
 
+  /* Universal Dynamic Glass Card Adaptable to Active Theme */
   .glass-card {
-    background: rgba(4, 16, 38, 0.75);
+    background: var(--theme-surface);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 240, 181, 0.18);
-    box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--theme-border);
+    box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.35);
   }
 
   .glass-card-accent {
-    background: linear-gradient(135deg, rgba(0, 105, 62, 0.35) 0%, rgba(4, 16, 38, 0.85) 100%);
+    background: linear-gradient(135deg, var(--theme-surface) 0%, var(--theme-card) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(0, 240, 181, 0.3);
+    border: 1px solid var(--theme-border);
+    box-shadow: var(--theme-glow);
   }
 
   .glass-card-hover {
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
-
   .glass-card-hover:hover {
-    border-color: rgba(0, 240, 181, 0.45);
-    box-shadow: 0 16px 44px -8px rgba(0, 240, 181, 0.22);
+    border-color: var(--theme-primary);
+    box-shadow: var(--theme-glow);
     transform: translateY(-2px);
   }
 
@@ -111,12 +383,12 @@
   height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #020813;
+  background: var(--theme-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 181, 0.25);
+  background: var(--theme-border);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 181, 0.55);
+  background: var(--theme-primary);
 }

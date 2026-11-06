@@ -49,11 +49,11 @@
       </div>
 
       <!-- Center: Instant ⌘K Command Search Trigger -->
-      <div class="flex-1 max-w-md mx-2 sm:mx-4">
+      <div class="flex-1 max-w-md mx-2 sm:mx-4 flex items-center gap-2">
         <button
           type="button"
           id="cmd-k-search-trigger"
-          class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/20 hover:border-[#00F0B5]/50 text-slate-400 hover:text-slate-200 text-xs font-mono transition-all shadow-inner group"
+          class="flex-1 flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/20 hover:border-[#00F0B5]/50 text-slate-400 hover:text-slate-200 text-xs font-mono transition-all shadow-inner group"
         >
           <div class="flex items-center gap-2.5">
             <svg class="w-3.5 h-3.5 text-[#00F0B5] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -68,6 +68,17 @@
             </kbd>
           </div>
         </button>
+
+        <!-- Studio Quick Link -->
+        <a
+          href="/workspace"
+          class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-400 text-emerald-300 hover:text-white text-xs font-mono font-bold transition-all shadow-sm flex-shrink-0"
+          title="Open Flexible Resizable Frame Workspace & 18 Colorful Themes"
+        >
+          <span>🖥️</span>
+          <span>Studio</span>
+          <span class="text-[9px] px-1 rounded bg-emerald-500/30 text-emerald-200">18 Palettes</span>
+        </a>
       </div>
 
       <!-- Right HUD: Gamified Streak, XP Multiplier & Ashok Kumar A Profile -->
@@ -170,6 +181,10 @@
             </div>
 
             <div class="pt-3 space-y-1">
+              <a href="/workspace" class="block px-2.5 py-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-500/20 transition-colors flex items-center justify-between font-bold border border-emerald-500/30">
+                <span>Interactive Studio & 18 Themes</span>
+                <span class="text-[9px] px-1 rounded bg-emerald-500/40 text-emerald-200">Phase 41</span>
+              </a>
               <a href="/component-inspector" class="block px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-[#00F0B5] hover:bg-[#020813] transition-colors flex items-center justify-between">
                 <span>Smart Component & PCB Inspector</span>
                 <span class="text-[9px] px-1 rounded bg-[#00693E]/40 text-[#00F0B5]">PCB/SMD</span>
@@ -370,6 +385,19 @@
 
       <!-- Quick Action Results -->
       <div class="max-h-80 overflow-y-auto p-2 space-y-1" id="search-results-list">
+        <a href="/workspace" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-emerald-400/40 cursor-pointer flex items-center justify-between group block">
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-[#00F0B5] flex items-center justify-center font-bold">
+              🖥️
+            </span>
+            <div>
+              <div class="font-semibold text-slate-200 group-hover:text-[#00F0B5]">Interactive Studio & 18 Vibrant Themes Workspace</div>
+              <div class="text-[10px] text-slate-400">4-Frame Layout (Video, Simulator, Code, Notes) • Granular ECE Syllabus • Equal Grid Split</div>
+            </div>
+          </div>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-emerald-400 border border-emerald-500/20 font-mono">Phase 41</span>
+        </a>
+
         <a href="/component-inspector" class="p-2.5 rounded-xl hover:bg-[#020813] border border-transparent hover:border-[#00F0B5]/40 cursor-pointer flex items-center justify-between group block">
           <div class="flex items-center gap-3">
             <span class="w-7 h-7 rounded-lg bg-[#00693E]/40 text-[#00F0B5] flex items-center justify-center font-bold">

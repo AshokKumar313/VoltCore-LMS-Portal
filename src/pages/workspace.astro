@@ -1,0 +1,82 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ResizableWorkspaceHub from '../components/ResizableWorkspaceHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Interactive Multi-Frame Workspace & 18 Vibrant Themes Studio
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Hardware Safety: Zero background polling daemons, lightweight SQLite WAL mode, passive CPU.
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Interactive Studio & Multi-Frame Workspace | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "4 Toggleable Frames + 18 Vibrant Themes + Granular Syllabus Navigation"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="workspace">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Workspace Header -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-purple-600 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              🖥️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Interactive Multi-Frame Studio & 18 Vibrant Themes
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40">
+                PHASE 41 STUDIO
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {pageMetadata.department} • {pageMetadata.campus}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.mode}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Themes:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">18 Non-Black Palettes</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-blue-500/30 text-xs">
+            <span class="text-slate-400">Frames:</span>
+            <span class="text-blue-400 font-bold ml-1.5">4 Resizable Panes</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-purple-500/30 text-xs">
+            <span class="text-slate-400">Curriculum:</span>
+            <span class="text-purple-400 font-bold ml-1.5">3 Tracks • 21 Sections</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Resizable Multi-Frame Workspace Hub Island -->
+    <ResizableWorkspaceHub client:load />
+
+  </div>
+</MainLayout>
