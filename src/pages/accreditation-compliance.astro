@@ -1,0 +1,98 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import AccreditationComplianceHub from '../components/AccreditationComplianceHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase P: Accreditation & Compliance Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 361–370:
+ *   - Feature 361: NBA/NAAC Outcome-Based Education (OBE) Dashboard (Tier-1 Criteria)
+ *   - Feature 362: Course Outcome (CO) Attainment Calculator (Threshold & Attainment 1/2/3)
+ *   - Feature 363: Program Outcome (PO) & PSO Mapping Matrix (PO1-PO12 + PSO1-PSO2)
+ *   - Feature 364: Direct & Indirect Assessment Evaluator (80% Direct + 20% Indirect)
+ *   - Feature 365: Bloom's Taxonomy Level Distribution Analyzer (L1 to L6 Rigor Audit)
+ *   - Feature 366: Continuous Quality Improvement (CQI) Logbook (Closing the Loop)
+ *   - Feature 367: Faculty Course File Archivist (Mandatory NBA Audit Checklist)
+ *   - Feature 368: Student Feedback Analysis Portal (Course Exit Survey Likert Scale)
+ *   - Feature 369: Accreditation Evidence Repository (Lab calibration, projects, audit proofs)
+ *   - Feature 370: Self-Assessment Report (SAR) Generator (Tier-1 SAR Executive Summaries)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Accreditation & Compliance Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "NBA Tier-1, NAAC A++, CO-PO Attainment & CQI Closing-the-Loop"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="accreditation-compliance">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              🏅
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Phase P • Features 361–370
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                NBA Tier-1 / NAAC A++
+              </span>
+              <span class="text-xs text-slate-400">
+                Lead: <strong class="text-slate-200">{pageMetadata.lead} ({pageMetadata.rollNo})</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Accreditation & Compliance Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                v1.0-LIVE
+              </span>
+            </h1>
+            <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Autonomous outcome-based education (OBE) governance engine calculating CO-PO & PSO attainments, Bloom's cognitive distribution, CQI action plans, mandatory course file audits, and formal NBA SAR Criterion 3 reports.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            80/20 Direct & Indirect Attainment
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            CO-PO & PSO Correlation Matrix
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            Bloom's Rigor & CQI Action Plans
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <AccreditationComplianceHub client:load />
+
+  </div>
+</MainLayout>
