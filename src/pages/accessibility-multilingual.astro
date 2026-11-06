@@ -1,0 +1,101 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import AccessibilityMultilingualHub from '../components/AccessibilityMultilingualHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase N: Accessibility & Multilingual Learning Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 341–350:
+ *   - Feature 341: English-Tamil Technical Dictionary (Transliteration, Audio, Definitions)
+ *   - Feature 342: Tamil Concept Explanation Library (Bilingual ECE Explanations & Audio scripts)
+ *   - Feature 343: Text-to-Speech Lesson Reader (Web Speech API, Pitch/Rate, Sentence Tracking)
+ *   - Feature 344: Video Subtitle Manager (Dual-track English/Tamil, Timestamp Sync)
+ *   - Feature 345: Adjustable Reading Interface (Font scaling, Dyslexic toggle, Line focus ruler)
+ *   - Feature 346: Keyboard-Only Navigation & Shortcut Engine (WCAG 2.1 AAA Hotkeys & Focus Rings)
+ *   - Feature 347: High-Contrast Theme Options (Contrasts > 7:1 & > 14:1, Colorblind modes)
+ *   - Feature 348: Accessible Mathematical Formula Display (MathML/KaTeX + Screen-Reader Audio)
+ *   - Feature 349: Simplified Technical Definitions (ELI5 Mode English & Tamil)
+ *   - Feature 350: Multilingual Search Support (Cross-lingual Tamil script <-> English matching)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Accessibility & Multilingual Learning Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "WCAG 2.1 AAA, English-Tamil Lexicon & Assistive Speech Engine"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="accessibility-multilingual">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-cyan-500 via-emerald-500 to-teal-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-cyan-400">
+              🌐
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                Phase N • Features 341–350
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                WCAG 2.1 AAA
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                தமிழ் / English
+              </span>
+              <span class="text-xs text-slate-400">
+                Lead: <strong class="text-slate-200">{pageMetadata.lead} ({pageMetadata.rollNo})</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Accessibility & Multilingual Learning Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                v1.0-LIVE
+              </span>
+            </h1>
+            <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Inclusive bilingual engineering education featuring English-Tamil technical lexicons, natural Web Speech narration, subtitle synchronizers, high-contrast themes, dyslexic fonts, and screen-reader accessible mathematics.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            English-Tamil Lexicon (ECE)
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            Text-to-Speech & Subtitles
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            High-Contrast & Dyslexia Rulers
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <AccessibilityMultilingualHub client:load />
+
+  </div>
+</MainLayout>
