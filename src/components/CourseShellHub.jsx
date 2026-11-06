@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
+import CourseLabSimulator from './CourseLabSimulator';
 
 /**
  * ========================================================================================
@@ -193,31 +194,6 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
   // Prerequisite Checklist State
   const [prereqChecked, setPrereqChecked] = useState({});
 
-  // ---------------------------------------------------------------------------
-  // INTERACTIVE SIMULATOR STATES
-  // ---------------------------------------------------------------------------
-
-  // EC23S01: Python DSP Filter Simulator State
-  const [dspFc, setDspFc] = useState(1200); // Cutoff frequency (Hz)
-  const [dspFs, setDspFs] = useState(8000); // Sampling frequency (Hz)
-  const [dspOrder, setDspOrder] = useState(4); // Filter order
-
-  // EC23C03: Electronic Devices Diode IV Simulator State
-  const [diodeVf, setDiodeVf] = useState(0.70); // Forward voltage (V)
-  const [diodeTempK, setDiodeTempK] = useState(300); // Temperature (K)
-  const [diodeIs, setDiodeIs] = useState(1e-12); // Reverse saturation current (A)
-
-  // EC23E04: Optics Laser Cavity Stability State
-  const [laserL, setLaserL] = useState(0.5); // Cavity length (m)
-  const [laserR1, setLaserR1] = useState(1.0); // Mirror 1 radius (m)
-  const [laserR2, setLaserR2] = useState(0.8); // Mirror 2 radius (m)
-
-  // EC8702: Embedded Systems FreeRTOS Schedulability State
-  const [rtosC1, setRtosC1] = useState(10); // Task 1 execution time (ms)
-  const [rtosT1, setRtosT1] = useState(50); // Task 1 period (ms)
-  const [rtosC2, setRtosC2] = useState(25); // Task 2 execution time (ms)
-  const [rtosT2, setRtosT2] = useState(80); // Task 2 period (ms)
-
   // Resolve current active course
   const currentCourse = useMemo(() => {
     return getCourseByCode(selectedCourseId) || PRIORITY_COURSES["EC23S01"];
@@ -231,69 +207,6 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
   const togglePrereq = (idx) => {
     setPrereqChecked(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
-
-  // ---------------------------------------------------------------------------
-  // SIMULATION COMPUTATIONS
-  // ---------------------------------------------------------------------------
-
-  // 1. EC23S01: DSP Butterworth Frequency Response
-  const dspSimulationResult = useMemo(() => {
-    const nyquist = dspFs / 2;
-    const normCutoff = dspFc / nyquist;
-    const testFreqs = [200, 500, 1000, 1200, 1500, 2000, 3000];
-    const points = testFreqs.map(f => {
-      const ratio = f / dspFc;
-      const magGain = 1 / Math.sqrt(1 + Math.pow(ratio, 2 * dspOrder));
-      const magDb = 20 * Math.log10(magGain);
-      return { freq: f, magGain: magGain.toFixed(4), magDb: magDb.toFixed(2) };
-    });
-    return { normCutoff: normCutoff.toFixed(3), points };
-  }, [dspFc, dspFs, dspOrder]);
-
-  // 2. EC23C03: Shockley Diode IV Calculation
-  const diodeSimulationResult = useMemo(() => {
-    const q = 1.602e-19;
-    const k = 1.38e-23;
-    const vt = (k * diodeTempK) / q; // Thermal voltage (approx 25.9mV at 300K)
-    const currentA = diodeIs * (Math.exp(diodeVf / vt) - 1);
-    const currentMa = currentA * 1000;
-    const dynamicRes = currentA > 0 ? (vt / currentA).toFixed(2) : "Infinity";
-    return {
-      vtMv: (vt * 1000).toFixed(2),
-      currentMa: currentMa < 1000 ? currentMa.toFixed(3) : currentMa.toExponential(3),
-      dynamicRes
-    };
-  }, [diodeVf, diodeTempK, diodeIs]);
-
-  // 3. EC23E04: Optics Laser Resonator Stability Calculation
-  const laserSimulationResult = useMemo(() => {
-    const g1 = 1 - (laserL / laserR1);
-    const g2 = 1 - (laserL / laserR2);
-    const gProd = g1 * g2;
-    const isStable = (gProd >= 0 && gProd <= 1);
-    return {
-      g1: g1.toFixed(3),
-      g2: g2.toFixed(3),
-      gProd: gProd.toFixed(3),
-      isStable
-    };
-  }, [laserL, laserR1, laserR2]);
-
-  // 4. EC8702: FreeRTOS Liu & Layland Schedulability Bound
-  const rtosSimulationResult = useMemo(() => {
-    const u1 = rtosC1 / rtosT1;
-    const u2 = rtosC2 / rtosT2;
-    const totalU = (u1 + u2) * 100;
-    const bound = 2 * (Math.pow(2, 1 / 2) - 1) * 100; // approx 82.84%
-    const isSchedulable = totalU <= bound;
-    return {
-      u1Pct: (u1 * 100).toFixed(1),
-      u2Pct: (u2 * 100).toFixed(1),
-      totalUPct: totalU.toFixed(1),
-      boundPct: bound.toFixed(2),
-      isSchedulable
-    };
-  }, [rtosC1, rtosT1, rtosC2, rtosT2]);
 
   return (
     <div
@@ -854,225 +767,14 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       )}
 
       {/* --------------------------------------------------------------------- */}
-      {/* TAB 5: LAB SIMULATOR WORKBENCH (DYNAMIC PER COURSE) */}
+      {/* TAB 5: LAB SIMULATOR WORKBENCH (PHASE 8 EXPANSION) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "simulator" && (
-        <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <DepartmentalBadgeIcon code={currentCourse.code} className="w-8 h-8" primaryColor={theme.primaryColor} />
-                <div>
-                  <div className="text-xs font-mono font-bold" style={{ color: theme.primaryColor }}>
-                    INTERACTIVE SIMULATOR • {currentCourse.labSimulation.simulationPlatform.toUpperCase()}
-                  </div>
-                  <h3 className="text-xl font-extrabold text-white font-sans mt-0.5">
-                    {currentCourse.code} Live Laboratory Workbench
-                  </h3>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${theme.badgeClass}`}>
-                100% Client-Side Physics
-              </span>
-            </div>
-
-            {/* 1. EC23S01: Python DSP Filter Response */}
-            {currentCourse.code === "EC23S01" && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
-                  <div>
-                    <label className="text-slate-400">Cutoff Frequency: <strong className="text-white">{dspFc} Hz</strong></label>
-                    <input
-                      type="range" min="300" max="3000" step="50"
-                      value={dspFc} onChange={(e) => setDspFc(Number(e.target.value))}
-                      className="w-full mt-2 accent-[#00F0B5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400">Sampling Rate: <strong className="text-white">{dspFs} Hz</strong></label>
-                    <input
-                      type="range" min="4000" max="16000" step="1000"
-                      value={dspFs} onChange={(e) => setDspFs(Number(e.target.value))}
-                      className="w-full mt-2 accent-[#00F0B5]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400">Butterworth Order: <strong className="text-white">{dspOrder}</strong></label>
-                    <input
-                      type="range" min="1" max="8" step="1"
-                      value={dspOrder} onChange={(e) => setDspOrder(Number(e.target.value))}
-                      className="w-full mt-2 accent-[#00F0B5]"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-mono">
-                    <thead>
-                      <tr className="border-b border-slate-800 text-slate-400 bg-[#020813]/60">
-                        <th className="py-2 px-3">Test Frequency (Hz)</th>
-                        <th className="py-2 px-3">Magnitude Gain |H(f)|</th>
-                        <th className="py-2 px-3">Attenuation (dB)</th>
-                        <th className="py-2 px-3">Regime</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/60">
-                      {dspSimulationResult.points.map(pt => (
-                        <tr key={pt.freq} className="hover:bg-slate-800/30">
-                          <td className="py-2 px-3 font-bold text-white">{pt.freq} Hz</td>
-                          <td className="py-2 px-3 text-[#00F0B5]">{pt.magGain}</td>
-                          <td className="py-2 px-3 text-amber-300">{pt.magDb} dB</td>
-                          <td className="py-2 px-3 text-[11px] text-slate-400">
-                            {pt.freq <= dspFc ? "Passband" : "Stopband Attenuation"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* 2. EC23C03: Electronic Devices Diode IV Simulator */}
-            {currentCourse.code === "EC23C03" && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-                  <div>
-                    <label className="text-slate-400">Forward Bias Voltage: <strong className="text-amber-400">{diodeVf.toFixed(2)} V</strong></label>
-                    <input
-                      type="range" min="0.10" max="0.85" step="0.01"
-                      value={diodeVf} onChange={(e) => setDiodeVf(Number(e.target.value))}
-                      className="w-full mt-2 accent-amber-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400">Junction Temp: <strong className="text-white">{diodeTempK} K ({diodeTempK - 273}°C)</strong></label>
-                    <input
-                      type="range" min="250" max="400" step="5"
-                      value={diodeTempK} onChange={(e) => setDiodeTempK(Number(e.target.value))}
-                      className="w-full mt-2 accent-amber-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 font-mono text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Thermal Voltage (VT)</div>
-                    <div className="text-white font-bold text-base mt-0.5">{diodeSimulationResult.vtMv} mV</div>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Diode Current (ID)</div>
-                    <div className="text-amber-400 font-bold text-base mt-0.5">{diodeSimulationResult.currentMa} mA</div>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Dynamic Resistance (rd)</div>
-                    <div className="text-emerald-400 font-bold text-base mt-0.5">{diodeSimulationResult.dynamicRes} Ω</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 3. EC23E04: Optics Laser Cavity Stability Calculator */}
-            {currentCourse.code === "EC23E04" && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
-                  <div>
-                    <label className="text-slate-400">Cavity Length (L): <strong className="text-cyan-400">{laserL.toFixed(2)} m</strong></label>
-                    <input
-                      type="range" min="0.1" max="1.5" step="0.05"
-                      value={laserL} onChange={(e) => setLaserL(Number(e.target.value))}
-                      className="w-full mt-2 accent-cyan-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400">Mirror 1 RoC (R1): <strong className="text-white">{laserR1.toFixed(2)} m</strong></label>
-                    <input
-                      type="range" min="0.2" max="2.0" step="0.1"
-                      value={laserR1} onChange={(e) => setLaserR1(Number(e.target.value))}
-                      className="w-full mt-2 accent-cyan-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400">Mirror 2 RoC (R2): <strong className="text-white">{laserR2.toFixed(2)} m</strong></label>
-                    <input
-                      type="range" min="0.2" max="2.0" step="0.1"
-                      value={laserR2} onChange={(e) => setLaserR2(Number(e.target.value))}
-                      className="w-full mt-2 accent-cyan-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 gap-3 font-mono text-xs">
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Parameter g1</div>
-                    <div className="text-white font-bold text-sm mt-0.5">{laserSimulationResult.g1}</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Parameter g2</div>
-                    <div className="text-white font-bold text-sm mt-0.5">{laserSimulationResult.g2}</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Product g1*g2</div>
-                    <div className="text-cyan-300 font-bold text-sm mt-0.5">{laserSimulationResult.gProd}</div>
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                    <div className="text-[10px] text-slate-500 uppercase">Stability (0 ≤ g1g2 ≤ 1)</div>
-                    <div className={`font-bold text-sm mt-0.5 ${laserSimulationResult.isStable ? "text-emerald-400" : "text-rose-400"}`}>
-                      {laserSimulationResult.isStable ? "STABLE RESONATOR" : "UNSTABLE"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 4. EC8702: FreeRTOS Schedulability Analyzer */}
-            {currentCourse.code === "EC8702" && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800 space-y-2">
-                    <div className="font-bold text-white">Task 1: Sensor Sampling (C1 / T1)</div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Exec: {rtosC1}ms</span>
-                      <span>Period: {rtosT1}ms</span>
-                    </div>
-                    <input
-                      type="range" min="5" max="30" step="1"
-                      value={rtosC1} onChange={(e) => setRtosC1(Number(e.target.value))}
-                      className="w-full accent-indigo-500"
-                    />
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[#020813] border border-slate-800 space-y-2">
-                    <div className="font-bold text-white">Task 2: Telemetry Stream (C2 / T2)</div>
-                    <div className="flex justify-between text-slate-400">
-                      <span>Exec: {rtosC2}ms</span>
-                      <span>Period: {rtosT2}ms</span>
-                    </div>
-                    <input
-                      type="range" min="10" max="60" step="1"
-                      value={rtosC2} onChange={(e) => setRtosC2(Number(e.target.value))}
-                      className="w-full accent-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#020813] border border-slate-800 font-mono text-xs flex justify-between items-center">
-                  <div>
-                    <div className="text-white font-bold">Total CPU Utilization: {rtosSimulationResult.totalUPct}%</div>
-                    <div className="text-slate-400 text-[11px] mt-0.5">
-                      Liu &amp; Layland Bound: ≤ {rtosSimulationResult.boundPct}% for 2 periodic tasks
-                    </div>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full font-bold text-xs ${
-                    rtosSimulationResult.isSchedulable ? "bg-emerald-950 text-emerald-300 border border-emerald-500/40" : "bg-rose-950 text-rose-300 border border-rose-500/40"
-                  }`}>
-                    {rtosSimulationResult.isSchedulable ? "100% SCHEDULABLE" : "OVERLOAD / MISSED DEADLINE"}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <CourseLabSimulator
+          courseCode={currentCourse.code}
+          themeColor={theme.primaryColor}
+          themeFamily={theme.themeFamily}
+        />
       )}
 
       {/* --------------------------------------------------------------------- */}
