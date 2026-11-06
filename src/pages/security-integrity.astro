@@ -1,0 +1,99 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import SecurityIntegrityHub from '../components/SecurityIntegrityHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase Q: Security, Authentication & System Integrity Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead & Systems Architect: Ashok Kumar A
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+ * Features 371–380:
+ *   - Feature 371: Role-Based Access Control (RBAC) (STUDENT, FACULTY, LAB_TECH, HOD_ADMIN)
+ *   - Feature 372: Session Token Manager (HMAC-SHA256 cryptographically signed tokens & TTL)
+ *   - Feature 373: SQLite WAL Integrity Checker (PRAGMA integrity_check & WAL verification)
+ *   - Feature 374: Secure Password Hashing & Salt Audit (PBKDF2-HMAC-SHA256 100k iterations)
+ *   - Feature 375: API Rate Limiting Monitor (Sliding-window rate limiter: 60 req/min)
+ *   - Feature 376: Security Vulnerability Scanner (SQL injection & XSS sanitization audit)
+ *   - Feature 377: Automated Database Backup Manager (Zero-downtime hot backups & checksums)
+ *   - Feature 378: Audit Trail Logger (Append-only tamper-evident security audit logs)
+ *   - Feature 379: CORS & CSP Policy Enforcer (Hardened Content-Security-Policy & origin allowlists)
+ *   - Feature 380: Dedicated Public Platform Lead Portfolio Tab (Architectural showcase)
+ * Hardware Safe: Zero background polling loops, SQLite WAL mode, passive CPU footprint.
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Security, Auth & System Integrity Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Enterprise Cybersecurity, SQLite WAL, PBKDF2-SHA256 & Zero-Trust RBAC"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="security-integrity">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              🛡️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Phase Q • Features 371–380
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                Enterprise Zero-Trust Security
+              </span>
+              <span class="text-xs text-slate-400">
+                Architectural Lead: <strong class="text-slate-200">{pageMetadata.lead}</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              Security, Authentication & System Integrity Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                v1.0-HARDENED
+              </span>
+            </h1>
+            <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Multi-tier authorization matrix, HMAC-SHA256 session token management, SQLite WAL integrity checks, PBKDF2 salting, rate-limiting shields, hot backups, and platform lead architectural transparency.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            Zero-Trust RBAC & HMAC Tokens
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            SQLite WAL & Hot Backup Engine
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            PBKDF2 Salting & CSP Hardening
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <SecurityIntegrityHub client:load />
+
+  </div>
+</MainLayout>
