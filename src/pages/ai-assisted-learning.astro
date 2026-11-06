@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import AIAssistedLearningHub from '../components/AIAssistedLearningHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase I: AI-Assisted Learning Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 291–300:
+ *   - Feature 291: VoltCore AI Concept Explainer (Multi-depth: ELI5, Undergrad, Rigorous)
+ *   - Feature 292: AI-Assisted Code Explanation (Verilog, ARM C, Python DSP, 8086 ASM)
+ *   - Feature 293: AI Notes Summarizer (TL;DR, Key Points, Formula Sheet, Cram Cards)
+ *   - Feature 294: AI Question Generator (Anna Univ Reg 2023 Bloom's Taxonomy Part A/B)
+ *   - Feature 295: AI Diagram Description Assistant (Schematics, Timing, FSM, ASCII)
+ *   - Feature 296: AI Assignment Feedback Assistant (Rubric-based evaluation, score, tips)
+ *   - Feature 297: AI Study Plan Generator (5-Unit exam countdown, spaced repetition)
+ *   - Feature 298: AI Technical Vocabulary Assistant (Lexicon, Etymology, Tamil & Traps)
+ *   - Feature 299: AI Viva Practice Assistant (Interactive oral exam simulator & scoring)
+ *   - Feature 300: AI Research Paper Summarizer (IEEE ECE Paper Breakdown & Project Scope)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "AI-Assisted Learning Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Client-Safe Deterministic AI & Intelligent Pedagogical Assistant"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="ai-assisted-learning">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-blue-500 via-indigo-500 to-purple-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-blue-400">
+              🧠
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-blue-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                AI-Assisted Learning Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-500/40">
+                PHASE I (FEATURES 291–300)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              Anna University / MIT Campus • ECE Dept • Reg 2023 • Lead: Ashok Kumar A (<span class="text-cyan-300">{pageMetadata.rollNo}</span>)
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">
+              Client-Safe Deterministic Prompt Engine • SQLite WAL Mode • Zero CPU Overhead
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col items-start md:items-end gap-2 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            Concept Explainer & Code AI
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Anna Univ Question Generator
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+            Interactive Viva & Rubric Evaluator
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main React Island -->
+    <AIAssistedLearningHub client:load />
+
+  </div>
+</MainLayout>
