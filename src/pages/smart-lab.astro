@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import SmartLabMonitor from '../components/SmartLabMonitor.jsx';
+import LowPowerEnergyHub from '../components/LowPowerEnergyHub.jsx';
 
 // Smart Laboratory Metadata
 const labMetadata = {
@@ -72,6 +73,9 @@ const labMetadata = {
 
     <!-- Interactive Smart Lab Island Component -->
     <SmartLabMonitor client:load />
+
+    <!-- Phase 34: Low-Power Sleep Modes & Battery Energy Profiler -->
+    <LowPowerEnergyHub client:load />
 
     <!-- Laboratory Operating Procedures & Safety Matrix -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

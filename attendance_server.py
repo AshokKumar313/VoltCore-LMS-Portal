@@ -4354,6 +4354,71 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    # ====================================================================================
+    # Phase 34: Low-Power Sleep & Battery Energy Profiler Endpoints
+    # ====================================================================================
+
+    @app.route("/api/energy/calculate", methods=["POST", "OPTIONS"])
+    def energy_calculate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.low_power_energy_engine import low_power_energy_engine
+        payload = request.get_json(silent=True) or {}
+        mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+        act_mode = payload.get("active_mode", "ACTIVE_WIFI_TX")
+        slp_mode = payload.get("sleep_mode", "DEEP_SLEEP")
+        wake = payload.get("wake_source", "RTC_TIMER")
+        act_ms = float(payload.get("active_duration_ms", 200.0))
+        slp_s = float(payload.get("sleep_duration_s", 59.8))
+        bat = payload.get("battery_key", "LIPO_18650_2500MAH")
+        eff = float(payload.get("battery_efficiency", 0.85))
+        student = payload.get("student_id", "2023MITEC042")
+
+        res = low_power_energy_engine.calculate_energy_profile(
+            mcu_target=mcu, active_mode=act_mode, sleep_mode=slp_mode,
+            wake_source=wake, active_duration_ms=act_ms, sleep_duration_s=slp_s,
+            battery_key=bat, battery_efficiency=eff, student_id=student
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/energy/discharge-curve", methods=["POST", "OPTIONS"])
+    def energy_discharge_curve_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+        from backend.low_power_energy_engine import low_power_energy_engine
+        payload = request.get_json(silent=True) or {}
+        bat = payload.get("battery_key", "LIPO_18650_2500MAH")
+        current = float(payload.get("avg_current_ma", 0.54))
+        eff = float(payload.get("battery_efficiency", 0.85))
+        res = low_power_energy_engine.generate_discharge_curve(
+            battery_key=bat, avg_current_ma=current, battery_efficiency=eff
+        )
+        return jsonify(res), 200
+
+    @app.route("/api/energy/history", methods=["GET"])
+    def energy_history_endpoint():
+        from backend.low_power_energy_engine import low_power_energy_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(low_power_energy_engine.get_simulation_history(limit=limit)), 200
+
+    @app.route("/api/energy/export-csv", methods=["GET"])
+    def energy_export_csv_endpoint():
+        from backend.low_power_energy_engine import low_power_energy_engine
+        csv_data = low_power_energy_engine.export_energy_csv()
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_energy_profiles.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -4853,6 +4918,20 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_rtos_benchmarks.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/energy/history":
+                from backend.low_power_energy_engine import low_power_energy_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(low_power_energy_engine.get_simulation_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/energy/export-csv":
+                from backend.low_power_energy_engine import low_power_energy_engine
+                csv_str = low_power_energy_engine.export_energy_csv()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_energy_profiles.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -5607,6 +5686,35 @@ else:
                 from backend.rtos_scheduler_engine import rtos_scheduler_engine
                 mcu = payload.get("mcu_target", "ESP32_WROOM_32")
                 res = rtos_scheduler_engine.benchmark_mcu_hardware(mcu_key=mcu)
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/energy/calculate":
+                from backend.low_power_energy_engine import low_power_energy_engine
+                mcu = payload.get("mcu_target", "ESP32_WROOM_32")
+                act_mode = payload.get("active_mode", "ACTIVE_WIFI_TX")
+                slp_mode = payload.get("sleep_mode", "DEEP_SLEEP")
+                wake = payload.get("wake_source", "RTC_TIMER")
+                act_ms = float(payload.get("active_duration_ms", 200.0))
+                slp_s = float(payload.get("sleep_duration_s", 59.8))
+                bat = payload.get("battery_key", "LIPO_18650_2500MAH")
+                eff = float(payload.get("battery_efficiency", 0.85))
+                student = payload.get("student_id", "2023MITEC042")
+
+                res = low_power_energy_engine.calculate_energy_profile(
+                    mcu_target=mcu, active_mode=act_mode, sleep_mode=slp_mode,
+                    wake_source=wake, active_duration_ms=act_ms, sleep_duration_s=slp_s,
+                    battery_key=bat, battery_efficiency=eff, student_id=student
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/energy/discharge-curve":
+                from backend.low_power_energy_engine import low_power_energy_engine
+                bat = payload.get("battery_key", "LIPO_18650_2500MAH")
+                current = float(payload.get("avg_current_ma", 0.54))
+                eff = float(payload.get("battery_efficiency", 0.85))
+                res = low_power_energy_engine.generate_discharge_curve(
+                    battery_key=bat, avg_current_ma=current, battery_efficiency=eff
+                )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:
