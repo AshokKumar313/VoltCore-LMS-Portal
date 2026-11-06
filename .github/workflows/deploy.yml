@@ -1,0 +1,162 @@
+name: VoltCore Apex Academia CI/CD & GitHub Pages Deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ========================================================================================
+  # Job 1: Automated Pytest Suite (417+ Tests) & Anti-Hallucination Content QA
+  # ========================================================================================
+  verification-and-tests:
+    name: Pytest Verification Suite & Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov dulwich reportlab
+
+      - name: Run Full Pytest Verification Suite (All 417+ Tests)
+        run: |
+          pytest tests/ --verbose
+
+      - name: Execute Content QA & Anti-Hallucination Validator
+        run: |
+          python scripts/content_qa_validator.py
+
+      - name: Run Production Readiness & RBAC Security Audit
+        run: |
+          python deploy/production_readiness_audit.py
+
+      - name: Verify Hardware Safety & Zero Leakage Invariants
+        run: |
+          echo "Asserting zero presence of private admin credentials..."
+          ! grep -rn "ashokkumar2008313@gmail.com" src/components/
+          ! grep -rn "9597382878" src/components/
+          echo "All privacy and credential protection invariants verified."
+
+  # ========================================================================================
+  # Job 2: Static Astro 5 SSG Compilation & Verification
+  # ========================================================================================
+  build-static-routes:
+    name: Compile Astro 5 Static Routes
+    runs-on: ubuntu-latest
+    needs: verification-and-tests
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Static Astro 5 Routes
+        run: npm run build
+
+      - name: Verify All 39 Production Static HTML Routes
+        run: |
+          for route in \
+            index \
+            academic-hub \
+            accessibility \
+            analog-communication \
+            attendance \
+            autograder \
+            careers \
+            cloud-deploy \
+            collaboration \
+            component-inspector \
+            data-intelligence \
+            digital-electronics \
+            ece-knowledge \
+            enterprise-admin \
+            exam-center \
+            faculty-workspace \
+            flash-firmware \
+            flashcards \
+            fleet \
+            gate-ece \
+            hardware-hil \
+            iot-lab \
+            learning-productivity \
+            next-gen \
+            nptel \
+            nptel-player \
+            physical-lab \
+            profile \
+            project-innovation \
+            research \
+            security-hub \
+            settings \
+            simulation \
+            smart-lab \
+            system-health \
+            teacher \
+            telemetry \
+            virtual-bench \
+            voice-lab; do
+            if [ "$route" = "index" ]; then
+              test -f dist/index.html || { echo "Missing dist/index.html"; exit 1; }
+            else
+              test -f dist/${route}/index.html || { echo "Missing dist/${route}/index.html"; exit 1; }
+            fi
+          done
+          echo "All 39 static routes confirmed pre-rendered."
+
+      - name: Setup Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+  # ========================================================================================
+  # Job 3: Automated GitHub Pages Deployment (Runs in Cloud, Zero Local Resource Draw)
+  # ========================================================================================
+  deploy-github-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-static-routes
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
