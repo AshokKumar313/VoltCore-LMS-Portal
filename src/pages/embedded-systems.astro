@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import EmbeddedSystemsHub from '../components/EmbeddedSystemsHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase F: Embedded Systems & Microcontrollers Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 261–270:
+ *   - Feature 261: Microcontroller Pinout Explorer (STM32F401, ATmega328P, ESP32, RP2040)
+ *   - Feature 262: GPIO Configuration Learning Tool (MODER, OTYPER, OSPEEDR, PUPDR, AFR)
+ *   - Feature 263: UART Communication Visualizer (BRR Mantissa/Fraction, Frame Timing)
+ *   - Feature 264: SPI Communication Diagram Explorer (Modes 0-3, CPOL/CPHA, SCK Prescaler)
+ *   - Feature 265: I2C Address and Transaction Explorer (7-bit/8-bit R/W, Pull-up Math)
+ *   - Feature 266: Interrupt Handling Learning Simulator (NVIC Priority Grouping, Latency)
+ *   - Feature 267: Timer and Counter Configuration Calculator (PSC, ARR, Overflow Freq)
+ *   - Feature 268: PWM Duty Cycle Visualizer (CCR, ARR, Edge vs Center-Aligned, Average V)
+ *   - Feature 269: Memory Map Explorer (Flash, SRAM, Peripherals, Bit-Band Alias Address)
+ *   - Feature 270: Embedded C Code Snippet Library (Bare-Metal Templates, Bilingual Notes)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Embedded Systems & Microcontrollers Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "STM32F4 + AVR + ESP32 + RP2040 Bare-Metal Register Architecture"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="embedded-systems">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-cyan-400">
+              ⚡
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-cyan-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Embedded Systems & Microcontrollers Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/40">
+                PHASE F (FEATURES 261–270)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              {pageMetadata.department} • {pageMetadata.campus}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5">
+              Platform Architect: <span class="text-white font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.mode}
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Core Architectures:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">Cortex-M4F & AVR</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-indigo-500/30 text-xs">
+            <span class="text-slate-400">Serial Buses:</span>
+            <span class="text-indigo-400 font-bold ml-1.5">UART, SPI & I²C</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-purple-500/30 text-xs">
+            <span class="text-slate-400">Interrupts/PWM:</span>
+            <span class="text-purple-400 font-bold ml-1.5">NVIC & 16-bit Timers</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Embedded Systems Hub Island -->
+    <EmbeddedSystemsHub client:load />
+
+  </div>
+</MainLayout>
