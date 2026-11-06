@@ -3,6 +3,7 @@ import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens 
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
 import CourseLabSimulator from './CourseLabSimulator';
+import CourseProjectsHub from './CourseProjectsHub';
 
 /**
  * ========================================================================================
@@ -374,6 +375,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
             { id: "outcomes", label: "Course Outcomes (CO-PO)", icon: "🎯" },
             { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗" },
             { id: "simulator", label: "Lab Simulator", icon: "⚡" },
+            { id: "projects", label: "Projects & Progress", icon: "🚀" },
             { id: "textbooks", label: "Textbooks & NPTEL", icon: "🏛️" }
           ].map((tab) => (
             <button
@@ -771,6 +773,17 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* --------------------------------------------------------------------- */}
       {activeTab === "simulator" && (
         <CourseLabSimulator
+          courseCode={currentCourse.code}
+          themeColor={theme.primaryColor}
+          themeFamily={theme.themeFamily}
+        />
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB 6: PROJECTS, PRACTICALS & PROGRESS TRACKING (PHASE 9) */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "projects" && (
+        <CourseProjectsHub
           courseCode={currentCourse.code}
           themeColor={theme.primaryColor}
           themeFamily={theme.themeFamily}
