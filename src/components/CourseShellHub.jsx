@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
@@ -209,6 +209,34 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
     setPrereqChecked(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
+  // Primary Navigation Tabs with Shortcut Bindings
+  const NAV_TABS = useMemo(() => [
+    { id: "overview", label: "Overview", icon: "📋", key: "1" },
+    { id: "syllabus", label: "Syllabus (Units I-V)", icon: "📖", key: "2" },
+    { id: "lessons", label: "Lesson Library & Notes", icon: "📚", key: "3" },
+    { id: "quizzes", label: "Quizzes & Assessments", icon: "📝", key: "4" },
+    { id: "outcomes", label: "Course Outcomes (CO-PO)", icon: "🎯", key: "5" },
+    { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗", key: "6" },
+    { id: "simulator", label: "Lab Simulator", icon: "⚡", key: "7" },
+    { id: "projects", label: "Projects & Progress", icon: "🚀", key: "8" },
+    { id: "textbooks", label: "Textbooks & NPTEL", icon: "🏛️", key: "9" }
+  ], []);
+
+  // Keyboard navigation handler (zero polling daemons)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName) || e.target?.isContentEditable) {
+        return;
+      }
+      const match = NAV_TABS.find(t => t.key === e.key);
+      if (match) {
+        setActiveTab(match.id);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [NAV_TABS]);
+
   return (
     <div
       data-course={currentCourse.code}
@@ -366,29 +394,27 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
         {/* ------------------------------------------------------------------- */}
         {/* PRIMARY NAVIGATION TABS */}
         {/* ------------------------------------------------------------------- */}
-        <div className="mt-6 flex flex-wrap gap-2 border-t border-slate-800/80 pt-5">
-          {[
-            { id: "overview", label: "Overview", icon: "📋" },
-            { id: "syllabus", label: "Syllabus (Units I-V)", icon: "📖" },
-            { id: "lessons", label: "Lesson Library & Notes", icon: "📚" },
-            { id: "quizzes", label: "Quizzes & Assessments", icon: "📝" },
-            { id: "outcomes", label: "Course Outcomes (CO-PO)", icon: "🎯" },
-            { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗" },
-            { id: "simulator", label: "Lab Simulator", icon: "⚡" },
-            { id: "projects", label: "Projects & Progress", icon: "🚀" },
-            { id: "textbooks", label: "Textbooks & NPTEL", icon: "🏛️" }
-          ].map((tab) => (
+        <div role="tablist" aria-label="Course Sections Navigation" className="mt-6 flex flex-wrap gap-2 border-t border-slate-800/80 pt-5">
+          {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`panel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
               onClick={() => setActiveTab(tab.id)}
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
                 activeTab === tab.id
-                  ? `${theme.activeTabClass} scale-102`
+                  ? `${theme.activeTabClass} scale-102 shadow-lg`
                   : "bg-[#020813]/60 text-slate-400 hover:text-white hover:bg-slate-800/60 border border-slate-800"
               }`}
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
+              <span className="hidden sm:inline-block ml-1 text-[9px] px-1 py-0.2 rounded bg-slate-900/80 text-slate-500 font-mono">
+                {tab.key}
+              </span>
             </button>
           ))}
         </div>
@@ -398,7 +424,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* TAB 1: COURSE OVERVIEW */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "overview" && (
-        <div className="space-y-6">
+        <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
               <h3 className="font-bold text-base text-white flex items-center gap-2">
@@ -468,6 +494,60 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
               </div>
             </div>
           </div>
+
+          {/* Master Academic Launch Matrix (Cross-Tab Navigators) */}
+          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <h4 className="font-bold text-sm text-white font-mono flex items-center gap-2">
+                  <span>⚡</span>
+                  <span>Unified Academic Launch Matrix &amp; Cross-Section Navigators</span>
+                </h4>
+                <div className="text-xs text-slate-400">Direct shortcuts to interactive course modules</div>
+              </div>
+              <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#020813] border border-slate-700 text-emerald-400">
+                Anna Univ Reg 2023 Aligned
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+              <button
+                onClick={() => setActiveTab("lessons")}
+                className="p-4 rounded-xl bg-[#020813] hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 text-left transition-all space-y-1.5 group"
+              >
+                <div className="text-base group-hover:scale-110 transition-transform">📚</div>
+                <div className="font-bold text-white group-hover:text-emerald-400 transition-colors">Lecture Notes &amp; Lessons</div>
+                <div className="text-[11px] text-slate-400 font-sans">KaTeX formula derivations &amp; student bookmarks</div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("quizzes")}
+                className="p-4 rounded-xl bg-[#020813] hover:bg-slate-800 border border-slate-800 hover:border-amber-500/50 text-left transition-all space-y-1.5 group"
+              >
+                <div className="text-base group-hover:scale-110 transition-transform">📝</div>
+                <div className="font-bold text-white group-hover:text-amber-400 transition-colors">Quizzes &amp; Assessments</div>
+                <div className="text-[11px] text-slate-400 font-sans">Unit MCQs, Part A 2-mark &amp; Part B solutions</div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("simulator")}
+                className="p-4 rounded-xl bg-[#020813] hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/50 text-left transition-all space-y-1.5 group"
+              >
+                <div className="text-base group-hover:scale-110 transition-transform">⚡</div>
+                <div className="font-bold text-white group-hover:text-cyan-400 transition-colors">Virtual Lab Simulator</div>
+                <div className="text-[11px] text-slate-400 font-sans">Client-side physics waveform &amp; curve visualizer</div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("projects")}
+                className="p-4 rounded-xl bg-[#020813] hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-left transition-all space-y-1.5 group"
+              >
+                <div className="text-base group-hover:scale-110 transition-transform">🚀</div>
+                <div className="font-bold text-white group-hover:text-indigo-400 transition-colors">Projects &amp; Practicals</div>
+                <div className="text-[11px] text-slate-400 font-sans">Mini-projects, CIE milestones &amp; lab reports</div>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -475,7 +555,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* TAB 2: UNIT-WISE SYLLABUS NAVIGATION (UNITS I THROUGH V) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "syllabus" && (
-        <div className="space-y-6">
+        <div role="tabpanel" id="panel-syllabus" aria-labelledby="tab-syllabus" className="space-y-6">
           {/* Unit Selector Strip (Units I to V with Roman Numerals) */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-xs">
             {currentCourse.syllabusUnits.map((unit, idx) => {
@@ -643,30 +723,34 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* TAB: LESSON LIBRARY & MARKDOWN LECTURE NOTES (PHASE 6) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "lessons" && (
-        <CourseLessonReader
-          courseCode={currentCourse.code}
-          themeColor={theme.primaryColor}
-          themeFamily={theme.themeFamily}
-          onLaunchSimulator={() => setActiveTab("simulator")}
-        />
+        <div role="tabpanel" id="panel-lessons" aria-labelledby="tab-lessons">
+          <CourseLessonReader
+            courseCode={currentCourse.code}
+            themeColor={theme.primaryColor}
+            themeFamily={theme.themeFamily}
+            onLaunchSimulator={() => setActiveTab("simulator")}
+          />
+        </div>
       )}
 
       {/* --------------------------------------------------------------------- */}
       {/* TAB: QUIZZES, ASSESSMENTS & AUTOMATED EXPLANATIONS (PHASE 7) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "quizzes" && (
-        <CourseQuizEngine
-          courseCode={currentCourse.code}
-          themeColor={theme.primaryColor}
-          themeFamily={theme.themeFamily}
-        />
+        <div role="tabpanel" id="panel-quizzes" aria-labelledby="tab-quizzes">
+          <CourseQuizEngine
+            courseCode={currentCourse.code}
+            themeColor={theme.primaryColor}
+            themeFamily={theme.themeFamily}
+          />
+        </div>
       )}
 
       {/* --------------------------------------------------------------------- */}
       {/* TAB 3: COURSE OUTCOMES (CO-PO ATTAINMENT) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "outcomes" && (
-        <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-5">
+        <div role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
               <h3 className="font-bold text-base text-white">Course Outcomes (COs) & NBA Tier-1 Mapping</h3>
@@ -710,7 +794,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* TAB 4: PREREQUISITES & DAG PATHWAY */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "prerequisites" && (
-        <div className="space-y-6">
+        <div role="tabpanel" id="panel-prerequisites" aria-labelledby="tab-prerequisites" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Prerequisite DAG Pathway */}
             <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
@@ -772,29 +856,33 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* TAB 5: LAB SIMULATOR WORKBENCH (PHASE 8 EXPANSION) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "simulator" && (
-        <CourseLabSimulator
-          courseCode={currentCourse.code}
-          themeColor={theme.primaryColor}
-          themeFamily={theme.themeFamily}
-        />
+        <div role="tabpanel" id="panel-simulator" aria-labelledby="tab-simulator">
+          <CourseLabSimulator
+            courseCode={currentCourse.code}
+            themeColor={theme.primaryColor}
+            themeFamily={theme.themeFamily}
+          />
+        </div>
       )}
 
       {/* --------------------------------------------------------------------- */}
       {/* TAB 6: PROJECTS, PRACTICALS & PROGRESS TRACKING (PHASE 9) */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "projects" && (
-        <CourseProjectsHub
-          courseCode={currentCourse.code}
-          themeColor={theme.primaryColor}
-          themeFamily={theme.themeFamily}
-        />
+        <div role="tabpanel" id="panel-projects" aria-labelledby="tab-projects">
+          <CourseProjectsHub
+            courseCode={currentCourse.code}
+            themeColor={theme.primaryColor}
+            themeFamily={theme.themeFamily}
+          />
+        </div>
       )}
 
       {/* --------------------------------------------------------------------- */}
-      {/* TAB 6: TEXTBOOKS & NPTEL MAPPING */}
+      {/* TAB 7: TEXTBOOKS & NPTEL MAPPING */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "textbooks" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div role="tabpanel" id="panel-textbooks" aria-labelledby="tab-textbooks" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
             <h3 className="font-bold text-base text-white flex items-center gap-2">
               <span>📖 Prescribed Textbooks (Reg 2023)</span>
