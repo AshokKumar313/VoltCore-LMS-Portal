@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import ResearchInnovationHub from '../components/ResearchInnovationHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase J: Research & Innovation Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 301–310:
+ *   - Feature 301: IEEE Paper Reading Workspace (Structured layout, margin notes, math)
+ *   - Feature 302: Research Topic Discovery Board (6G THz, Neuromorphic, GaN, RISC-V, PIC)
+ *   - Feature 303: Research Paper Tagging System (Domain, Methodology, Tools, TRL 1-9)
+ *   - Feature 304: Citation Format Assistant (BibTeX, IEEE, APA, Harvard, Chicago)
+ *   - Feature 305: Literature Review Organizer (Comparative matrix, SOTA metrics, gaps)
+ *   - Feature 306: Research Gap Tracking Board (Open scientific hurdles & attack vectors)
+ *   - Feature 307: Research Idea Notebook (Hypotheses, apparatus, expected outcomes)
+ *   - Feature 308: Patent Reference Organizer (USPTO/IPO/WIPO, CPC/IPC codes, prior art)
+ *   - Feature 309: Research Collaboration Workspace (CRediT taxonomy, roles, equipment)
+ *   - Feature 310: Publication Progress Tracker (Stages: Draft -> Review -> Q1/Q2 Accepted)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Research & Innovation Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "IEEE Publications, Patents & Frontier ECE Research"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="research-innovation">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              💡
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Research & Innovation Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40">
+                PHASE J (FEATURES 301–310)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              Anna University / MIT Campus • ECE Dept • Reg 2023 • Lead: Ashok Kumar A (<span class="text-cyan-300">{pageMetadata.rollNo}</span>)
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">
+              IEEE Paper Workspace • Frontier Topics • Patents • CRediT Taxonomy • Q1/Q2 Pipeline
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col items-start md:items-end gap-2 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            IEEE Paper Workspace
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+            Citations & Literature Matrix
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            Patent & Q1 Pipeline Tracker
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main React Island -->
+    <ResearchInnovationHub client:load />
+
+  </div>
+</MainLayout>
