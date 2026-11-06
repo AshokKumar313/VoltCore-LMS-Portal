@@ -1,0 +1,92 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import CareerProfessionalHub from '../components/CareerProfessionalHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase L: Career & Professional Development Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Features 321–330:
+ *   - Feature 321: ECE Career Roadmap (Firmware, VLSI, Analog, RF, Automotive EV)
+ *   - Feature 322: Embedded Systems Skill Tracker (C/C++, RTOS, Buses, Hardware Debug)
+ *   - Feature 323: Semiconductor Industry Learning Track (IC Fab, EUV, Foundries)
+ *   - Feature 324: VLSI Learning Roadmap (RTL to GDSII, Synthesis, STA, DFT, Tapeout)
+ *   - Feature 325: IoT Career Preparation Track (MQTT, LoRaWAN, BLE, TinyML, Security)
+ *   - Feature 326: Technical Interview Question Bank (Qualcomm, TI, Intel, NXP, Bosch)
+ *   - Feature 327: Resume Builder (ATS-Compliant ECE Resume for Campus Recruitment)
+ *   - Feature 328: Technical Skills Assessment (Diagnostic interactive quiz & scoring)
+ *   - Feature 329: Internship Application Tracker (Company, Role, Tier, Status, Stipend)
+ *   - Feature 330: Placement Preparation Dashboard (Campus Day-0/1 countdown, CGPA, Target)
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "Career & Professional Development Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Semiconductor Tracks, Core Interviews & Day-0 Campus Placement"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="career-professional">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-teal-500 via-blue-500 to-indigo-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-teal-400">
+              💼
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-teal-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                Career & Professional Development Hub
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-xs font-bold border border-teal-500/40">
+                PHASE L (FEATURES 321–330)
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+              Anna University / MIT Campus • ECE Dept • Reg 2023 • Lead: Ashok Kumar A (<span class="text-cyan-300">{pageMetadata.rollNo}</span>)
+            </div>
+            <div class="text-[11px] text-slate-400 mt-0.5">
+              ECE Pathways • Interview Question Bank • ATS Resume Builder • Day-0 Readiness Dashboard
+            </div>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col items-start md:items-end gap-2 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+            Semiconductor & VLSI Pathways
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            Core Interview Question Bank
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Day-0 Placement Readiness
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Main React Island -->
+    <CareerProfessionalHub client:load />
+
+  </div>
+</MainLayout>
