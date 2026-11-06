@@ -1,0 +1,99 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import SystemHealthHub from '../components/SystemHealthHub.jsx';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Phase S: System Health, CI/CD & Final Integration Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead & Systems Architect: Ashok Kumar A
+ * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+ * Features 391–400:
+ *   - Feature 391: CI/CD Pipeline Status Monitor (GitHub Actions workflow execution telemetry)
+ *   - Feature 392: Automated Project Health Auditor (File tree integrity & dependency audit)
+ *   - Feature 393: SQLite Database Integrity Daemon (Passive WAL health & corruption diagnosis)
+ *   - Feature 394: Error Log Aggregator & Stack Trace Analyzer (Severity classification & parsing)
+ *   - Feature 395: API Endpoint Latency Benchmark Suite (P50, P95, P99 percentile latency SLA)
+ *   - Feature 396: Security Vulnerability Continuous Scanner (Secret leakage & CVE audit)
+ *   - Feature 397: Asset Build & SSG Integrity Verifier (Astro SSG 58-route link & asset verification)
+ *   - Feature 398: Automated Regression Test Runner (600+ test suite telemetry & coverage)
+ *   - Feature 399: Platform Analytics & Usage Telemetry (Campus student concurrency telemetry)
+ *   - Feature 400: Master System Integration Dashboard & Milestone Capstone (400-Feature Capstone)
+ * Hardware Safe: Zero background polling loops, SQLite WAL mode, passive CPU footprint.
+ * ========================================================================================
+ */
+
+const pageMetadata = {
+  title: "System Health, CI/CD & Final Integration Hub | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  department: "Department of Electronics Engineering",
+  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "CI/CD Pipeline Telemetry, SQLite WAL Daemon, 611 Tests & 400th Feature Capstone"
+};
+---
+
+<MainLayout title={pageMetadata.title} activeNav="system-health-integration">
+  <div class="space-y-6 font-mono">
+    
+    <!-- Hero Header Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        
+        <div class="flex items-center gap-5">
+          <!-- Glass Cybernetic Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
+              🚀
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
+          </div>
+          
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <span class="px-3 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Phase S • Features 391–400
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                400th Feature Capstone
+              </span>
+              <span class="text-xs text-slate-400">
+                Architectural Lead: <strong class="text-slate-200">{pageMetadata.lead}</strong>
+              </span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+              System Health, CI/CD & Final Integration Hub
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                v1.0-CAPSTONE
+              </span>
+            </h1>
+            <p class="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              {pageMetadata.campus} • {pageMetadata.department}. Master health center and CI/CD diagnostic suite verifying GitHub Actions pipelines, SQLite WAL daemons, error stack de-obfuscation, latency percentiles, regression testing, and the historic 400-Feature Capstone.
+            </p>
+          </div>
+        </div>
+
+        <!-- Capability Badges -->
+        <div class="flex flex-wrap md:flex-col gap-2 min-w-[200px]">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-emerald-500/30 text-xs text-emerald-300">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            CI/CD Telemetry &amp; SRE SLAs
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-cyan-500/30 text-xs text-cyan-300">
+            <span class="h-2 w-2 rounded-full bg-cyan-400"></span>
+            611 / 611 Tests Passed (100%)
+          </div>
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-purple-500/30 text-xs text-purple-300">
+            <span class="h-2 w-2 rounded-full bg-purple-400"></span>
+            400 Features Complete
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Interactive Client Component -->
+    <SystemHealthHub client:load />
+
+  </div>
+</MainLayout>
