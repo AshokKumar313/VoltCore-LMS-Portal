@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens } from '../data/course_config_schema';
+import CourseLessonReader from './CourseLessonReader';
 
 /**
  * ========================================================================================
@@ -454,10 +455,11 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
           {[
             { id: "overview", label: "Overview", icon: "📋" },
             { id: "syllabus", label: "Syllabus (Units I-V)", icon: "📖" },
+            { id: "lessons", label: "Lesson Library & Notes", icon: "📚" },
             { id: "outcomes", label: "Course Outcomes (CO-PO)", icon: "🎯" },
             { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗" },
             { id: "simulator", label: "Lab Simulator", icon: "⚡" },
-            { id: "textbooks", label: "Textbooks & NPTEL", icon: "📚" }
+            { id: "textbooks", label: "Textbooks & NPTEL", icon: "🏛️" }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -646,6 +648,17 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                     </div>
                   ))}
                 </div>
+
+                <div className="pt-3 border-t border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setActiveTab("lessons")}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#020813] hover:bg-slate-800 text-xs font-mono font-bold transition-all border border-slate-800 flex items-center gap-1.5"
+                    style={{ color: theme.primaryColor }}
+                  >
+                    <span>📚 Open Complete Lesson Library & Lecture Notes</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -707,6 +720,18 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
             )}
           </div>
         </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB: LESSON LIBRARY & MARKDOWN LECTURE NOTES (PHASE 6) */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "lessons" && (
+        <CourseLessonReader
+          courseCode={currentCourse.code}
+          themeColor={theme.primaryColor}
+          themeFamily={theme.themeFamily}
+          onLaunchSimulator={() => setActiveTab("simulator")}
+        />
       )}
 
       {/* --------------------------------------------------------------------- */}
