@@ -87,3 +87,35 @@ def test_academic_rigor_and_hours_compliance(engine):
         assert rigor["is_hour_compliant"] is True
         assert rigor["nba_tier1_aligned"] is True
         assert "L3-L6" in rigor["obe_blooms_rigor"]
+
+
+def test_course_theme_tokens_and_color_families(engine):
+    """Verify that course theme families and branding tokens adhere to Anna University ECE spec."""
+    expected_themes = {
+        "EC23S01": {"family": "emerald", "color": "#00F0B5"},
+        "EC23C03": {"family": "amber", "color": "#F59E0B"},
+        "EC23E04": {"family": "cyan", "color": "#06B6D4"},
+        "EC8702":  {"family": "indigo", "color": "#6366F1"},
+    }
+    for code, expected in expected_themes.items():
+        course = engine.get_course(code)
+        assert course is not None
+        assert course["theme_family"] == expected["family"]
+        assert course["theme_color"] == expected["color"]
+
+
+def test_course_departmental_domain_mapping(engine):
+    """Verify specialized ECE departmental domain apparatus and simulation platform."""
+    dsp = engine.get_course("EC23S01")
+    assert dsp["simulation_platform"] == "Python SciPy"
+    assert dsp["total_lab_hours"] == 48
+
+    devices = engine.get_course("EC23C03")
+    assert devices["simulation_platform"] == "LTspice"
+    assert devices["total_lecture_hours"] == 45
+
+    optics = engine.get_course("EC23E04")
+    assert optics["simulation_platform"] == "Optics Ray Tracer"
+
+    embedded = engine.get_course("EC8702")
+    assert embedded["simulation_platform"] == "Wokwi Embedded"

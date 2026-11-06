@@ -41,7 +41,10 @@ export interface PrerequisiteLink {
   topicBridge: string;
 }
 
+export type CourseThemeFamily = "emerald" | "amber" | "cyan" | "indigo";
+
 export interface CourseVisualTheme {
+  themeFamily: CourseThemeFamily;
   primaryColor: string; // Hex or CSS var
   accentGlow: string;
   badgeBg: string;
@@ -50,6 +53,11 @@ export interface CourseVisualTheme {
   gradientFrom: string;
   gradientTo: string;
   icon: string;
+  cardClass: string;
+  glowClass: string;
+  badgeClass: string;
+  activeTabClass: string;
+  textAccentClass: string;
 }
 
 export interface LabSimulationConfig {
@@ -106,6 +114,7 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
     campus: "Madras Institute of Technology (MIT) Campus, Anna University",
     description: "Computational signal processing laboratory utilizing Python (NumPy, SciPy, Matplotlib) for discrete-time signal transformation, FFT spectral analysis, IIR/FIR filter synthesis, and real-time audio/sensor telemetry.",
     visualTheme: {
+      themeFamily: "emerald",
       primaryColor: "#00F0B5",
       accentGlow: "rgba(0, 240, 181, 0.25)",
       badgeBg: "rgba(0, 105, 62, 0.4)",
@@ -113,7 +122,12 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
       borderAccent: "rgba(0, 240, 181, 0.3)",
       gradientFrom: "#00693E",
       gradientTo: "#00F0B5",
-      icon: "🐍"
+      icon: "🐍",
+      cardClass: "course-card-emerald",
+      glowClass: "course-glow-emerald",
+      badgeClass: "course-badge-emerald",
+      activeTabClass: "bg-[#00F0B5] text-slate-950 font-bold shadow-course-emerald-glow",
+      textAccentClass: "text-[#00F0B5]"
     },
     prerequisites: ["Signals and Systems (EC23C04)", "Linear Algebra & Numerical Methods (MA23C01)"],
     corequisites: ["Digital Signal Processing (EC23C06)"],
@@ -269,6 +283,7 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
     campus: "Madras Institute of Technology (MIT) Campus, Anna University",
     description: "Fundamental semiconductor physics and charge carrier dynamics, PN junctions, Zener diodes, Bipolar Junction Transistors (BJT), JFETs, and modern nanoscale MOSFETs.",
     visualTheme: {
+      themeFamily: "amber",
       primaryColor: "#F59E0B",
       accentGlow: "rgba(245, 158, 11, 0.25)",
       badgeBg: "rgba(180, 83, 9, 0.4)",
@@ -276,7 +291,12 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
       borderAccent: "rgba(245, 158, 11, 0.3)",
       gradientFrom: "#B45309",
       gradientTo: "#F59E0B",
-      icon: "⚡"
+      icon: "⚡",
+      cardClass: "course-card-amber",
+      glowClass: "course-glow-amber",
+      badgeClass: "course-badge-amber",
+      activeTabClass: "bg-[#F59E0B] text-slate-950 font-bold shadow-course-amber-glow",
+      textAccentClass: "text-[#F59E0B]"
     },
     prerequisites: ["Engineering Physics (PH23C01)", "Electric Circuit Analysis (EE23C01)"],
     corequisites: ["Electronic Circuits I (EC23C05)"],
@@ -426,14 +446,20 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
     campus: "Madras Institute of Technology (MIT) Campus, Anna University",
     description: "Electromagnetic wave optics, interference, diffraction, laser physics, Einstein coefficients, cavity resonator design, Q-switching, semiconductor diode lasers, and optical fiber telecommunications.",
     visualTheme: {
-      primaryColor: "#A855F7",
-      accentGlow: "rgba(168, 85, 247, 0.25)",
-      badgeBg: "rgba(126, 34, 206, 0.4)",
-      badgeText: "#E9D5FF",
-      borderAccent: "rgba(168, 85, 247, 0.3)",
-      gradientFrom: "#7E22CE",
-      gradientTo: "#A855F7",
-      icon: "🔦"
+      themeFamily: "cyan",
+      primaryColor: "#06B6D4",
+      accentGlow: "rgba(6, 182, 212, 0.25)",
+      badgeBg: "rgba(8, 145, 178, 0.4)",
+      badgeText: "#67E8F9",
+      borderAccent: "rgba(6, 182, 212, 0.3)",
+      gradientFrom: "#0891B2",
+      gradientTo: "#06B6D4",
+      icon: "🔦",
+      cardClass: "course-card-cyan",
+      glowClass: "course-glow-cyan",
+      badgeClass: "course-badge-cyan",
+      activeTabClass: "bg-[#06B6D4] text-slate-950 font-bold shadow-course-cyan-glow",
+      textAccentClass: "text-[#06B6D4]"
     },
     prerequisites: ["Electromagnetic Fields (EC23C02)", "Engineering Physics (PH23C01)"],
     corequisites: ["Optical Communication & Networks (EC23C08)"],
@@ -583,14 +609,20 @@ export const PRIORITY_COURSES: Record<string, CourseConfig> = {
     campus: "Madras Institute of Technology (MIT) Campus, Anna University",
     description: "Core embedded microcontroller architecture, ARM Cortex-M, memory mapped registers, peripherals (UART, SPI, I2C), FreeRTOS real-time scheduling, and low-power IoT hardware interfaces.",
     visualTheme: {
-      primaryColor: "#10B981",
-      accentGlow: "rgba(16, 185, 129, 0.25)",
-      badgeBg: "rgba(4, 120, 87, 0.4)",
-      badgeText: "#6EE7B7",
-      borderAccent: "rgba(16, 185, 129, 0.3)",
-      gradientFrom: "#047857",
-      gradientTo: "#10B981",
-      icon: "⚙️"
+      themeFamily: "indigo",
+      primaryColor: "#6366F1",
+      accentGlow: "rgba(99, 102, 241, 0.25)",
+      badgeBg: "rgba(67, 56, 202, 0.4)",
+      badgeText: "#A5B4FC",
+      borderAccent: "rgba(99, 102, 241, 0.3)",
+      gradientFrom: "#4338CA",
+      gradientTo: "#6366F1",
+      icon: "⚙️",
+      cardClass: "course-card-indigo",
+      glowClass: "course-glow-indigo",
+      badgeClass: "course-badge-indigo",
+      activeTabClass: "bg-[#6366F1] text-slate-950 font-bold shadow-course-indigo-glow",
+      textAccentClass: "text-[#6366F1]"
     },
     prerequisites: ["Microprocessors and Microcontrollers (EC23C05)", "C Programming & Data Structures"],
     corequisites: ["Embedded Systems Laboratory (EC8711)"],
@@ -741,4 +773,10 @@ export function getCourseBySlug(slug: string): CourseConfig | undefined {
 
 export function getAllCourses(): CourseConfig[] {
   return Object.values(PRIORITY_COURSES);
+}
+
+export function getCourseThemeTokens(code: string): CourseVisualTheme {
+  const course = getCourseByCode(code);
+  if (course) return course.visualTheme;
+  return PRIORITY_COURSES["EC23S01"].visualTheme;
 }
