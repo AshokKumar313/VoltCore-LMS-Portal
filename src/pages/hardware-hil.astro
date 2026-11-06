@@ -1,6 +1,7 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import HwTestBenchLive from '../components/HwTestBenchLive.jsx';
+import PeripheralBusHub from '../components/PeripheralBusHub.jsx';
 ---
 
 <MainLayout
@@ -27,6 +28,9 @@ import HwTestBenchLive from '../components/HwTestBenchLive.jsx';
 
     <!-- HIL Test Bench React Island -->
     <HwTestBenchLive client:load />
+
+    <!-- Phase 36: Peripheral Bus Protocols Analyzer Island -->
+    <PeripheralBusHub client:load />
   </div>
 </MainLayout>
 

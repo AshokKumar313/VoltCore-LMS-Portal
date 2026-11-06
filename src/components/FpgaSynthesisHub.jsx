@@ -1505,3 +1505,4 @@ export default function FpgaSynthesisHub() {
     </div>
   );
 }
+

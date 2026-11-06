@@ -4487,6 +4487,70 @@ if HAS_FLASK:
         resp.headers["Access-Control-Allow-Origin"] = "*"
         return resp
 
+    @app.route("/api/peripheral-bus/simulate", methods=["POST", "OPTIONS"])
+    def peripheral_bus_simulate_endpoint():
+        if request.method == "OPTIONS":
+            return "", 204
+        from backend.peripheral_bus_engine import peripheral_bus_engine
+        payload = request.get_json(silent=True) or {}
+        protocol = payload.get("protocol", "SPI").upper()
+        student = payload.get("student_id", "2023MITEC042")
+        dev = payload.get("device_name", "Peripheral Device")
+
+        if protocol == "I2C":
+            res = peripheral_bus_engine.simulate_i2c_transaction(
+                slave_addr_7bit=payload.get("slave_addr_7bit", "0x68"),
+                reg_addr_hex=payload.get("reg_addr_hex", "0x75"),
+                is_read=bool(payload.get("is_read", True)),
+                data_byte_hex=payload.get("data_byte_hex", "0x68"),
+                speed_mode=payload.get("speed_mode", "STANDARD"),
+                device_name=dev,
+                student_id=student
+            )
+        elif protocol == "UART":
+            res = peripheral_bus_engine.simulate_uart_transaction(
+                baud_rate=int(payload.get("baud_rate", 115200)),
+                tx_payload=payload.get("tx_payload", "OK"),
+                parity=payload.get("parity", "NONE"),
+                stop_bits=int(payload.get("stop_bits", 1)),
+                device_name=dev,
+                student_id=student
+            )
+        else:
+            tx_b = payload.get("tx_bytes")
+            rx_b = payload.get("rx_bytes")
+            res = peripheral_bus_engine.simulate_spi_transaction(
+                mode_key=payload.get("mode_key", "MODE_0"),
+                clock_khz=float(payload.get("clock_khz", 1000.0)),
+                tx_bytes=tx_b,
+                rx_bytes=rx_b,
+                device_name=dev,
+                student_id=student
+            )
+        return jsonify(res), 200
+
+    @app.route("/api/peripheral-bus/presets", methods=["GET"])
+    def peripheral_bus_presets_endpoint():
+        from backend.peripheral_bus_engine import peripheral_bus_engine
+        return jsonify(peripheral_bus_engine.get_protocol_presets()), 200
+
+    @app.route("/api/peripheral-bus/history", methods=["GET"])
+    def peripheral_bus_history_endpoint():
+        from backend.peripheral_bus_engine import peripheral_bus_engine
+        limit = int(request.args.get("limit", 15))
+        return jsonify(peripheral_bus_engine.get_transaction_history(limit=limit)), 200
+
+    @app.route("/api/peripheral-bus/export-csv", methods=["GET"])
+    def peripheral_bus_export_csv_endpoint():
+        from backend.peripheral_bus_engine import peripheral_bus_engine
+        proto = request.args.get("protocol", "SPI")
+        csv_data = peripheral_bus_engine.export_transaction_csv(protocol=proto)
+        resp = make_response(csv_data)
+        resp.headers["Content-Type"] = "text/csv; charset=utf-8"
+        resp.headers["Content-Disposition"] = "attachment; filename=voltcore_bus_protocol_traces.csv"
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
     def run_server(host="0.0.0.0", port=5000):
         print(f"{TerminalColors.BOLD}{TerminalColors.EMERALD}")
         print("╔══════════════════════════════════════════════════════════════════════════════════╗")
@@ -5031,6 +5095,25 @@ else:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/csv; charset=utf-8")
                 self.send_header("Content-Disposition", "attachment; filename=voltcore_logic_analyzer_traces.csv")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(csv_str.encode("utf-8"))
+            elif parsed.path == "/api/peripheral-bus/presets":
+                from backend.peripheral_bus_engine import peripheral_bus_engine
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(peripheral_bus_engine.get_protocol_presets()).encode("utf-8"))
+            elif parsed.path == "/api/peripheral-bus/history":
+                from backend.peripheral_bus_engine import peripheral_bus_engine
+                limit = int(params.get("limit", [15])[0])
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(peripheral_bus_engine.get_transaction_history(limit=limit)).encode("utf-8"))
+            elif parsed.path == "/api/peripheral-bus/export-csv":
+                from backend.peripheral_bus_engine import peripheral_bus_engine
+                proto = params.get("protocol", ["SPI"])[0]
+                csv_str = peripheral_bus_engine.export_transaction_csv(protocol=proto)
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", "attachment; filename=voltcore_bus_protocol_traces.csv")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(csv_str.encode("utf-8"))
@@ -5838,6 +5921,44 @@ else:
                 res = fpga_synthesis_engine.generate_logic_analyzer_traces(
                     module_key=mod, cycles=cycles, clk_period_ns=clk_ns, synthesis_id=synth_id
                 )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/peripheral-bus/simulate":
+                from backend.peripheral_bus_engine import peripheral_bus_engine
+                protocol = payload.get("protocol", "SPI").upper()
+                student = payload.get("student_id", "2023MITEC042")
+                dev = payload.get("device_name", "Peripheral Device")
+
+                if protocol == "I2C":
+                    res = peripheral_bus_engine.simulate_i2c_transaction(
+                        slave_addr_7bit=payload.get("slave_addr_7bit", "0x68"),
+                        reg_addr_hex=payload.get("reg_addr_hex", "0x75"),
+                        is_read=bool(payload.get("is_read", True)),
+                        data_byte_hex=payload.get("data_byte_hex", "0x68"),
+                        speed_mode=payload.get("speed_mode", "STANDARD"),
+                        device_name=dev,
+                        student_id=student
+                    )
+                elif protocol == "UART":
+                    res = peripheral_bus_engine.simulate_uart_transaction(
+                        baud_rate=int(payload.get("baud_rate", 115200)),
+                        tx_payload=payload.get("tx_payload", "OK"),
+                        parity=payload.get("parity", "NONE"),
+                        stop_bits=int(payload.get("stop_bits", 1)),
+                        device_name=dev,
+                        student_id=student
+                    )
+                else:
+                    tx_b = payload.get("tx_bytes")
+                    rx_b = payload.get("rx_bytes")
+                    res = peripheral_bus_engine.simulate_spi_transaction(
+                        mode_key=payload.get("mode_key", "MODE_0"),
+                        clock_khz=float(payload.get("clock_khz", 1000.0)),
+                        tx_bytes=tx_b,
+                        rx_bytes=rx_b,
+                        device_name=dev,
+                        student_id=student
+                    )
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             else:

@@ -937,3 +937,4 @@ class FpgaSynthesisEngine:
 
 # Singleton Instance
 fpga_synthesis_engine = FpgaSynthesisEngine()
+
