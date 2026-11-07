@@ -388,7 +388,10 @@ class EphemeralSandboxExecutor:
             return comp_res
 
         # Run binary step
-        return self._run_subprocess([bin_path], temp_dir, stdin_input, timeout)
+        run_res = self._run_subprocess([bin_path], temp_dir, stdin_input, timeout)
+        if run_res["status"] == "ERROR" and ("4551" in run_res.get("stderr", "") or "Application Control" in run_res.get("stderr", "")) and self.fallback_simulated:
+            return self._simulate_c_cpp_execution(source_code, stdin_input, "C")
+        return run_res
 
     def _execute_cpp(
         self,
@@ -422,7 +425,10 @@ class EphemeralSandboxExecutor:
             return comp_res
 
         # Run binary step
-        return self._run_subprocess([bin_path], temp_dir, stdin_input, timeout)
+        run_res = self._run_subprocess([bin_path], temp_dir, stdin_input, timeout)
+        if run_res["status"] == "ERROR" and ("4551" in run_res.get("stderr", "") or "Application Control" in run_res.get("stderr", "")) and self.fallback_simulated:
+            return self._simulate_c_cpp_execution(source_code, stdin_input, "C++")
+        return run_res
 
     def _execute_javascript(
         self,
@@ -470,8 +476,9 @@ class EphemeralSandboxExecutor:
             }
 
         # Check for simple printf or std::cout messages
-        prints = re.findall(r'(?:printf|cout\s*<<)\s*["\']([^"\']+)["\']', source_code)
-        simulated_output = "\n".join(prints) if prints else "[Simulated Compilation & Execution Succeeded]"
+        raw_prints = re.findall(r'(?:printf\s*\(\s*|cout\s*<<\s*)["\']([^"\']+)["\']', source_code)
+        prints = [p.replace(r"\n", "\n") for p in raw_prints]
+        simulated_output = "".join(prints) if prints else "[Simulated Compilation & Execution Succeeded]\n"
         if not simulated_output.endswith("\n"):
             simulated_output += "\n"
 

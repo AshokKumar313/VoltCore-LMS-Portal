@@ -320,9 +320,9 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                   }}
                 >
                   <DepartmentalBadgeIcon code={c.code} className="w-4 h-4" primaryColor={c.visualTheme.primaryColor} />
-                  <span>{c.code}</span>
-                  <span className="hidden md:inline font-normal text-slate-400 text-[10px]">
-                    ({c.shortTitle})
+                  <span>{c.shortTitle || c.name}</span>
+                  <span className="hidden md:inline font-mono text-slate-500 text-[10px]">
+                    [{c.code}]
                   </span>
                 </button>
               );

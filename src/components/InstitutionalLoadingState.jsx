@@ -27,13 +27,13 @@ export default function InstitutionalLoadingState({
     <div className={containerClass} role="status" aria-live="polite">
       {/* Central Silicon Die with Rotating Reticle */}
       <div className="relative mb-6">
-        <!-- Glowing Ambient Aura -->
+        {/* Glowing Ambient Aura */}
         <div
           className="absolute inset-0 rounded-3xl blur-2xl opacity-40 animate-pulse pointer-events-none"
           style={{ backgroundColor: 'var(--theme-primary)' }}
         />
 
-        <!-- Rotating Outer Circuit Track -->
+        {/* Rotating Outer Circuit Track */}
         <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-[var(--theme-primary)]/40 flex items-center justify-center animate-spin-slow">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--theme-card)] to-[var(--theme-bg)] border border-[var(--theme-border)] flex items-center justify-center p-3 shadow-xl">
             <img
@@ -44,14 +44,14 @@ export default function InstitutionalLoadingState({
           </div>
         </div>
 
-        <!-- Corner Micro-Die Alignment Indicators -->
+        {/* Corner Micro-Die Alignment Indicators */}
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--theme-primary)] opacity-75" />
           <span className="relative inline-flex rounded-full h-3 w-3 bg-[var(--theme-primary)]" />
         </span>
       </div>
 
-      <!-- Institutional Branding Title -->
+      {/* Institutional Branding Title */}
       <div className="text-center space-y-1.5 max-w-md">
         <div className="flex items-center justify-center gap-2">
           <span className="font-mono font-extrabold text-lg text-[var(--theme-text)]">
@@ -70,7 +70,7 @@ export default function InstitutionalLoadingState({
           {subtext}
         </p>
 
-        <!-- Progress Bar if Provided -->
+        {/* Progress Bar if Provided */}
         {progress !== null && (
           <div className="w-48 mx-auto mt-3 h-1.5 rounded-full bg-[var(--theme-bg)] border border-[var(--theme-border)] overflow-hidden">
             <div
@@ -84,7 +84,7 @@ export default function InstitutionalLoadingState({
           </div>
         )}
 
-        <!-- Institutional Subtitle Motto -->
+        {/* Institutional Subtitle Motto */}
         <p className="text-[10px] font-sans text-[var(--theme-primary)] pt-3 tracking-wide">
           "Engineering Intelligence. Practical Innovation. Academic Excellence."
         </p>

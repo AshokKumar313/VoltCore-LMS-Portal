@@ -521,12 +521,17 @@ COURSE_REGISTRY_DATA: Dict[str, Dict[str, Any]] = {
     }
 }
 
-# Merge all 14 ECE curriculum disciplines into registry
+# Merge all 15 ECE curriculum disciplines into registry
 try:
     from backend.ece_comprehensive_curriculum import COMPREHENSIVE_ECE_CURRICULUM
     for _course_code, _course_data in COMPREHENSIVE_ECE_CURRICULUM.items():
         if _course_code not in COURSE_REGISTRY_DATA:
             COURSE_REGISTRY_DATA[_course_code] = _course_data
+        else:
+            # Enrich existing courses with comprehensive derivations, worked examples, sims, and assessments
+            for _field in ["mathematical_derivations", "worked_examples", "simulation_activities", "assessment_questions", "course_outcomes"]:
+                if _field in _course_data and (_field not in COURSE_REGISTRY_DATA[_course_code] or not COURSE_REGISTRY_DATA[_course_code][_field]):
+                    COURSE_REGISTRY_DATA[_course_code][_field] = _course_data[_field]
 except Exception:
     pass
 
@@ -729,7 +734,21 @@ class CourseConfigEngine:
 
         # 3-credit lecture courses require 45 hours; 2-credit labs require 40-50 hours
         expected_hours = 45 if course["credits"] == 3 else 48
-        actual_hours = course.get("total_lecture_hours", course.get("total_lab_hours", 45))
+
+        # Calculate actual contact hours from LTP (L-T-P) or explicit hour attributes
+        ltp = course.get("ltp", "3-0-0")
+        try:
+            parts = [int(x) for x in ltp.split("-")]
+            if len(parts) == 3:
+                l, t, p = parts
+                ltp_hours = (l + t) * 15 + p * 15
+            else:
+                ltp_hours = 45
+        except Exception:
+            ltp_hours = 45
+
+        explicit_hours = course.get("total_lecture_hours") or course.get("total_lab_hours")
+        actual_hours = max(explicit_hours or 0, ltp_hours)
 
         return {
             "code": course["code"],

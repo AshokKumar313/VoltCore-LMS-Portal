@@ -248,6 +248,17 @@ export default function ThemeSelector({ compact = false }) {
 
   const activeTheme = THEMES_LIST.find(t => t.id === activeThemeId) || THEMES_LIST[0];
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   const categories = ['All', 'Vibrant Neon', 'Sunset Gradient', 'Rich Chromatic', 'Pastel Academy', 'Light Dynamic', 'Multi-Chromatic'];
   const filteredThemes = selectedCategory === 'All' 
     ? THEMES_LIST 
@@ -259,16 +270,19 @@ export default function ThemeSelector({ compact = false }) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-700/60 hover:border-slate-500 text-slate-200 transition-all shadow-md group"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label={`Theme Selector: currently ${activeTheme.name}`}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] hover:border-[var(--theme-primary)] text-[var(--theme-text)] transition-all shadow-md group focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]"
         title="Toggle Vibrant 18-Theme Palette (Non-Black Focus)"
       >
         <span className="text-sm">{activeTheme.icon}</span>
         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeTheme.primary }}></span>
         <span className="font-semibold hidden sm:inline">{activeTheme.name}</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-bold hidden md:inline">
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--theme-bg)] text-[var(--theme-text-muted)] border border-[var(--theme-border)]/50 font-bold hidden md:inline">
           {activeTheme.badge}
         </span>
-        <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg className={`w-3.5 h-3.5 text-[var(--theme-text-muted)] transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </button>
@@ -276,7 +290,12 @@ export default function ThemeSelector({ compact = false }) {
       {/* Modal / Popover Palette Drawer */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl bg-slate-950/95 border border-slate-700 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="18 Vibrant & Colorful Themes Palette"
+            className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl bg-slate-950/95 border border-slate-700 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200"
+          >
             
             {/* Header */}
             <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
@@ -286,7 +305,7 @@ export default function ThemeSelector({ compact = false }) {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                    18 Vibrant & Colorful Themes
+                    18 Vibrant &amp; Colorful Themes
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold">
                       Non-Black Focus
                     </span>
@@ -300,7 +319,8 @@ export default function ThemeSelector({ compact = false }) {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors"
+                aria-label="Close theme selection modal"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-primary)]"
               >
                 ✕
               </button>
@@ -313,7 +333,8 @@ export default function ThemeSelector({ compact = false }) {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1 rounded-lg transition-all flex-shrink-0 font-medium ${
+                  aria-pressed={selectedCategory === cat}
+                  className={`px-3 py-1 rounded-lg transition-all flex-shrink-0 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 ${
                     selectedCategory === cat
                       ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold shadow-md'
                       : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -331,8 +352,18 @@ export default function ThemeSelector({ compact = false }) {
                 return (
                   <div
                     key={theme.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    aria-label={`Select ${theme.name} theme`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectTheme(theme.id);
+                      }
+                    }}
                     onClick={() => handleSelectTheme(theme.id)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between ${
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-emerald-400 ${
                       isSelected
                         ? 'border-emerald-400 ring-2 ring-emerald-400/30 shadow-lg scale-[1.01]'
                         : 'border-slate-800 hover:border-slate-600 bg-slate-900/50 hover:bg-slate-900/90'

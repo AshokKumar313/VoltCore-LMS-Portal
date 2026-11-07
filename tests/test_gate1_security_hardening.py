@@ -30,12 +30,18 @@ from backend.security_auth import (
     generate_jwt_token,
     verify_jwt_token,
     hash_password,
-    verify_password
+    verify_password,
+    build_session_cookie,
+    extract_token_from_cookie,
+    build_clear_session_cookie,
+    get_admin_audit_metadata,
+    SESSION_COOKIE_NAME
 )
 from backend.security_middleware import (
     require_role,
     require_auth,
-    ROLE_HIERARCHY
+    ROLE_HIERARCHY,
+    resolve_request_role
 )
 from backend.digital_electronics_engine import DigitalElectronicsEngine
 from backend.vlsi_physical_design_engine import SystemVerilogAssertionAnalyzer
@@ -275,6 +281,37 @@ class TestServerEnforcedRbacMiddleware:
         assert code == 401
         assert res["body"]["code"] == "INVALID_OR_EXPIRED_TOKEN"
 
+    def test_require_role_authenticates_via_session_cookie(self):
+        token = generate_jwt_token(user_id="2023MITEC042", role="Admin", name="Ashok Kumar A")
+
+        @require_role("Admin")
+        def admin_view():
+            return {"status": "SUCCESS", "role": "Admin"}
+
+        cookie_str = f"theme=dark; {SESSION_COOKIE_NAME}={token}; visited=true"
+        req = self.MockRequest(headers={"Cookie": cookie_str})
+        res = admin_view(_mock_request=req)
+        assert res["status"] == "SUCCESS"
+
+    def test_resolve_request_role_prevents_unauthenticated_privilege_escalation(self):
+        class SimpleReq:
+            def __init__(self, headers=None):
+                self.headers = headers or {}
+
+        # 1. Unauthenticated request attempting to pass privileged actor_role in payload
+        fake_payload = {"actor_role": "Faculty", "course_code": "EC4801"}
+        role, claims = resolve_request_role(SimpleReq(), payload=fake_payload, default_role="Student")
+        assert role == "Student", "Unauthenticated payload must NOT be able to escalate to Faculty"
+        assert claims is None
+
+        # 2. Legitimate authenticated Faculty token elevates properly
+        fac_token = generate_jwt_token(user_id="FAC_042", role="Faculty", name="Faculty Lead")
+        req_auth = SimpleReq(headers={"Authorization": f"Bearer {fac_token}"})
+        role_auth, claims_auth = resolve_request_role(req_auth, payload=fake_payload)
+        assert role_auth == "Faculty"
+        assert claims_auth is not None
+        assert claims_auth["role"] == "Faculty"
+
 
 # ========================================================================================
 # 4. ENGINE INTEGRATION REGRESSION TESTS (AST VERIFICATION)
@@ -300,4 +337,58 @@ class TestEngineAstIntegration:
         assert res["total_matches"] == 1
         assert res["total_failures"] == 1
         assert res["total_vacuous_passes"] == 3
+
+
+# ========================================================================================
+# 5. SECURE SESSION COOKIE & PRIVILEGE REDACTION TESTS
+# ========================================================================================
+class TestSessionCookieHardening:
+    """Verifies RFC 6265 compliant session cookies and RBAC metadata redaction."""
+
+    def test_session_cookie_structure(self):
+        token = "sample.jwt.token"
+        cookie = build_session_cookie(token, max_age=3600, same_site="Strict")
+        assert f"{SESSION_COOKIE_NAME}={token}" in cookie
+        assert "Max-Age=3600" in cookie
+        assert "Path=/" in cookie
+        assert "HttpOnly" in cookie
+        assert "SameSite=Strict" in cookie
+
+    def test_session_cookie_production_secure_enforcement(self, monkeypatch):
+        token = "prod.jwt.token"
+        monkeypatch.setenv("VOLTCORE_ENV", "production")
+        prod_cookie = build_session_cookie(token)
+        assert "Secure" in prod_cookie
+
+        monkeypatch.delenv("VOLTCORE_ENV", raising=False)
+        dev_cookie = build_session_cookie(token, secure=False)
+        assert "Secure" not in dev_cookie
+
+    def test_extract_token_from_cookie(self):
+        sample_jwt = "header.payload.signature"
+        header = f"theme=cyan; {SESSION_COOKIE_NAME}={sample_jwt}; lang=en"
+        extracted = extract_token_from_cookie(header)
+        assert extracted == sample_jwt
+
+        # Missing cookie returns None
+        assert extract_token_from_cookie("theme=dark; other=123") is None
+        assert extract_token_from_cookie("") is None
+
+    def test_clear_session_cookie(self):
+        cleared = build_clear_session_cookie()
+        assert f"{SESSION_COOKIE_NAME}=" in cleared
+        assert "Max-Age=0" in cleared
+        assert "Thu, 01 Jan 1970" in cleared
+
+    def test_admin_audit_metadata_unprivileged_redaction(self):
+        student_meta = get_admin_audit_metadata(role="Student")
+        assert student_meta["rbac_access_level"] == "PUBLIC_UNPRIVILEGED"
+        assert "[REDACTED" in student_meta["admin_email"]
+        assert "[REDACTED" in student_meta["admin_phone"]
+
+        admin_meta = get_admin_audit_metadata(role="Admin")
+        assert admin_meta["rbac_access_level"] == "PRIVILEGED_ADMIN_ACCESS"
+        assert "[REDACTED" not in admin_meta["admin_email"]
+        assert "@" in admin_meta["admin_email"]
+
 

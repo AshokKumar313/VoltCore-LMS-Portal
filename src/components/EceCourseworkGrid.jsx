@@ -467,17 +467,22 @@ export default function EceCourseworkGrid() {
               } ${isSelected ? `${course.glowClass} ring-2 ring-${isOlive ? 'olive-400' : 'mustard-400'}` : 'hover:-translate-y-1'}`}
             >
               <div>
-                {/* Top Row: Course Code & Progress Ring */}
+                {/* Top Row: Discipline Emblem, Professional Category & Technical Code */}
                 <div className="flex items-start justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3">
                     <SubjectEmblem courseCode={course.code} size="md" />
                     <div>
-                      <span className={course.badgeClass}>
-                        {course.code}
+                      <span className={`${course.badgeClass} text-xs font-semibold tracking-wide`}>
+                        {course.disciplineName || course.title}
                       </span>
-                      <span className="block text-[11px] font-mono text-slate-400 mt-1">
-                        {course.semester}
-                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[11px] font-mono text-slate-400">
+                          {course.semester}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 bg-slate-900/60 px-1.5 py-0.5 rounded border border-slate-800" title={`Technical Course Code: ${course.code}`}>
+                          {course.code}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   {renderProgressRing(course.progress, course.accentColor)}

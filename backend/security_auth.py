@@ -367,6 +367,80 @@ def verify_jwt_token(token: str, secret: Optional[str] = None) -> Optional[Dict[
 
 
 # ========================================================================================
+# SECURE HTTP SESSION COOKIE UTILITIES (RFC 6265, OWASP HARDENING)
+# ========================================================================================
+SESSION_COOKIE_NAME: str = "voltcore_session"
+
+
+def build_session_cookie(
+    token: str,
+    max_age: int = DEFAULT_TOKEN_EXPIRY_SECONDS,
+    secure: Optional[bool] = None,
+    same_site: str = "Strict",
+    cookie_name: str = SESSION_COOKIE_NAME,
+    path: str = "/"
+) -> str:
+    """
+    Builds an RFC 6265 compliant Set-Cookie header string for hardened session management.
+
+    Security Guarantees:
+      - HttpOnly: Disallows client-side JavaScript access (document.cookie), mitigating XSS cookie theft.
+      - SameSite=Strict: Mitigates Cross-Site Request Forgery (CSRF).
+      - Secure: Automatically enforced when in production or HTTPS mode.
+      - Path=/: Scopes session exclusively across the platform origin.
+    """
+    is_prod = (
+        os.environ.get("VOLTCORE_ENV", "").lower() == "production" or
+        os.environ.get("FLASK_ENV", "").lower() == "production"
+    )
+    enforce_secure = secure if secure is not None else is_prod
+
+    parts = [
+        f"{cookie_name}={token.strip()}",
+        f"Max-Age={int(max_age)}",
+        f"Path={path}",
+        "HttpOnly",
+        f"SameSite={same_site}"
+    ]
+    if enforce_secure:
+        parts.append("Secure")
+
+    return "; ".join(parts)
+
+
+def extract_token_from_cookie(cookie_header: str, cookie_name: str = SESSION_COOKIE_NAME) -> Optional[str]:
+    """
+    Safely extracts the JWT session token from an incoming HTTP 'Cookie' header.
+    Returns token string if found, otherwise None.
+    """
+    if not isinstance(cookie_header, str) or not cookie_header.strip():
+        return None
+
+    try:
+        for item in cookie_header.split(";"):
+            item_clean = item.strip()
+            if not item_clean or "=" not in item_clean:
+                continue
+            name, val = item_clean.split("=", 1)
+            if name.strip() == cookie_name:
+                token = val.strip().strip('"')
+                return token if token else None
+    except Exception:
+        return None
+
+    return None
+
+
+def build_clear_session_cookie(
+    cookie_name: str = SESSION_COOKIE_NAME,
+    path: str = "/"
+) -> str:
+    """Builds a Set-Cookie header that invalidates and purges the session cookie immediately."""
+    return f"{cookie_name}=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path={path}; HttpOnly; SameSite=Strict"
+
+
+
+# ========================================================================================
 # TOKEN BUCKET RATE LIMITER (PER-USER & PER-IP REQUEST THROTTLING)
 # ========================================================================================
 class TokenBucketRateLimiter:

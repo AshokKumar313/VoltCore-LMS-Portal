@@ -57,23 +57,23 @@ const {
       })();
     </script>
   </head>
-  <body class="bg-[#020813] text-slate-100 font-sans antialiased selection:bg-[#00F0B5]/30 selection:text-[#00F0B5] min-h-screen flex flex-col relative overflow-x-hidden">
+  <body class="bg-[var(--theme-bg,#020813)] text-[var(--theme-text,#F1F5F9)] font-sans antialiased selection:bg-[var(--theme-primary,#00F0B5)]/30 selection:text-[var(--theme-primary,#00F0B5)] min-h-screen flex flex-col relative overflow-x-hidden">
     
-    <!-- German Precision Cyber-Grid Canvas & Radial Gradients -->
+    <!-- German Precision Cyber-Grid Canvas & Radial Gradients (18-Theme Adaptive) -->
     <div class="fixed inset-0 pointer-events-none z-0">
-      <!-- Deep Royal Navy to Emerald Atmospheric Radial Glow -->
-      <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[650px] bg-gradient-to-b from-[#00693E]/20 via-[#00F0B5]/10 to-transparent blur-[140px] opacity-70"></div>
-      <div class="absolute top-[40%] -right-40 w-[600px] h-[600px] bg-[#00693E]/10 blur-[130px] rounded-full pointer-events-none"></div>
-      <div class="absolute bottom-0 -left-40 w-[700px] h-[500px] bg-[#041026] blur-[110px] pointer-events-none"></div>
+      <!-- Atmospheric Radial Glow adapting to active theme -->
+      <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1200px] h-[650px] blur-[140px] pointer-events-none" style="background: radial-gradient(circle at 50% 0%, var(--theme-primary, #00F0B5) 0%, var(--theme-accent, #10B981) 40%, transparent 75%); opacity: 0.15;"></div>
+      <div class="absolute top-[40%] -right-40 w-[600px] h-[600px] blur-[130px] rounded-full pointer-events-none" style="background: var(--theme-accent, #10B981); opacity: 0.08;"></div>
+      <div class="absolute bottom-0 -left-40 w-[700px] h-[500px] blur-[110px] pointer-events-none" style="background: var(--theme-surface, #041026); opacity: 0.4;"></div>
 
-      <!-- Precision Sub-Pixel Grid (German Technical Blueprint Grid) -->
-      <div class="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,240,181,0.035)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,181,0.035)_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+      <!-- Precision Sub-Pixel Grid (18-Theme Adaptive Border Grid) -->
+      <div class="absolute inset-0 pointer-events-none opacity-40" style="background-image: linear-gradient(to right, var(--theme-border, rgba(0,240,181,0.05)) 1px, transparent 1px), linear-gradient(to bottom, var(--theme-border, rgba(0,240,181,0.05)) 1px, transparent 1px); background-size: 32px 32px;"></div>
       
       <!-- Coordinate Reticles & Alignment Ticks -->
-      <div class="absolute top-24 left-6 text-[10px] font-mono text-[#00F0B5]/25 tracking-widest hidden lg:block">
+      <div class="absolute top-24 left-6 text-[10px] font-mono text-[var(--theme-primary,#00F0B5)]/35 tracking-widest hidden lg:block">
         +00.00° LAT // LAB BENCH ZERO POINT
       </div>
-      <div class="absolute top-24 right-6 text-[10px] font-mono text-[#00F0B5]/25 tracking-widest hidden lg:block">
+      <div class="absolute top-24 right-6 text-[10px] font-mono text-[var(--theme-primary,#00F0B5)]/35 tracking-widest hidden lg:block">
         SYS_VER 4.2.0 // FREERTOS_CORE_V10.5
       </div>
     </div>
@@ -158,28 +158,30 @@ const {
     <GeminiRagDrawer client:load />
 
     <style is:global>
-      /* Italian Glassmorphism Core Utilities */
+      /* Dynamic Theme-Adaptive Glassmorphism Core Utilities */
       .glass-card {
-        background: rgba(4, 16, 38, 0.72);
+        background: var(--theme-surface, rgba(4, 16, 38, 0.72));
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(0, 240, 181, 0.16);
-        box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+        border: 1px solid var(--theme-border, rgba(0, 240, 181, 0.16));
+        box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.35);
       }
 
       .glass-card-hover {
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       }
       .glass-card-hover:hover {
-        border-color: rgba(0, 240, 181, 0.38);
-        box-shadow: 0 16px 44px -8px rgba(0, 240, 181, 0.18);
+        border-color: var(--theme-primary, rgba(0, 240, 181, 0.38));
+        box-shadow: var(--theme-glow, 0 16px 44px -8px rgba(0, 240, 181, 0.18));
         transform: translateY(-2px);
       }
 
       .glass-card-accent {
-        background: linear-gradient(135deg, rgba(0, 105, 62, 0.35) 0%, rgba(4, 16, 38, 0.85) 100%);
+        background: linear-gradient(135deg, var(--theme-surface, rgba(0, 105, 62, 0.35)) 0%, var(--theme-card, rgba(4, 16, 38, 0.85)) 100%);
         backdrop-filter: blur(24px);
-        border: 1px solid rgba(0, 240, 181, 0.3);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--theme-border, rgba(0, 240, 181, 0.3));
+        box-shadow: var(--theme-glow);
       }
 
       /* IEEE Journal Academic Typography Classes */

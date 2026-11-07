@@ -1,12 +1,13 @@
 /**
  * ========================================================================================
- * VoltCore Apex Academia - Canva-Inspired ECE Subject Emblem Component
+ * VoltCore Apex Academia - Professional Canva-Inspired ECE Subject Emblem Component
  * Anna University / MIT Campus Standards (Department of Electronics Engineering)
  * ----------------------------------------------------------------------------------------
  * Module: src/components/SubjectEmblem.jsx
  * Platform Lead & Educational Systems Director: Ashok Kumar A (2023MITEC042)
  *
  * Renders precision vector SVG circuit emblems for the 14 core ECE disciplines.
+ * Presents clean, professional engineering discipline names (no raw alphanumeric codes).
  * Supports theme-adaptive styling across all 18 vibrant color schemes.
  * ========================================================================================
  */
@@ -30,19 +31,22 @@ export default function SubjectEmblem({
   glow = true,
   className = '',
   customColor = null,
+  showLabel = false,
+  labelPosition = 'bottom',
 }) {
   const meta = getSubjectMetadata(courseCode);
   const sizeConfig = SIZE_MAP[size] || SIZE_MAP.md;
   const activeColor = customColor || meta.primaryColor;
+  const displayName = meta.disciplineName || meta.name;
 
-  return (
+  const emblemNode = (
     <div
       className={`relative inline-flex items-center justify-center shrink-0 transition-transform ${
         interactive ? 'hover:scale-105 cursor-pointer' : ''
-      } ${className}`}
-      title={`${meta.name} (${meta.code}) - ${meta.symbolName}`}
+      } ${!showLabel ? className : ''}`}
+      title={`${displayName} — ${meta.symbolName}`}
       role="img"
-      aria-label={meta.accessibleLabel}
+      aria-label={`${displayName} — ${meta.accessibleLabel}`}
     >
       {/* Outer Jewel Glow & Subtle Glass Frame */}
       {showFrame && (
@@ -91,6 +95,36 @@ export default function SubjectEmblem({
           />
         </span>
       )}
+    </div>
+  );
+
+  if (!showLabel) {
+    return emblemNode;
+  }
+
+  const isRow = labelPosition === 'right';
+
+  return (
+    <div
+      className={`inline-flex ${isRow ? 'flex-row items-center gap-3' : 'flex-col items-center text-center gap-2'} ${className}`}
+    >
+      {emblemNode}
+      <div className={isRow ? 'text-left' : 'text-center'}>
+        <div
+          className="text-xs sm:text-sm font-bold font-sans tracking-tight"
+          style={{ color: 'var(--theme-text, #F8FAFC)' }}
+        >
+          {displayName}
+        </div>
+        {meta.subfield && (
+          <div
+            className="text-[10px] font-mono uppercase tracking-wider"
+            style={{ color: 'var(--theme-text-muted, #94A3B8)' }}
+          >
+            {meta.subfield}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

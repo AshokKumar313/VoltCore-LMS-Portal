@@ -31,9 +31,19 @@ from backend.security_auth import (
     OWNER_METADATA,
     PUBLIC_CONTACT_METADATA,
     get_admin_audit_metadata,
-    global_rate_limiter
+    global_rate_limiter,
+    verify_jwt_token,
+    extract_token_from_cookie,
+    build_session_cookie
 )
-from backend.security_middleware import init_security_middleware, add_security_headers, SECURITY_HEADERS
+from backend.security_middleware import (
+    init_security_middleware,
+    add_security_headers,
+    SECURITY_HEADERS,
+    require_role,
+    require_auth,
+    resolve_request_role
+)
 from backend.rag_tutor_engine import query_rag_knowledge_base
 try:
     from backend.websocket_gateway import telemetry_broker
@@ -820,14 +830,12 @@ if HAS_FLASK:
 
     @app.route("/api/admin/audit_metadata", methods=["GET"])
     def admin_audit_metadata_endpoint():
-        # Authenticate role: check query or header for privileged role
-        role = request.args.get("role", "Student")
-        auth_header = request.headers.get("Authorization", "")
-        if "Bearer " in auth_header:
-            from backend.security_auth import verify_jwt_token
-            claims = verify_jwt_token(auth_header.split(" ")[1])
-            if claims:
-                role = claims.get("role", role)
+        # Authenticate role: query param alone CANNOT elevate to privileged admin
+        role, _ = resolve_request_role(request, default_role="Student")
+        # Allow non-privileged query override (e.g. testing Student view)
+        param_role = request.args.get("role")
+        if param_role and param_role.lower() not in ("admin", "owner", "platform-lead", "editor", "teacher", "faculty"):
+            role = param_role
 
         audit_data = get_admin_audit_metadata(role=role)
         return jsonify(audit_data), 200
@@ -2722,16 +2730,25 @@ if HAS_FLASK:
 
     @app.route("/api/enterprise_admin/overview", methods=["GET"])
     def enterprise_admin_overview_endpoint():
+        role, _ = resolve_request_role(request, default_role="Student")
+        if role not in ("Admin", "Platform-Lead", "Dean_Academic", "HOD_ECE", "Faculty", "Instructor"):
+            return jsonify({"status": "error", "code": "FORBIDDEN", "message": "Insufficient permissions to access Enterprise Admin overview."}), 403
         from backend.enterprise_admin_engine import enterprise_admin_engine
         return jsonify(enterprise_admin_engine.get_enterprise_overview()), 200
 
     @app.route("/api/enterprise_admin/nba_matrix", methods=["GET"])
     def enterprise_admin_nba_matrix_endpoint():
+        role, _ = resolve_request_role(request, default_role="Student")
+        if role not in ("Admin", "Platform-Lead", "Dean_Academic", "HOD_ECE", "Faculty", "Instructor"):
+            return jsonify({"status": "error", "code": "FORBIDDEN", "message": "Insufficient permissions to access NBA Attainment Matrix."}), 403
         from backend.enterprise_admin_engine import enterprise_admin_engine
         return jsonify(enterprise_admin_engine.compute_nba_co_po_matrix()), 200
 
     @app.route("/api/security/overview", methods=["GET"])
     def security_overview_endpoint():
+        role, _ = resolve_request_role(request, default_role="Student")
+        if role not in ("Admin", "Platform-Lead", "Dean_Academic"):
+            return jsonify({"status": "error", "code": "FORBIDDEN", "message": "Insufficient permissions to access Security Overview."}), 403
         from backend.security_hardening_engine import security_hardening_engine
         return jsonify(security_hardening_engine.get_security_overview()), 200
 
@@ -2927,7 +2944,7 @@ if HAS_FLASK:
             return resp
         from backend.security_hardening_engine import security_hardening_engine
         payload = request.get_json(silent=True) or {}
-        role = payload.get("role", "Admin")
+        role, _ = resolve_request_role(request, payload, default_role="Student")
         res = security_hardening_engine.create_database_backup(actor_role=role)
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
@@ -6651,7 +6668,7 @@ if HAS_FLASK:
         if not instructor_cms_engine:
             return jsonify({"status": "error", "message": "CMS engine unavailable"}), 503
         payload = request.get_json(silent=True) or {}
-        role = request.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+        role, _ = resolve_request_role(request, payload, default_role="Student")
         res = instructor_cms_engine.publish_course(payload, actor_role=role)
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
@@ -6669,7 +6686,7 @@ if HAS_FLASK:
         if not instructor_cms_engine:
             return jsonify({"status": "error", "message": "CMS engine unavailable"}), 503
         payload = request.get_json(silent=True) or {}
-        role = request.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+        role, _ = resolve_request_role(request, payload, default_role="Student")
         res = instructor_cms_engine.review_and_override_report(payload, actor_role=role)
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
@@ -6681,7 +6698,7 @@ if HAS_FLASK:
         if not instructor_cms_engine:
             return jsonify({"status": "error", "message": "CMS engine unavailable"}), 503
         payload = request.get_json(silent=True) or {}
-        role = request.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+        role, _ = resolve_request_role(request, payload, default_role="Student")
         res = instructor_cms_engine.add_question_to_bank(payload, actor_role=role)
         code = 200 if res.get("status") == "SUCCESS" else 403
         return jsonify(res), code
@@ -6909,7 +6926,10 @@ else:
                 self.wfile.write(json.dumps(compute_nba_attainment_and_zscores()).encode("utf-8"))
             elif parsed.path == "/api/admin/audit_metadata":
                 params = parse_qs(parsed.query)
-                role = params.get("role", ["Student"])[0]
+                role, _ = resolve_request_role(self, default_role="Student")
+                param_role = params.get("role", [None])[0]
+                if param_role and param_role.lower() not in ("admin", "owner", "platform-lead", "editor", "teacher", "faculty"):
+                    role = param_role
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(get_admin_audit_metadata(role)).encode("utf-8"))
             elif parsed.path == "/api/spice_simulate":
@@ -8060,7 +8080,7 @@ else:
                     self._set_cors_headers(503)
                     self.wfile.write(json.dumps({"status": "error", "message": "CMS engine unavailable"}).encode("utf-8"))
                 else:
-                    role = self.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+                    role, _ = resolve_request_role(self, payload, default_role="Student")
                     res = instructor_cms_engine.publish_course(payload, actor_role=role)
                     code = 200 if res.get("status") == "SUCCESS" else 403
                     self._set_cors_headers(code)
@@ -8070,7 +8090,7 @@ else:
                     self._set_cors_headers(503)
                     self.wfile.write(json.dumps({"status": "error", "message": "CMS engine unavailable"}).encode("utf-8"))
                 else:
-                    role = self.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+                    role, _ = resolve_request_role(self, payload, default_role="Student")
                     res = instructor_cms_engine.review_and_override_report(payload, actor_role=role)
                     code = 200 if res.get("status") == "SUCCESS" else 403
                     self._set_cors_headers(code)
@@ -8080,7 +8100,7 @@ else:
                     self._set_cors_headers(503)
                     self.wfile.write(json.dumps({"status": "error", "message": "CMS engine unavailable"}).encode("utf-8"))
                 else:
-                    role = self.headers.get("X-User-Role", payload.get("actor_role", "Faculty"))
+                    role, _ = resolve_request_role(self, payload, default_role="Student")
                     res = instructor_cms_engine.add_question_to_bank(payload, actor_role=role)
                     code = 200 if res.get("status") == "SUCCESS" else 403
                     self._set_cors_headers(code)
@@ -8256,7 +8276,10 @@ else:
                 self.wfile.write(json.dumps(compute_nba_attainment_and_zscores()).encode("utf-8"))
             elif parsed.path == "/api/admin/audit_metadata":
                 params = parse_qs(parsed.query)
-                role = params.get("role", ["Student"])[0]
+                role, _ = resolve_request_role(self, default_role="Student")
+                param_role = params.get("role", [None])[0]
+                if param_role and param_role.lower() not in ("admin", "owner", "platform-lead", "editor", "teacher", "faculty"):
+                    role = param_role
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(get_admin_audit_metadata(role)).encode("utf-8"))
             elif parsed.path == "/api/spice_simulate":
@@ -9030,7 +9053,7 @@ else:
                 self.wfile.write(json.dumps(res).encode("utf-8"))
             elif parsed.path == "/api/security/backup/create":
                 from backend.security_hardening_engine import security_hardening_engine
-                role = payload.get("role", "Admin")
+                role, _ = resolve_request_role(self, payload, default_role="Student")
                 res = security_hardening_engine.create_database_backup(actor_role=role)
                 self._set_cors_headers(200 if res.get("status") == "SUCCESS" else 403)
                 self.wfile.write(json.dumps(res).encode("utf-8"))

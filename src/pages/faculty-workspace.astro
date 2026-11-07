@@ -1,28 +1,61 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import FacultyProductivityHub from '../components/FacultyProductivityHub.jsx';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
 
-// Faculty & Department Productivity Workspace Metadata
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Role Workspace: Faculty & Department Productivity Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ *
+ * Capabilities:
+ *   1. Dynamic Sovereign Brand Header & Institutional Alignment
+ *   2. Server-Enforced Role Badge: PROFESSOR / CURRICULUM DIRECTOR
+ *   3. Dynamic Breadcrumb Navigation (Home / Faculty & Department Workspace)
+ *   4. High-Contrast Typography & 18-Theme Adaptability
+ *   5. Real-Time Academic Operations: Syllabus Planner (Units I-V), MoM, Rubric Grading
+ * ========================================================================================
+ */
+
 const facultyWorkspaceMetadata = {
-  institution: "Autonomous Engineering Cluster",
-  department: "Electronics & Embedded Systems",
-  regulation: "Modular Engineering Series",
-  lead: "VoltCore Apex",
-  rollNo: "Core Series",
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Anna University Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
   departmentHead: "Dr. P. Nirmal Kumar (Professor & Head)",
   workspace: "Faculty & Department Productivity Workspace",
   scope: "Lecture Planning (Units I-V) + Templates + Assignments + Feedback Rubrics + MoM",
-  mode: "Continuous Assessment Attainment & Department Productivity Engine"
+  mode: "Continuous Assessment Attainment & Department Productivity Engine",
+  roleName: "PROFESSOR / CURRICULUM DIRECTOR",
+  roleScope: "Academic Council & Syllabus Authority"
 };
 ---
 
 <MainLayout title={`Faculty & Department Workspace | VoltCore Apex Academia`} activeNav="faculty-workspace">
-  <div class="space-y-8 font-mono">
-    
-    <!-- Hero Faculty Workspace Header -->
-    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+  <div class="space-y-6 font-mono">
+
+    <!-- Dynamic Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-[var(--theme-text-muted,#94A3B8)] font-mono py-1">
+      <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+      <span class="text-slate-600">/</span>
+      <span class="text-[var(--theme-primary,#00F0B5)] font-bold">Faculty & Department Workspace</span>
+    </nav>
+
+    <!-- Sovereign Institutional Brand Header -->
+    <VoltCoreBrandHeader variant="banner" showSubtitle={true} showMotto={false} className="mb-2" />
+
+    <!-- Role-Specific Workspace Hero Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border, rgba(0, 240, 181, 0.25)); background: var(--theme-surface, rgba(4, 16, 38, 0.75));">
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        
+
         <div class="flex items-center gap-5">
           <!-- Glass Cybernetic Avatar -->
           <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
@@ -33,68 +66,97 @@ const facultyWorkspaceMetadata = {
           </div>
 
           <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-[var(--theme-text,#F8FAFC)] tracking-tight font-sans">
                 Faculty &amp; Department Productivity Workspace
               </h1>
-              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
-                PHASE 25 ENTERPRISE
+              <!-- Server-Enforced Role Badge -->
+              <span class="px-3 py-1 rounded-full bg-teal-500/15 text-teal-300 text-xs font-mono font-bold border border-teal-500/30 flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                ROLE: PROFESSOR / CURRICULUM DIRECTOR
               </span>
             </div>
-            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+            <div class="text-xs sm:text-sm text-[var(--theme-text-muted,#94A3B8)]">
               {facultyWorkspaceMetadata.department} • {facultyWorkspaceMetadata.institution}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-              HOD: <span class="text-white font-bold">{facultyWorkspaceMetadata.departmentHead}</span> • Lead: {facultyWorkspaceMetadata.lead} ({facultyWorkspaceMetadata.rollNo})
+            <div class="text-xs text-[var(--theme-text-muted,#94A3B8)] mt-1">
+              Department Head: <span class="text-[var(--theme-text,#F8FAFC)] font-bold">{facultyWorkspaceMetadata.departmentHead}</span> • Platform Lead: {facultyWorkspaceMetadata.lead} ({facultyWorkspaceMetadata.rollNo})
             </div>
           </div>
         </div>
 
         <!-- System Capability Badges -->
         <div class="flex flex-wrap items-center gap-3">
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
-            <span class="text-slate-400">Syllabus Scope:</span>
-            <span class="text-emerald-400 font-bold ml-1.5">Units I - V</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Syllabus Scope:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">Units I - V Active</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
-            <span class="text-slate-400">Continuous Assmt:</span>
-            <span class="text-[#00F0B5] font-bold ml-1.5">Rubric Grading</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Continuous Assmt:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">Rubric Grading</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-purple-500/30 text-xs">
-            <span class="text-slate-400">Department:</span>
-            <span class="text-purple-300 font-bold ml-1.5">Council MoM</span>
-          </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
-            <span class="text-slate-400">Storage:</span>
-            <span class="text-cyan-400 font-bold ml-1.5">SQLite WAL Engine</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Department:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">Council MoM Chained</span>
           </div>
         </div>
 
       </div>
 
-      <!-- Ambient glow effects -->
+      <!-- Ambient Glow Accents -->
       <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#00693E]/15 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#00F0B5]/10 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Faculty Quick-Workflow Navigation Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Lecture Planner</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>Units I - V</span>
+          <span class="text-xs text-emerald-400 font-mono">14 Syllabi</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Question Bank</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>Bloom's K1-K6</span>
+          <span class="text-xs text-cyan-400 font-mono">CO Aligned</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-purple-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Assessment Engine</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>CAT I &amp; II</span>
+          <span class="text-xs text-purple-400 font-mono">Auto-Attain</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-amber-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Council Minutes</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>MoM Verified</span>
+          <span class="text-xs text-amber-400 font-mono">Export PDF</span>
+        </div>
+      </div>
     </div>
 
     <!-- Interactive React Island Hub -->
     <FacultyProductivityHub client:load />
 
-    <!-- Academic Accreditation Footer -->
+    <!-- Academic Quality & NBA Assurance Protocol -->
     <div class="p-6 rounded-2xl bg-[#041026]/70 border border-slate-800 text-xs text-slate-400 space-y-2">
       <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
         <span class="font-bold text-slate-200">
-          Modular Engineering Curriculum — Department of Electronics Engineering Quality Assurance Protocol
+          Anna University Regulation 2023 — Department of Electronics Engineering Quality Assurance Protocol
         </span>
         <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
           Academic Council Certified
         </span>
       </div>
       <p class="leading-relaxed text-slate-400">
-        All lecture plans, continuous assessment rubrics, and lesson templates in this workspace conform to NBA criteria and Modular Engineering Curriculum outcome-based education (OBE) principles. Course outcome (CO1–CO5) mapping and Bloom's taxonomy levels are mandatory across all undergraduate ECE curricula.
+        All lecture plans, continuous assessment rubrics, and lesson templates in this workspace conform to NBA Tier-1 criteria and Anna University outcome-based education (OBE) principles. Course outcome (CO1–CO5) mapping and Bloom's taxonomy cognitive levels are mandatory across all undergraduate ECE curricula.
       </p>
     </div>
 
   </div>
 </MainLayout>
-

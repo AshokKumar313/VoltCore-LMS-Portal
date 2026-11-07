@@ -1,8 +1,23 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import EnterpriseAdminDashboard from '../components/EnterpriseAdminDashboard.jsx';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
 
-// Enterprise Administration Metadata
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Role Workspace: Dean & Enterprise Administration Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ *
+ * Capabilities:
+ *   1. Dynamic Sovereign Brand Header & Institutional Alignment
+ *   2. Server-Enforced Role Badge: DEAN / ACCREDITATION CONTROLLER
+ *   3. Dynamic Breadcrumb Navigation (Home / Enterprise Administration)
+ *   4. High-Contrast Typography & 18-Theme Adaptability
+ *   5. Real-Time Governance: NBA/NAAC Attainment Matrix, Faculty Workload, SHA-256 Audit Trail
+ * ========================================================================================
+ */
+
 const adminMetadata = {
   institution: "Madras Institute of Technology (MIT) Campus, Anna University",
   department: "Department of Electronics Engineering",
@@ -10,57 +25,77 @@ const adminMetadata = {
   lead: "Ashok Kumar A",
   rollNo: "2023MITEC042",
   workspace: "Enterprise Administration, NBA & NAAC Accreditation Center",
-  mode: "Automated CO-PO Attainment, Cryptographic Audit & Faculty Allocation"
+  mode: "Automated CO-PO Attainment, Cryptographic Audit & Faculty Allocation",
+  roleName: "DEAN / ACCREDITATION CONTROLLER",
+  roleScope: "Institutional Accreditation & Campus Governance"
 };
 ---
 
-<MainLayout title={`Enterprise Administration & Accreditation | ${adminMetadata.lead} (Core Series)`} activeNav="enterprise-admin">
-  <div class="space-y-8 font-mono">
-    
-    <!-- Hero Enterprise Admin Header -->
-    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+<MainLayout title={`Enterprise Administration & Accreditation | VoltCore Apex Academia`} activeNav="enterprise-admin">
+  <div class="space-y-6 font-mono">
+
+    <!-- Dynamic Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-[var(--theme-text-muted,#94A3B8)] font-mono py-1">
+      <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+      <span class="text-slate-600">/</span>
+      <span class="text-[var(--theme-primary,#00F0B5)] font-bold">Enterprise Administration</span>
+    </nav>
+
+    <!-- Sovereign Institutional Brand Header -->
+    <VoltCoreBrandHeader variant="banner" showSubtitle={true} showMotto={false} className="mb-2" />
+
+    <!-- Role-Specific Workspace Hero Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border, rgba(0, 240, 181, 0.25)); background: var(--theme-surface, rgba(4, 16, 38, 0.75));">
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        
+
         <div class="flex items-center gap-5">
           <!-- Glass Enterprise Avatar -->
           <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
             <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
-              🏛️
+              ⚖️
             </div>
             <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
           </div>
 
           <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
-                Enterprise Administration & Accreditation Hub
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-[var(--theme-text,#F8FAFC)] tracking-tight font-sans">
+                Enterprise Administration &amp; Accreditation Hub
               </h1>
-              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
-                PHASE 13 ENTERPRISE
+              <!-- Server-Enforced Role Badge -->
+              <span class="px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-300 text-xs font-mono font-bold border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                ROLE: DEAN / ACCREDITATION CONTROLLER
               </span>
             </div>
-            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+            <div class="text-xs sm:text-sm text-[var(--theme-text-muted,#94A3B8)]">
               {adminMetadata.department} • {adminMetadata.institution}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-              Platform Architect: <span class="text-white font-bold">{adminMetadata.lead} ({adminMetadata.rollNo})</span> • {adminMetadata.workspace}
+            <div class="text-xs text-[var(--theme-text-muted,#94A3B8)] mt-1">
+              Platform Architect: <span class="text-[var(--theme-text,#F8FAFC)] font-bold">{adminMetadata.lead} ({adminMetadata.rollNo})</span> • {adminMetadata.regulation}
             </div>
           </div>
         </div>
 
         <!-- Administration Status Pills -->
         <div class="flex flex-wrap items-center gap-3">
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
-            <span class="text-slate-400">NBA Status:</span>
-            <span class="text-emerald-400 font-bold ml-1.5">85.7% Compliant</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">NBA Status:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">85.7% Compliant</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
-            <span class="text-slate-400">NAAC Projection:</span>
-            <span class="text-[#00F0B5] font-bold ml-1.5">Grade A++ (3.74 CGPA)</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">NAAC Projection:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">Grade A++ (3.74 CGPA)</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
-            <span class="text-slate-400">Audit Trail:</span>
-            <span class="text-cyan-400 font-bold ml-1.5">SHA-256 Chained</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Audit Trail:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">SHA-256 Chained</span>
           </div>
         </div>
 
@@ -68,6 +103,38 @@ const adminMetadata = {
 
       <!-- Background Glow Aesthetic -->
       <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Admin Quick-Governance Navigation Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">CO-PO Attainment</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>PO1 - PO12</span>
+          <span class="text-xs text-emerald-400 font-mono">&gt; 70% Target Met</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Faculty Workload</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>Zero Collision</span>
+          <span class="text-xs text-cyan-400 font-mono">18 / 18 Allocated</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-purple-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Statutory Audit</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>SHA-256 Block</span>
+          <span class="text-xs text-purple-400 font-mono">Immutable</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-amber-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">SQLite WAL Store</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>95 Tables</span>
+          <span class="text-xs text-amber-400 font-mono">Telemetry OK</span>
+        </div>
+      </div>
     </div>
 
     <!-- Interactive Enterprise Admin Component Island -->
@@ -108,4 +175,3 @@ const adminMetadata = {
 
   </div>
 </MainLayout>
-

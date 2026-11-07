@@ -967,5 +967,355 @@ COMPREHENSIVE_ECE_CURRICULUM: Dict[str, Dict[str, Any]] = {
                 "explanation": "CTS specifically inserts balanced buffer trees (e.g. H-trees or fishbone trees) to ensure the clock signal reaches every flip-flop at virtually the exact same instant, minimizing clock skew to prevent setup and hold violations."
             }
         ]
+    },
+
+    # 12. ELECTRONIC DEVICES AND CIRCUIT MODELING
+    "EC23C03": {
+        "code": "EC23C03",
+        "title": "Electronic Devices and Circuit Modeling",
+        "descriptive_title": "Non-Linear Active Devices, BJT/MOSFET Small-Signal Equivalent Circuits, and Power Amplifiers",
+        "short_title": "Electronic Devices",
+        "slug": "electronic-devices",
+        "semester": 3,
+        "credits": 3,
+        "ltp": "3-0-0",
+        "category": "Professional Core (PCC)",
+        "regulation": "Anna University Regulation 2023",
+        "theme_family": "amber",
+        "theme_color": "#F59E0B",
+        "icon": "⚡",
+        "prerequisites": ["EC23C01", "EC23C02"],
+        "corequisites": [],
+        "cos_count": 5,
+        "simulation_platform": "Diode / MOSFET IV Curve Tracer",
+        "simulation_component": "DiodeMosfetIvCurveTracer",
+        "total_lab_hours": 45,
+        "course_outcomes": [
+            {"id": "CO1", "description": "Analyze Shockley diode equation, diffusion capacitance, and reverse recovery dynamics in high-speed switching circuits.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO2", "description": "Synthesize BJT Ebers-Moll and hybrid-pi small-signal models incorporating Early voltage and base-width modulation.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO3"], "mapped_psos": ["PSO1"]},
+            {"id": "CO3", "description": "Formulate MOSFET square-law and subthreshold conduction models across triode and saturation regimes.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO4", "description": "Evaluate frequency response, Miller effect, and dominant pole compensation in multistage cascaded amplifiers.", "bloom_level": "L5 (Evaluate)", "mapped_pos": ["PO1", "PO3", "PO4"], "mapped_psos": ["PSO1"]},
+            {"id": "CO5", "description": "Design power output stages (Class A, B, AB) with heat sink thermal dissipation and harmonic distortion constraints.", "bloom_level": "L5 (Evaluate)", "mapped_pos": ["PO3", "PO5"], "mapped_psos": ["PSO2"]}
+        ],
+        "mathematical_derivations": [
+            {
+                "topic": "BJT Small-Signal Transconductance & Hybrid-Pi Model Parameters",
+                "formula_latex": r"g_m = \frac{I_C}{V_T}, \quad r_\pi = \frac{\beta}{g_m} = \frac{\beta V_T}{I_C}, \quad r_o = \frac{V_A + V_{CE}}{I_C} \approx \frac{V_A}{I_C}",
+                "derivation_steps": [
+                    "Differentiate collector current I_C = I_S * exp(V_BE / V_T) * (1 + V_CE / V_A) with respect to base-emitter voltage V_BE.",
+                    "Small-signal transconductance evaluates as g_m = dI_C / dV_BE = I_C / V_T, where V_T = k_B * T / q approx 25.86 mV at 300K.",
+                    "Input dynamic resistance looking into the base equals r_pi = dV_BE / dI_B = beta / g_m.",
+                    "Finite output conductance due to base-width modulation (Early effect) yields output resistance r_o = dV_CE / dI_C approx V_A / I_C."
+                ],
+                "parameters": [
+                    {"symbol": "g_m", "unit": "A/V (S)", "definition": "Small-signal transconductance"},
+                    {"symbol": "r_pi", "unit": "Ohms", "definition": "Base-emitter dynamic input resistance"},
+                    {"symbol": "r_o", "unit": "Ohms", "definition": "Collector-emitter Early output resistance"},
+                    {"symbol": "V_A", "unit": "V", "definition": "Forward Early voltage parameter"}
+                ]
+            }
+        ],
+        "worked_examples": [
+            {
+                "title": "Common-Emitter Amplifier Small-Signal Midband Voltage Gain",
+                "problem_statement": "A Common-Emitter BJT amplifier is biased at quiescent collector current I_C = 2.0 mA with collector load R_C = 3.3 kOhms. The BJT parameters are beta = 120, Early voltage V_A = 80 V, and thermal voltage V_T = 26 mV. Calculate g_m, r_pi, r_o, and loaded voltage gain A_v = -g_m * (R_C || r_o).",
+                "step_by_step_solution": [
+                    "Step 1: Compute transconductance g_m = I_C / V_T = 2.0 mA / 26 mV = 76.92 mS (0.07692 A/V).",
+                    "Step 2: Compute base dynamic input resistance r_pi = beta / g_m = 120 / 0.07692 = 1,560 Ohms (1.56 kOhms).",
+                    "Step 3: Compute Early output resistance r_o = V_A / I_C = 80 V / 2.0 mA = 40.0 kOhms.",
+                    "Step 4: Compute effective ac collector resistance R_L' = R_C || r_o = (3.3k * 40k) / (3.3k + 40k) = 132 / 43.3 = 3.048 kOhms.",
+                    "Step 5: Calculate small-signal voltage gain A_v = -g_m * R_L' = -0.07692 * 3048.5 = -234.5 V/V."
+                ],
+                "verified_output": "g_m = 76.92 mS, r_pi = 1.56 kOhm, r_o = 40.0 kOhm, A_v = -234.5 V/V"
+            }
+        ],
+        "simulation_activities": [
+            {
+                "lab_id": "EDC_LAB_01",
+                "title": "BJT Common-Emitter Output Characteristics & Early Voltage Extraction",
+                "component": "DiodeMosfetIvCurveTracer",
+                "instructions": "Sweep Vce from 0V to 15V at base currents Ib = 10uA to 50uA in 10uA increments. Extrapolate saturation slopes back to the negative voltage axis to extract Early voltage Va and evaluate output conductance go.",
+                "expected_telemetry": {"early_voltage_v": 80.0, "gm_ms": 76.9, "vce_sat_v": 0.2}
+            }
+        ],
+        "assessment_questions": [
+            {
+                "id": "EDC_Q1",
+                "bloom_level": "L4 (Analyze)",
+                "question": "In a BJT operating in the active region, what is the physical mechanism that causes collector current to increase slightly with increasing V_CE?",
+                "options": [
+                    "Base-width modulation (Early effect) narrowing the effective neutral base region",
+                    "Avalanche multiplication of minority carriers in the emitter junction",
+                    "Thermal runaway caused by negative temperature coefficient of V_BE",
+                    "Oxide charge trapping at the silicon-silicon dioxide interface"
+                ],
+                "correct_index": 0,
+                "explanation": "Increasing V_CE expands the reverse-biased collector-base depletion region, narrowing the effective quasi-neutral base width W_B. This reduces base recombination, steepens the carrier concentration gradient, and increases collector current."
+            }
+        ]
+    },
+
+    # 13. DIGITAL SIGNAL PROCESSING & ARCHITECTURE
+    "EC23S01": {
+        "code": "EC23S01",
+        "title": "Digital Signal Processing and Algorithms",
+        "descriptive_title": "Discrete Transforms, Multirate Processing, FIR/IIR Synthesis, and Fixed-Point DSP Architectures",
+        "short_title": "Digital Signal Processing",
+        "slug": "digital-signal-processing",
+        "semester": 5,
+        "credits": 2,
+        "ltp": "0-0-4",
+        "category": "Professional Core (PCC)",
+        "regulation": "Anna University Regulation 2023",
+        "theme_family": "emerald",
+        "theme_color": "#00F0B5",
+        "icon": "📊",
+        "prerequisites": ["EC23C04"],
+        "corequisites": [],
+        "cos_count": 5,
+        "simulation_platform": "Python SciPy DSP Workstation",
+        "simulation_component": "PythonSciPy",
+        "total_lab_hours": 48,
+        "course_outcomes": [
+            {"id": "CO1", "description": "Apply Discrete Fourier Transform (DFT) and radix-2 Cooley-Tukey FFT decimation-in-time algorithms to spectral analysis.", "bloom_level": "L3 (Apply)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO2", "description": "Synthesize linear-phase FIR filters using windowing techniques and Remez/Parks-McClellan equiripple algorithms.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO3"], "mapped_psos": ["PSO1"]},
+            {"id": "CO3", "description": "Design IIR digital filters via Bilinear Transformation with frequency warping pre-compensation.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO4", "description": "Analyze finite word-length quantization noise, limit cycles, and coefficient sensitivity in fixed-point registers.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO4"], "mapped_psos": ["PSO1"]},
+            {"id": "CO5", "description": "Implement multirate decimation, interpolation, and polyphase filterbank decomposition on streaming telemetry.", "bloom_level": "L5 (Evaluate)", "mapped_pos": ["PO3", "PO5"], "mapped_psos": ["PSO2"]}
+        ],
+        "mathematical_derivations": [
+            {
+                "topic": "Bilinear Transformation & Discrete-Time Frequency Warping",
+                "formula_latex": r"s = \frac{2}{T_s} \frac{1 - z^{-1}}{1 + z^{-1}}, \quad \Omega = \frac{2}{T_s} \tan\left(\frac{\omega}{2}\right)",
+                "derivation_steps": [
+                    "Approximate continuous integrator H_a(s) = 1/s using trapezoidal numerical integration in the time domain: y[n] - y[n-1] = (T_s/2) * (x[n] + x[n-1]).",
+                    "Apply Z-transform yielding Y(z)*(1 - z^-1) = (T_s/2) * X(z)*(1 + z^-1).",
+                    "Solve for transfer ratio yielding conformal substitution s = (2/T_s) * (1 - z^-1)/(1 + z^-1).",
+                    "Map analog imaginary axis s = j*Omega onto discrete unit circle z = exp(j*omega): j*Omega = (2/T_s) * tanh(j*omega/2) = j*(2/T_s)*tan(omega/2).",
+                    "Continuous frequencies Omega in (-inf, inf) map monotonically to discrete frequencies omega in (-pi, pi), requiring pre-warping Omega_c = (2/T_s)*tan(omega_c/2)."
+                ],
+                "parameters": [
+                    {"symbol": "s", "unit": "rad/s", "definition": "Continuous-time Laplace complex frequency"},
+                    {"symbol": "z", "unit": "dimensionless", "definition": "Discrete-time complex Z-plane variable"},
+                    {"symbol": "Omega", "unit": "rad/s", "definition": "Continuous analog angular frequency"},
+                    {"symbol": "omega", "unit": "rad/sample", "definition": "Digital discrete normalized angular frequency"},
+                    {"symbol": "T_s", "unit": "s", "definition": "Sampling period interval"}
+                ]
+            }
+        ],
+        "worked_examples": [
+            {
+                "title": "Bilinear Transformation Butterworth Lowpass Filter Synthesis with Pre-Warping",
+                "problem_statement": "Design a first-order digital Butterworth lowpass filter with -3dB cutoff frequency f_c = 1.0 kHz at sampling rate f_s = 8.0 kHz. Determine the pre-warped analog angular cutoff Omega_c and the resulting Z-domain transfer function H(z).",
+                "step_by_step_solution": [
+                    "Step 1: Compute normalized digital angular cutoff: omega_c = 2*pi*f_c / f_s = 2*pi*(1000) / 8000 = pi / 4 rad/sample approx 0.7854 rad.",
+                    "Step 2: Pre-warp analog angular cutoff: Omega_c = (2 / T_s) * tan(omega_c / 2) = 2*f_s * tan(pi / 8) = 16000 * 0.414214 = 6627.42 rad/s.",
+                    "Step 3: State analog prototype filter: H_a(s) = Omega_c / (s + Omega_c) = 6627.42 / (s + 6627.42).",
+                    "Step 4: Substitute bilinear transformation s = 16000 * (1 - z^-1) / (1 + z^-1).",
+                    "Step 5: Normalize denominator: H(z) = 6627.42*(1 + z^-1) / [16000*(1 - z^-1) + 6627.42*(1 + z^-1)] = (0.2929 + 0.2929*z^-1) / (1 - 0.4142*z^-1)."
+                ],
+                "verified_output": "H(z) = (0.2929 + 0.2929 z^-1) / (1 - 0.4142 z^-1), Omega_c = 6627.42 rad/s"
+            }
+        ],
+        "simulation_activities": [
+            {
+                "lab_id": "DSP_LAB_01",
+                "title": "Radix-2 DIT-FFT Spectrum Analysis and Windowed FIR Frequency Response",
+                "component": "PythonSciPy",
+                "instructions": "Synthesize a multi-tone signal (f1=500Hz, f2=1800Hz) with additive Gaussian noise. Compute 1024-point radix-2 FFT using Cooley-Tukey algorithm. Apply Hamming window and design a 31-tap Parks-McClellan FIR bandpass filter.",
+                "expected_telemetry": {"fft_snr_db": 42.6, "passband_ripple_db": 0.05, "stopband_attenuation_db": -54.0}
+            }
+        ],
+        "assessment_questions": [
+            {
+                "id": "DSP_Q1",
+                "bloom_level": "L4 (Analyze)",
+                "question": "What is the computational multiplication complexity of an N-point Radix-2 Cooley-Tukey Decimation-in-Time FFT compared to direct matrix DFT computation?",
+                "options": [
+                    "(N/2) * log2(N) complex multiplications versus N^2 for direct DFT",
+                    "N * log2(N) complex multiplications versus N for direct DFT",
+                    "O(N) linear complexity versus O(N^3) Gaussian elimination",
+                    "N^2 complex multiplications versus N! combinatorial passes"
+                ],
+                "correct_index": 0,
+                "explanation": "Radix-2 Cooley-Tukey decomposes an N-point DFT into log2(N) stages, each containing N/2 butterfly twiddle multiplications, yielding (N/2)*log2(N) complex multiplications instead of N^2."
+            }
+        ]
+    },
+
+    # 14. EMBEDDED SYSTEMS & ARM ARCHITECTURE
+    "EC8702": {
+        "code": "EC8702",
+        "title": "Embedded Systems and ARM Architecture",
+        "descriptive_title": "ARM Cortex-M Hardware Architecture, Deterministic RTOS Scheduling, and Low-Power Peripherals",
+        "short_title": "Embedded Systems",
+        "slug": "embedded-systems",
+        "semester": 7,
+        "credits": 3,
+        "ltp": "3-0-0",
+        "category": "Professional Core (PCC)",
+        "regulation": "Anna University Regulation 2023",
+        "theme_family": "indigo",
+        "theme_color": "#6366F1",
+        "icon": "🖥️",
+        "prerequisites": ["EC23C06"],
+        "corequisites": [],
+        "cos_count": 5,
+        "simulation_platform": "ARM Cortex-M NVIC / DMA Virtual Hub",
+        "simulation_component": "DmaNvicHub",
+        "total_lab_hours": 45,
+        "course_outcomes": [
+            {"id": "CO1", "description": "Analyze ARM Cortex-M architecture, dual-bank stack pointers (MSP/PSP), and hardware exception auto-stacking.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO2", "description": "Synthesize preemptive Rate Monotonic and Earliest Deadline First scheduling policies on real-time RTOS kernels.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO3"], "mapped_psos": ["PSO1"]},
+            {"id": "CO3", "description": "Formulate priority inversion remediation mechanisms using Priority Ceiling Protocol (PCP) and Priority Inheritance.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO3"], "mapped_psos": ["PSO1"]},
+            {"id": "CO4", "description": "Evaluate direct memory access (DMA) double-buffering ping-pong streams for zero-CPU peripheral servicing.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO4"], "mapped_psos": ["PSO1"]},
+            {"id": "CO5", "description": "Design power-gated ultra-low-power firmware modes (Sleep, Stop, Standby) with external wake-up latency budgets.", "bloom_level": "L5 (Evaluate)", "mapped_pos": ["PO3", "PO5"], "mapped_psos": ["PSO2"]}
+        ],
+        "mathematical_derivations": [
+            {
+                "topic": "Rate Monotonic Scheduling (RMS) Processor Utilization Bound",
+                "formula_latex": r"U = \sum_{i=1}^{n} \frac{C_i}{T_i} \le n \left( 2^{1/n} - 1 \right), \quad \lim_{n \to \infty} n \left( 2^{1/n} - 1 \right) = \ln(2) \approx 0.693",
+                "derivation_steps": [
+                    "Liu & Layland established that assigning fixed priorities monotonically with task request rate (shorter period T_i implies higher priority) is optimal for static priority periodic task sets.",
+                    "Processor utilization U is defined as the sum of worst-case execution time C_i divided by period T_i across all n independent periodic tasks: U = sum(C_i / T_i).",
+                    "Worst-case phasing occurs at the critical instant when all tasks request execution simultaneously at t = 0.",
+                    "By formulating task execution demands across worst-case period ratios, the least upper bound is proven to be U(n) = n*(2^(1/n) - 1).",
+                    "For n=1: U=1.0 (100%), for n=2: U = 2*(sqrt(2)-1) approx 0.828 (82.8%), for n=3: U approx 0.780 (78.0%), and as n -> inf: lim n*(2^(1/n)-1) = ln(2) approx 0.693 (69.3%)."
+                ],
+                "parameters": [
+                    {"symbol": "U", "unit": "dimensionless (ratio)", "definition": "Total processor core utilization"},
+                    {"symbol": "C_i", "unit": "ms", "definition": "Worst-case execution time (WCET) of task i"},
+                    {"symbol": "T_i", "unit": "ms", "definition": "Repetition period / deadline of task i"},
+                    {"symbol": "n", "unit": "integer", "definition": "Total number of periodic real-time tasks"}
+                ]
+            }
+        ],
+        "worked_examples": [
+            {
+                "title": "Hard Real-Time Periodic Task Schedulability Analysis",
+                "problem_statement": "A flight avionics RTOS executes three periodic tasks: Task 1 (Sensors: C_1 = 1.0 ms, T_1 = 4.0 ms), Task 2 (Guidance: C_2 = 2.0 ms, T_2 = 10.0 ms), and Task 3 (Telemetry: C_3 = 3.0 ms, T_3 = 20.0 ms). Verify whether this task set is guaranteed schedulable under Rate Monotonic Scheduling (RMS) using the Liu & Layland utilization bound.",
+                "step_by_step_solution": [
+                    "Step 1: Calculate individual task utilizations: U_1 = 1.0 / 4.0 = 0.250 (25.0%), U_2 = 2.0 / 10.0 = 0.200 (20.0%), U_3 = 3.0 / 20.0 = 0.150 (15.0%).",
+                    "Step 2: Calculate total CPU utilization: U_total = 0.250 + 0.200 + 0.150 = 0.600 (60.0%).",
+                    "Step 3: Evaluate Liu & Layland utilization bound for n = 3 tasks: U_bound = 3 * (2^(1/3) - 1) = 3 * (1.25992 - 1) = 3 * 0.25992 = 0.7798 (77.98%).",
+                    "Step 4: Compare U_total against U_bound: Since 0.600 <= 0.7798, the task set is unconditionally guaranteed to meet all hard real-time deadlines under RMS.",
+                    "Step 5: Verify priority assignment: Task 1 has shortest period (T=4 ms) -> Priority 1 (Highest), Task 2 (T=10 ms) -> Priority 2 (Medium), Task 3 (T=20 ms) -> Priority 3 (Lowest)."
+                ],
+                "verified_output": "U_total = 0.600 (60.0%) <= U_bound = 0.780 (78.0%), Guaranteed Schedulable under RMS"
+            }
+        ],
+        "simulation_activities": [
+            {
+                "lab_id": "EMB_LAB_01",
+                "title": "Nested Vectored Interrupt Controller (NVIC) Preemption & Latency Analysis",
+                "component": "DmaNvicHub",
+                "instructions": "Configure USART1_IRQn at Preemption Priority 1 and TIM2_IRQn at Preemption Priority 0 (Higher). Trigger nested interrupt arrival and measure hardware stack-push cycle count on ARM Cortex-M4 virtual core.",
+                "expected_telemetry": {"nvic_latency_cycles": 12, "tail_chaining_cycles": 6, "context_switch_us": 1.45}
+            }
+        ],
+        "assessment_questions": [
+            {
+                "id": "EMB_Q1",
+                "bloom_level": "L4 (Analyze)",
+                "question": "In real-time embedded systems, what phenomenon occurs when a high-priority task is blocked waiting for a shared mutex held by a low-priority task, which is in turn preempted by an unrelated medium-priority task?",
+                "options": [
+                    "Unbounded Priority Inversion",
+                    "Deadlock caused by circular wait condition",
+                    "Starvation due to round-robin quantum expiration",
+                    "Stack frame overflow in the process stack pointer (PSP)"
+                ],
+                "correct_index": 0,
+                "explanation": "This is classic unbounded priority inversion: the medium-priority task preempts the low-priority task holding the shared resource, indirectly delaying the high-priority task for an unbounded duration. Remediation requires Priority Inheritance Protocol (PIP) or Priority Ceiling Protocol (PCP)."
+            }
+        ]
+    },
+
+    # 15. OPTICS, LASERS AND OPTICAL COMMUNICATION
+    "EC23E04": {
+        "code": "EC23E04",
+        "title": "Optics, Lasers and Optical Communication",
+        "descriptive_title": "Electromagnetic Wave Propagation in Dielectric Waveguides, Laser Cavity Dynamics, and High-Speed Photonic Links",
+        "short_title": "Optics and Photonics",
+        "slug": "optics-and-lasers",
+        "semester": 6,
+        "credits": 3,
+        "ltp": "3-0-0",
+        "category": "Professional Elective (PEC)",
+        "regulation": "Anna University Regulation 2023",
+        "theme_family": "cyan",
+        "theme_color": "#06B6D4",
+        "icon": "🔬",
+        "prerequisites": ["PH23C01", "EC23C01"],
+        "corequisites": [],
+        "cos_count": 5,
+        "simulation_platform": "RF / Optical Waveguide Smith Chart Explorer",
+        "simulation_component": "RfSmithChartHub",
+        "total_lab_hours": 45,
+        "course_outcomes": [
+            {"id": "CO1", "description": "Analyze total internal reflection, numerical aperture (NA), and acceptance angle in step-index and graded-index fibers.", "bloom_level": "L3 (Apply)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO2", "description": "Synthesize electromagnetic wave solutions of Maxwell's equations in cylindrical dielectric waveguides and derive the V-number cutoff.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO3"], "mapped_psos": ["PSO1"]},
+            {"id": "CO3", "description": "Formulate stimulated emission, Einstein coefficients, population inversion, and optical cavity threshold gain in semiconductor diode lasers.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2"], "mapped_psos": ["PSO1"]},
+            {"id": "CO4", "description": "Evaluate chromatic dispersion, material dispersion, and polarization mode dispersion (PMD) in long-haul DWDM spans.", "bloom_level": "L4 (Analyze)", "mapped_pos": ["PO1", "PO2", "PO4"], "mapped_psos": ["PSO1"]},
+            {"id": "CO5", "description": "Design high-speed optical transceivers with PIN/APD photodetectors meeting link power margin and rise-time budgets.", "bloom_level": "L5 (Evaluate)", "mapped_pos": ["PO3", "PO5"], "mapped_psos": ["PSO2"]}
+        ],
+        "mathematical_derivations": [
+            {
+                "topic": "Step-Index Fiber Numerical Aperture & Normalized Frequency (V-Number) Cutoff",
+                "formula_latex": r"\text{NA} = \sqrt{n_1^2 - n_2^2} = n_0 \sin(\theta_{\text{max}}), \quad V = \frac{2\pi a}{\lambda_0} \text{NA} = \frac{2\pi a}{\lambda_0} \sqrt{n_1^2 - n_2^2}",
+                "derivation_steps": [
+                    "Apply Snell's law at the fiber entrance face: n_0 * sin(theta_a) = n_1 * sin(theta_r), where n_0 is refractive index of medium (air n_0 approx 1).",
+                    "At the core-cladding boundary, total internal reflection requires incidence angle phi_c to satisfy sin(phi_c) = n_2 / n_1.",
+                    "In the internal right triangle, theta_r = 90 deg - phi_c, implying sin(theta_r) = cos(phi_c) = sqrt(1 - (n_2/n_1)^2).",
+                    "Multiplying by n_1 yields the numerical aperture: NA = n_0 * sin(theta_a) = sqrt(n_1^2 - n_2^2).",
+                    "Normalized frequency parameter V governs supported guided modes; single-mode operation (supporting only fundamental HE11 mode) is strictly guaranteed when V <= 2.4048 (the first root of Bessel function J0)."
+                ],
+                "parameters": [
+                    {"symbol": "NA", "unit": "dimensionless", "definition": "Numerical aperture (light gathering capacity)"},
+                    {"symbol": "V", "unit": "dimensionless", "definition": "Normalized frequency / V-number parameter"},
+                    {"symbol": "n_1", "unit": "dimensionless", "definition": "Core refractive index"},
+                    {"symbol": "n_2", "unit": "dimensionless", "definition": "Cladding refractive index"},
+                    {"symbol": "a", "unit": "m (um)", "definition": "Fiber core radius"},
+                    {"symbol": "lambda_0", "unit": "m (nm)", "definition": "Free-space optical carrier wavelength"}
+                ]
+            }
+        ],
+        "worked_examples": [
+            {
+                "title": "Single-Mode Optical Fiber Cutoff Wavelength and Acceptance Angle Design",
+                "problem_statement": "A silica step-index optical fiber has a core radius a = 4.1 um, core index n_1 = 1.468, and cladding index n_2 = 1.462. In air (n_0 = 1.0), determine: (a) Numerical aperture NA, (b) Acceptance angle theta_max, and (c) The cutoff wavelength lambda_c above which the fiber operates strictly in single-mode regime (V <= 2.405).",
+                "step_by_step_solution": [
+                    "Step 1: Compute numerical aperture: NA = sqrt(n_1^2 - n_2^2) = sqrt(1.468^2 - 1.462^2) = sqrt(2.155024 - 2.137444) = sqrt(0.01758) = 0.1326.",
+                    "Step 2: Compute acceptance angle in air (n_0 = 1): theta_max = arcsin(NA) = arcsin(0.1326) = 7.62 degrees (full cone angle 2*theta = 15.24 degrees).",
+                    "Step 3: Relate normalized frequency V to cutoff condition: V_c = 2.4048 = (2*pi*a / lambda_c) * NA.",
+                    "Step 4: Solve for cutoff wavelength: lambda_c = (2*pi*a * NA) / 2.4048 = (2 * pi * 4.1e-6 * 0.13259) / 2.4048 = 3.4158e-6 / 2.4048 = 1.4204 um = 1420.4 nm.",
+                    "Step 5: Interpretation: At standard telecom wavelength lambda = 1550 nm > 1420.4 nm, V = 2.204 < 2.405, guaranteeing single-mode propagation."
+                ],
+                "verified_output": "NA = 0.1326, Acceptance Angle = 7.62 degrees, Cutoff Wavelength lambda_c = 1420.4 nm (Single-mode at 1550 nm)"
+            }
+        ],
+        "simulation_activities": [
+            {
+                "lab_id": "OPT_LAB_01",
+                "title": "Optical Link Power Budget & Chromatic Dispersion Penalty Simulator",
+                "component": "RfSmithChartHub",
+                "instructions": "Configure a 40 km single-mode fiber span at 1550 nm with transmitter power Pt = +3 dBm and receiver sensitivity Pr = -28 dBm. Account for connector loss (0.5 dB * 2), splice loss (0.1 dB * 4), and fiber attenuation (0.2 dB/km) to calculate operating link margin.",
+                "expected_telemetry": {"total_attenuation_db": 9.4, "operating_margin_db": 21.6, "dispersion_ps_per_nm": 680.0}
+            }
+        ],
+        "assessment_questions": [
+            {
+                "id": "OPT_Q1",
+                "bloom_level": "L4 (Analyze)",
+                "question": "What is the critical normalized frequency (V-number) condition required for a step-index optical fiber to operate strictly as a single-mode waveguide?",
+                "options": [
+                    "V <= 2.405 (the first zero of the J0 Bessel function)",
+                    "V >= 3.832 (ensuring higher-order mode propagation)",
+                    "V = 1.000 (matching air wave impedance)",
+                    "V <= 0.707 (corresponding to -3dB half-power cutoff)"
+                ],
+                "correct_index": 0,
+                "explanation": "In a step-index cylindrical dielectric waveguide, the cutoff for the second guided mode (TE01 / TM01) occurs at V = 2.4048, which is the first root of the Bessel function J0(x). Below this value, only the fundamental HE11 mode can propagate."
+            }
+        ]
     }
 }

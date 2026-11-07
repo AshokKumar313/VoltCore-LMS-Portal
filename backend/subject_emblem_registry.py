@@ -1,6 +1,6 @@
 """
 ========================================================================================
-VoltCore Apex Academia - ECE Subject Emblem & Institutional Branding Registry (Backend)
+VoltCore Apex Academia - ECE Professional Subject Emblem & Institutional Registry (Backend)
 Anna University / MIT Campus Standards (Department of Electronics Engineering)
 ----------------------------------------------------------------------------------------
 Module: backend/subject_emblem_registry.py
@@ -8,10 +8,12 @@ Platform Lead & Educational Systems Director: Ashok Kumar A (2023MITEC042)
 Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
 
 Provides:
-  1. Complete 14 Core ECE Disciplines Vector Emblem Metadata
-  2. Verified SVG Circuit Geometries (Nodal Bridge, Bandgap, Op-Amp, Smith Chart, etc.)
-  3. Official VoltCore Sovereign Brand Identity & Institutional Motto
-  4. Theme-Adaptive Color Tokens and Accessible Descriptions
+  1. Complete 14 Core ECE Disciplines with Clean, Professional Engineering Nomenclature
+  2. Industry-Aligned Professional Titles, Disciplines, and Subfield Categorization
+  3. Verified SVG Circuit Geometries (Nodal Bridge, Bandgap, Op-Amp, Smith Chart, etc.)
+  4. Official VoltCore Sovereign Brand Identity & Institutional Motto
+  5. Theme-Adaptive Color Tokens and Accessible Descriptions
+  6. Robust Fallback and Discipline Name Lookup Services
 ========================================================================================
 """
 
@@ -40,6 +42,10 @@ INSTITUTIONAL_BRANDING: Dict[str, Any] = {
 ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     "EC23C01": {
         "code": "EC23C01",
+        "discipline_name": "Circuit Analysis & Network Synthesis",
+        "professional_title": "Linear Circuit Theory & Network Synthesis",
+        "industry_domain": "Analog EDA & Circuit Infrastructure",
+        "subfield": "Circuits & Systems",
         "name": "Circuit Analysis & Network Synthesis",
         "short_title": "Circuits & Networks",
         "symbol_name": "MNA Nodal Bridge",
@@ -54,6 +60,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C02": {
         "code": "EC23C02",
+        "discipline_name": "Semiconductor Device Physics",
+        "professional_title": "Solid-State Physics & Semiconductor Devices",
+        "industry_domain": "Semiconductor Foundry & Microelectronics",
+        "subfield": "Solid-State Physics",
         "name": "Semiconductor Physics & Devices",
         "short_title": "Semiconductor Physics",
         "symbol_name": "Fermi Bandgap Lattice",
@@ -68,6 +78,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C03": {
         "code": "EC23C03",
+        "discipline_name": "Electronic Devices & Circuit Modeling",
+        "professional_title": "Discrete Semiconductor Devices & Active Circuits",
+        "industry_domain": "Hardware Electronics & Power Systems",
+        "subfield": "Electronic Devices",
         "name": "Electronic Devices & Solid-State Circuits",
         "short_title": "Electronic Devices",
         "symbol_name": "Shockley PN Junction",
@@ -82,6 +96,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C05": {
         "code": "EC23C05",
+        "discipline_name": "Analog Integrated Circuit Design",
+        "professional_title": "Precision Analog ICs & Operational Amplifiers",
+        "industry_domain": "Mixed-Signal ICs & Sensor Frontends",
+        "subfield": "Analog ICs",
         "name": "Analog Integrated Electronics",
         "short_title": "Analog Electronics",
         "symbol_name": "Differential Op-Amp Core",
@@ -96,6 +114,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C06": {
         "code": "EC23C06",
+        "discipline_name": "Digital Logic Design & Finite Automata",
+        "professional_title": "Combinational & Sequential Logic Architecture",
+        "industry_domain": "Digital Systems & ASIC Microarchitecture",
+        "subfield": "Digital Logic",
         "name": "Digital Electronics & Logic Design",
         "short_title": "Digital Electronics",
         "symbol_name": "K-Map Logic Gate Matrix",
@@ -110,6 +132,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C04": {
         "code": "EC23C04",
+        "discipline_name": "Signals & Linear Systems Theory",
+        "professional_title": "Continuous & Discrete-Time Linear Systems",
+        "industry_domain": "Signal Processing & Communication Infrastructure",
+        "subfield": "Systems & Signals",
         "name": "Signals and Linear Systems",
         "short_title": "Signals & Systems",
         "symbol_name": "Continuous Fourier S-Plane",
@@ -124,6 +150,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C07": {
         "code": "EC23C07",
+        "discipline_name": "Control Systems Engineering",
+        "professional_title": "Feedback Dynamics, Stability & Modern Control",
+        "industry_domain": "Robotics, Aerospace & Industrial Automation",
+        "subfield": "Control Systems",
         "name": "Control Systems Engineering",
         "short_title": "Control Systems",
         "symbol_name": "Closed-Loop Root Locus Plant",
@@ -138,6 +168,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23S01": {
         "code": "EC23S01",
+        "discipline_name": "Digital Signal Processing & Algorithms",
+        "professional_title": "Discrete-Time Transforms & Multirate Filterbanks",
+        "industry_domain": "Audio/Image DSP, Radar & Biomedical Signals",
+        "subfield": "Digital Signal Processing",
         "name": "Digital Signal Processing Practice",
         "short_title": "Python DSP",
         "symbol_name": "Radix-2 FFT Butterfly Ring",
@@ -152,6 +186,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC23C08": {
         "code": "EC23C08",
+        "discipline_name": "Telecommunications & RF Engineering",
+        "professional_title": "Analog & Digital Modulation, Information Theory",
+        "industry_domain": "Wireless Telecom, 5G/6G & RF Infrastructure",
+        "subfield": "RF & Communications",
         "name": "Analog & Digital Communication Systems",
         "short_title": "Communication Systems",
         "symbol_name": "Smith Chart Reflection Circle",
@@ -166,6 +204,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "EC8702": {
         "code": "EC8702",
+        "discipline_name": "Embedded Real-Time Systems",
+        "professional_title": "Deterministic Firmware, RTOS & Microcontrollers",
+        "industry_domain": "Automotive, Avionics & Critical Embedded",
+        "subfield": "Embedded Systems",
         "name": "Embedded Systems & RTOS Architecture",
         "short_title": "Embedded Systems",
         "symbol_name": "NVIC Priority DMA Pipeline",
@@ -180,6 +222,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "STM32-ACADEMY": {
         "code": "STM32-ACADEMY",
+        "discipline_name": "ARM Cortex-M Microcontroller Engineering",
+        "professional_title": "Bare-Metal Silicon Drivers & Hardware Peripherals",
+        "industry_domain": "Industrial Edge IoT & Precision Control",
+        "subfield": "Microcontroller Engineering",
         "name": "ARM Cortex-M Firmware Mastery",
         "short_title": "STM32 Academy",
         "symbol_name": "Cortex-M Harvard Silicon Matrix",
@@ -194,6 +240,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "IOT8701": {
         "code": "IOT8701",
+        "discipline_name": "Internet of Things & Connected Systems",
+        "professional_title": "Wireless Embedded Networks & Cloud Edge Gateways",
+        "industry_domain": "Smart Infrastructure & Industrial IoT",
+        "subfield": "IoT & Wireless",
         "name": "ESP32 IoT Systems & FreeRTOS",
         "short_title": "ESP32 IoT Systems",
         "symbol_name": "Xtensa RF Antenna Transceiver",
@@ -208,6 +258,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "HDL6001": {
         "code": "HDL6001",
+        "discipline_name": "FPGA Digital Design & Verilog HDL",
+        "professional_title": "Synchronous RTL Synthesis & Digital Verification",
+        "industry_domain": "FPGA Acceleration & ASIC Prototyping",
+        "subfield": "FPGA & Hardware Synthesis",
         "name": "Verilog HDL & FPGA Hardware Synthesis",
         "short_title": "Verilog HDL & FPGA",
         "symbol_name": "FPGA Synchronous LUT Matrix",
@@ -222,6 +276,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
     },
     "VLSI7001": {
         "code": "VLSI7001",
+        "discipline_name": "Digital VLSI Design & Silicon Layout",
+        "professional_title": "Sub-Micron CMOS Physical Design & Timing Closure",
+        "industry_domain": "Semiconductor Foundry & Silicon Tape-Out",
+        "subfield": "VLSI & Physical Design",
         "name": "CMOS VLSI Design & Physical Architecture",
         "short_title": "CMOS VLSI Design",
         "symbol_name": "CMOS Sub-Micron Transistor Layout",
@@ -238,6 +296,10 @@ ECE_SUBJECT_EMBLEMS: Dict[str, Dict[str, Any]] = {
 
 DEFAULT_FALLBACK: Dict[str, Any] = {
     "code": "CORE-GENERIC",
+    "discipline_name": "Advanced Engineering Discipline",
+    "professional_title": "VoltCore Apex Applied Engineering System",
+    "industry_domain": "Electronics & Computer Engineering",
+    "subfield": "Core Engineering",
     "name": "VoltCore Apex Engineering Course",
     "short_title": "Engineering Discipline",
     "symbol_name": "Silicon Chevron Beacon",
@@ -260,9 +322,36 @@ def get_subject_emblem(course_code: Optional[str] = None) -> Dict[str, Any]:
     return ECE_SUBJECT_EMBLEMS.get(code_norm, DEFAULT_FALLBACK)
 
 
+def get_discipline_name(course_code: Optional[str] = None) -> str:
+    """Retrieves clean, professional engineering discipline name (no raw course codes)."""
+    meta = get_subject_emblem(course_code)
+    return meta.get("discipline_name", meta.get("name", "Advanced Engineering Discipline"))
+
+
+def get_professional_title(course_code: Optional[str] = None) -> str:
+    """Retrieves full professional title for an engineering discipline."""
+    meta = get_subject_emblem(course_code)
+    return meta.get("professional_title", meta.get("name", "VoltCore Apex Applied Engineering System"))
+
+
 def list_all_subject_emblems() -> List[Dict[str, Any]]:
     """Returns list of all 14 official ECE curriculum subject emblems."""
     return list(ECE_SUBJECT_EMBLEMS.values())
+
+
+def list_discipline_catalog() -> List[Dict[str, Any]]:
+    """Returns list of all 14 disciplines with clean professional names, domains, and subfields."""
+    catalog = []
+    for meta in ECE_SUBJECT_EMBLEMS.values():
+        catalog.append({
+            "discipline_name": meta["discipline_name"],
+            "professional_title": meta["professional_title"],
+            "industry_domain": meta["industry_domain"],
+            "subfield": meta["subfield"],
+            "code": meta["code"],
+            "primary_color": meta["primary_color"]
+        })
+    return catalog
 
 
 def get_institutional_branding() -> Dict[str, Any]:

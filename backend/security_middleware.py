@@ -42,7 +42,11 @@ try:
         generate_jwt_token,
         OWNER_METADATA,
         PUBLIC_CONTACT_METADATA,
-        get_admin_audit_metadata
+        get_admin_audit_metadata,
+        SESSION_COOKIE_NAME,
+        build_session_cookie,
+        extract_token_from_cookie,
+        build_clear_session_cookie
     )
 except ImportError:
     from security_auth import (
@@ -52,7 +56,11 @@ except ImportError:
         generate_jwt_token,
         OWNER_METADATA,
         PUBLIC_CONTACT_METADATA,
-        get_admin_audit_metadata
+        get_admin_audit_metadata,
+        SESSION_COOKIE_NAME,
+        build_session_cookie,
+        extract_token_from_cookie,
+        build_clear_session_cookie
     )
 
 # Optional Flask import with seamless fallback for tests and custom HTTP servers
@@ -376,21 +384,29 @@ def require_role(*allowed_roles: str, allow_dev_bypass: bool = False):
 
             auth_header = None
             role_header = None
+            cookie_header = None
             if req is not None:
                 headers = getattr(req, "headers", {})
                 if hasattr(headers, "get"):
                     auth_header = headers.get("Authorization")
                     role_header = headers.get("X-User-Role")
+                    cookie_header = headers.get("Cookie")
                 elif isinstance(headers, dict):
                     auth_header = headers.get("Authorization")
                     role_header = headers.get("X-User-Role")
+                    cookie_header = headers.get("Cookie")
 
             user_role = None
             user_claims = None
 
-            # 1. Bearer Token Verification
+            # 1. Bearer Token or Session Cookie Verification
+            token = None
             if auth_header and auth_header.startswith("Bearer "):
                 token = auth_header.split(" ", 1)[1].strip()
+            elif cookie_header:
+                token = extract_token_from_cookie(cookie_header)
+
+            if token:
                 claims = verify_jwt_token(token)
                 if not claims:
                     err = {
@@ -454,6 +470,61 @@ def require_role(*allowed_roles: str, allow_dev_bypass: bool = False):
 def require_auth(f: Callable):
     """Convenience decorator requiring any authenticated user role."""
     return require_role("Student", "TeachingAssistant", "Faculty", "Instructor", "Admin", "Platform-Lead")(f)
+
+
+def resolve_request_role(
+    req: Any,
+    payload: Optional[Dict[str, Any]] = None,
+    default_role: str = "Student",
+    allow_unverified_payload: bool = False
+) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """
+    Standardized, secure server-side role and claims resolution for VoltCore endpoints.
+
+    Resolution Hierarchy:
+      1. Cryptographically signed JWT from 'Authorization: Bearer <token>' header.
+      2. Cryptographically signed JWT from HttpOnly 'Cookie: voltcore_session=<token>'.
+      3. Explicit 'X-User-Role' header (internal test harness and trusted gateway).
+      4. If unauthenticated, cannot self-assign privileged roles (Faculty, Admin, etc.) via payload;
+         falls back strictly to default_role ("Student") or Anonymous.
+    """
+    headers = getattr(req, "headers", {}) if req is not None else {}
+    auth_header = None
+    role_header = None
+    cookie_header = None
+
+    if hasattr(headers, "get"):
+        auth_header = headers.get("Authorization")
+        role_header = headers.get("X-User-Role")
+        cookie_header = headers.get("Cookie")
+    elif isinstance(headers, dict):
+        auth_header = headers.get("Authorization")
+        role_header = headers.get("X-User-Role")
+        cookie_header = headers.get("Cookie")
+
+    token = None
+    if auth_header and "Bearer " in auth_header:
+        token = auth_header.split("Bearer ", 1)[1].strip()
+    elif cookie_header:
+        token = extract_token_from_cookie(cookie_header)
+
+    if token:
+        claims = verify_jwt_token(token)
+        if claims and claims.get("role"):
+            return str(claims.get("role")), claims
+        # Invalid or expired token: demoted to Anonymous
+        return "Anonymous", None
+
+    if role_header and str(role_header).strip():
+        return str(role_header).strip(), None
+
+    if payload and allow_unverified_payload:
+        p_role = payload.get("actor_role") or payload.get("role")
+        if p_role and p_role not in ("Admin", "Platform-Lead", "Faculty", "Instructor", "Dean_Academic", "HOD_ECE", "Editor", "Teacher"):
+            return str(p_role).strip(), None
+
+    return default_role, None
+
 
 
 # ========================================================================================

@@ -1,0 +1,127 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import VivaVoceSimulatorHub from '../components/VivaVoceSimulatorHub.jsx';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
+
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - AI Viva Voce Simulator & OBE Analytics Portal
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ *
+ * Capabilities:
+ *   1. Dynamic Sovereign Brand Header & Breadcrumbs
+ *   2. Server-Enforced Role Badge: EXAMINER & SCHOLAR / ORAL ASSESSMENT
+ *   3. Conversational Viva Voce Oral Assessment across 5 ECE Core Domains
+ *   4. Course Outcome (CO1-CO5) & Program Outcome (PO1-PO12) Attainment Tracking
+ *   5. Institutional Threshold Gating (>= 70%) & NBA Accreditation Export
+ * ========================================================================================
+ */
+
+const vivaMetadata = {
+  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
+  department: "Department of Electronics Engineering",
+  regulation: "Anna University Regulation 2023",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  hall: "Virtual Oral Assessment Chamber & Academic Council Boardroom",
+  mode: "AI-Assisted Viva Voce & OBE CO-PO Threshold Evaluation",
+  roleName: "EXAMINER & SCHOLAR / ORAL ASSESSMENT",
+  roleScope: "Undergraduate ECE Technical Viva Defense"
+};
+---
+
+<MainLayout title={`AI Viva Voce Simulator & OBE Analytics | VoltCore Apex Academia`} activeNav="viva-voce">
+  <div class="space-y-6 font-mono">
+
+    <!-- Dynamic Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-[var(--theme-text-muted,#94A3B8)] font-mono py-1">
+      <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+      <span class="text-slate-600">/</span>
+      <span class="text-[var(--theme-primary,#00F0B5)] font-bold">AI Viva Voce &amp; OBE Assessment</span>
+    </nav>
+
+    <!-- Sovereign Institutional Brand Header -->
+    <VoltCoreBrandHeader variant="banner" showSubtitle={true} showMotto={false} className="mb-2" />
+
+    <!-- Role-Specific Viva Chamber Hero Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border, rgba(0, 240, 181, 0.25)); background: var(--theme-surface, rgba(4, 16, 38, 0.75));">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+        <div class="flex items-center gap-5">
+          <!-- Glass Microphone Avatar -->
+          <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
+            <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
+              🎙️
+            </div>
+            <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
+                AI Viva Voce Simulator &amp; OBE Analytics
+              </h1>
+              <!-- Server-Enforced Role Badge -->
+              <span class="px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-300 text-xs font-mono font-bold border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                ROLE: EXAMINER & SCHOLAR / ORAL ASSESSMENT
+              </span>
+            </div>
+            <div class="text-xs sm:text-sm text-slate-300">
+              {vivaMetadata.department} • {vivaMetadata.institution}
+            </div>
+            <div class="text-xs text-slate-400 mt-1">
+              Lead Candidate: <span class="text-white font-bold">{vivaMetadata.lead} ({vivaMetadata.rollNo})</span> • {vivaMetadata.hall}
+            </div>
+          </div>
+        </div>
+
+        <!-- System Capability Badges -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Oral Assessment:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">5 ECE Domains</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-[#00F0B5]/30 text-xs">
+            <span class="text-slate-400">Adaptive Branching:</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">Bloom L3-L6</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs">
+            <span class="text-slate-400">Gating Threshold:</span>
+            <span class="text-cyan-400 font-bold ml-1.5">&ge; 70.0% Attained</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Ambient Glow Accents -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Interactive Viva Simulator & OBE Hub Island -->
+    <VivaVoceSimulatorHub client:load />
+
+    <!-- Academic Quality & Accreditation Assurance Protocol -->
+    <div class="p-6 rounded-2xl bg-[#041026]/70 border border-slate-800 text-xs text-slate-400 space-y-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <span class="font-bold text-slate-200">
+          Anna University Regulation 2023 — Outcome-Based Education (OBE) Oral Assessment Standard
+        </span>
+        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+          NBA Tier-1 Compliant
+        </span>
+      </div>
+      <p class="leading-relaxed text-slate-400">
+        All oral evaluations, Bloom's cognitive taxonomy levels (L1–L6), and continuous assessment rubrics conform to NBA accreditation guidelines. Direct Course Outcome attainment metrics gating at 70% ensure statutory institutional compliance for undergraduate ECE degree programs.
+      </p>
+    </div>
+
+  </div>
+</MainLayout>

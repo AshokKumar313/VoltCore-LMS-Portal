@@ -1,79 +1,139 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import PersonalizedLearningHub from '../components/PersonalizedLearningHub.jsx';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
 
 /**
  * ========================================================================================
- * VoltCore Apex Academia - Phase A: Personalized Learning Dashboard & Adaptive Path
+ * VoltCore Apex Academia - Role Workspace: Student Learning Dashboard & Adaptive Path
  * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
  * Platform Lead: Ashok Kumar A (2023MITEC042)
- * Features 201–202:
- *   - Feature 201: Personalized Learning Dashboard (Domain mastery, cognitive gaps, study velocity)
- *   - Feature 202: Adaptive Learning Path Generator (Prerequisite DAG, career goals, diagnostic quiz)
+ *
+ * Capabilities:
+ *   1. Dynamic Sovereign Brand Header & Institutional Alignment
+ *   2. Server-Enforced Role Badge: SCHOLAR / STUDENT
+ *   3. Dynamic Breadcrumb Navigation (Home / Student Learning Dashboard)
+ *   4. High-Contrast Typography & 18-Theme Adaptability
+ *   5. Real-Time Student Metrics: Domain Mastery, Prerequisite DAG, Cognitive Gaps
  * ========================================================================================
  */
 
 const pageMetadata = {
-  title: "Personalized Learning Hub & Adaptive Path | VoltCore Apex Academia",
-  lead: "VoltCore Apex",
-  rollNo: "Core Series",
-  department: "Electronics & Embedded Systems",
-  campus: "Autonomous Engineering Cluster",
-  regulation: "Modular Engineering Series",
-  mode: "Domain Mastery + Cognitive Gap Detection + Adaptive Career DAG"
+  title: "Student Learning Dashboard & Adaptive Path | VoltCore Apex Academia",
+  lead: "Ashok Kumar A",
+  rollNo: "2023MITEC042",
+  department: "Department of Electronics Engineering",
+  campus: "MIT Campus, Anna University",
+  regulation: "Regulation 2023",
+  mode: "Domain Mastery + Cognitive Gap Detection + Adaptive Career DAG",
+  roleName: "SCHOLAR / STUDENT",
+  roleScope: "Undergraduate ECE Matriculation"
 };
 ---
 
 <MainLayout title={pageMetadata.title} activeNav="learning-dashboard">
   <div class="space-y-6 font-mono">
-    
-    <!-- Hero Header Banner -->
-    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border);">
+
+    <!-- Dynamic Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-[var(--theme-text-muted,#94A3B8)] font-mono py-1">
+      <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+      <span class="text-slate-600">/</span>
+      <span class="text-[var(--theme-primary,#00F0B5)] font-bold">Student Learning Dashboard</span>
+    </nav>
+
+    <!-- Sovereign Institutional Brand Header -->
+    <VoltCoreBrandHeader variant="banner" showSubtitle={true} showMotto={false} className="mb-2" />
+
+    <!-- Role-Specific Workspace Hero Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border, rgba(0, 240, 181, 0.25)); background: var(--theme-surface, rgba(4, 16, 38, 0.75));">
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        
+
         <div class="flex items-center gap-5">
           <!-- Glass Cybernetic Avatar -->
           <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 p-[2.5px] shadow-emerald-glow flex-shrink-0">
             <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center font-bold text-2xl text-emerald-400">
-              📊
+              🎓
             </div>
             <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-slate-950 animate-pulse"></span>
           </div>
 
           <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
-                Personalized Learning Hub & Adaptive Path
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-[var(--theme-text,#F8FAFC)] tracking-tight font-sans">
+                Student Learning Dashboard
               </h1>
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/40">
-                PHASE A (FEATURES 201–202)
+              <!-- Server-Enforced Role Badge -->
+              <span class="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-xs font-mono font-bold border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                ROLE: SCHOLAR / STUDENT
               </span>
             </div>
-            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+            <div class="text-xs sm:text-sm text-[var(--theme-text-muted,#94A3B8)]">
               {pageMetadata.department} • {pageMetadata.campus}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
-              Platform Architect: <span class="text-white font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.mode}
+            <div class="text-xs text-[var(--theme-text-muted,#94A3B8)] mt-1">
+              Matriculation ID: <span class="text-[var(--theme-text,#F8FAFC)] font-bold">{pageMetadata.lead} ({pageMetadata.rollNo})</span> • {pageMetadata.regulation}
             </div>
           </div>
         </div>
 
-        <!-- Capability Badges -->
+        <!-- Capability & Student Metrics Badges -->
         <div class="flex flex-wrap items-center gap-3">
-          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-emerald-500/30 text-xs">
-            <span class="text-slate-400">Mastery:</span>
-            <span class="text-emerald-400 font-bold ml-1.5">5 ECE Domains</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Enrolled Disciplines:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">14 Core ECE</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs">
-            <span class="text-slate-400">Adaptive DAG:</span>
-            <span class="text-cyan-400 font-bold ml-1.5">3 Career Tracks</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Career Tracks:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">3 Adaptive DAGs</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-xs">
-            <span class="text-slate-400">Cognitive Gaps:</span>
-            <span class="text-amber-400 font-bold ml-1.5">Real-Time Alert</span>
+          <div class="px-4 py-2 rounded-xl bg-[var(--theme-card)] border border-[var(--theme-border)] text-xs">
+            <span class="text-[var(--theme-text-muted,#94A3B8)]">Cognitive Alerts:</span>
+            <span class="text-[var(--theme-primary,#00F0B5)] font-bold ml-1.5">Real-Time Monitor</span>
           </div>
         </div>
 
+      </div>
+
+      <!-- Ambient Glow Accents -->
+      <div class="absolute -right-24 -bottom-24 w-80 h-80 bg-gradient-to-br from-emerald-500/10 to-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    </div>
+
+    <!-- Student Quick-Workflow Navigation Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-emerald-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Active Modules</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>6 Active</span>
+          <span class="text-xs text-emerald-400 font-mono">100% On-Track</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-cyan-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Laboratory Bench</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>SPICE / DSP</span>
+          <span class="text-xs text-cyan-400 font-mono">Hardware HIL</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-purple-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Attained Credits</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>94 / 160</span>
+          <span class="text-xs text-purple-400 font-mono">Sem V Standing</span>
+        </div>
+      </div>
+      <div class="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 hover:border-amber-500/40 transition-colors">
+        <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">CGPA Projection</div>
+        <div class="text-lg font-bold text-white font-sans flex items-center justify-between">
+          <span>9.18 / 10.0</span>
+          <span class="text-xs text-amber-400 font-mono">Distinction</span>
+        </div>
       </div>
     </div>
 

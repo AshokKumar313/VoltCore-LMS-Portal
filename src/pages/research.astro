@@ -1,8 +1,24 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import ResearchDiscoveryHub from '../components/ResearchDiscoveryHub.jsx';
+import ExperimentNotebookStudio from '../components/ExperimentNotebookStudio.jsx';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
 
-// Research Discovery Metadata
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Cross-Disciplinary Research & Experiment Notebook Hub
+ * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Platform Lead: Ashok Kumar A (2023MITEC042)
+ *
+ * Capabilities:
+ *   1. Dynamic Sovereign Brand Header & Breadcrumbs
+ *   2. Server-Enforced Role Badge: RESEARCH FELLOW / SCHOLAR
+ *   3. Version-Controlled Markdown Experiment Notebooks with MNA State & SPICE Export
+ *   4. Oscilloscope Waveform Capture & Cross-Disciplinary Project Registry
+ *   5. IEEE Technical Literature Discovery & Knowledge Synthesis
+ * ========================================================================================
+ */
+
 const researchMetadata = {
   institution: "Madras Institute of Technology (MIT) Campus, Anna University",
   department: "Department of Electronics Engineering",
@@ -10,55 +26,75 @@ const researchMetadata = {
   lead: "Ashok Kumar A",
   rollNo: "2023MITEC042",
   facility: "Embedded Systems & IoT Advanced Research Laboratory (Lab 304)",
-  mode: "IEEE Publications, Citation Indexing & AI Literature Review"
+  mode: "IEEE Publications, Citation Indexing & AI Literature Review",
+  roleName: "RESEARCH FELLOW / SCHOLAR",
+  roleScope: "Cross-Disciplinary Hardware & Systems Discovery"
 };
 ---
 
-<MainLayout title={`Research Discovery & Knowledge Systems | ${researchMetadata.lead} (Core Series)`} activeNav="research">
-  <div class="space-y-8 font-mono">
-    
-    <!-- Hero Research Discovery Header -->
-    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border border-[#00F0B5]/30 relative overflow-hidden shadow-2xl">
+<MainLayout title={`Research Discovery & Experiment Notebooks | VoltCore Apex Academia`} activeNav="research">
+  <div class="space-y-6 font-mono">
+
+    <!-- Dynamic Breadcrumb Navigation -->
+    <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-xs text-[var(--theme-text-muted,#94A3B8)] font-mono py-1">
+      <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+        <span>Home</span>
+      </a>
+      <span class="text-slate-600">/</span>
+      <span class="text-[var(--theme-primary,#00F0B5)] font-bold">Cross-Disciplinary Research Hub</span>
+    </nav>
+
+    <!-- Sovereign Institutional Brand Header -->
+    <VoltCoreBrandHeader variant="banner" showSubtitle={true} showMotto={false} className="mb-2" />
+
+    <!-- Role-Specific Research Workspace Hero Banner -->
+    <div class="glass-card-accent rounded-3xl p-6 sm:p-8 border relative overflow-hidden shadow-2xl" style="border-color: var(--theme-border, rgba(0, 240, 181, 0.25)); background: var(--theme-surface, rgba(4, 16, 38, 0.75));">
       <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        
+
         <div class="flex items-center gap-5">
           <!-- Glass Research Avatar -->
           <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[2.5px] shadow-emerald-glow flex-shrink-0">
             <div class="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center font-bold text-2xl text-[#00F0B5]">
-              📚
+              🔬
             </div>
             <span class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-emerald-400 ring-4 ring-[#020813] animate-pulse"></span>
           </div>
 
           <div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
               <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
-                Research Discovery & Knowledge Systems
+                Cross-Disciplinary Research &amp; Experiment Hub
               </h1>
-              <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-bold border border-[#00F0B5]/40">
-                PHASE 12 RESEARCH
+              <!-- Server-Enforced Role Badge -->
+              <span class="px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-300 text-xs font-mono font-bold border border-cyan-500/30 flex items-center gap-1.5 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                ROLE: RESEARCH FELLOW / SCHOLAR
               </span>
             </div>
-            <div class="text-xs sm:text-sm text-slate-300 mt-1">
+            <div class="text-xs sm:text-sm text-slate-300">
               {researchMetadata.department} • {researchMetadata.institution}
             </div>
-            <div class="text-xs text-slate-400 mt-0.5">
+            <div class="text-xs text-slate-400 mt-1">
               Research Lead: <span class="text-white font-bold">{researchMetadata.lead} ({researchMetadata.rollNo})</span> • {researchMetadata.facility}
             </div>
           </div>
         </div>
 
-        <!-- Research Status Pills -->
+        <!-- Research Capability Badges -->
         <div class="flex flex-wrap items-center gap-3">
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-emerald-500/30 text-xs">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-emerald-500/30 text-xs">
+            <span class="text-slate-400">Lab Notebooks:</span>
+            <span class="text-emerald-400 font-bold ml-1.5">MNA + SPICE Export</span>
+          </div>
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-[#00F0B5]/30 text-xs">
             <span class="text-slate-400">Indexed Feeds:</span>
-            <span class="text-emerald-400 font-bold ml-1.5">IEEE Xplore & Scopus</span>
+            <span class="text-[#00F0B5] font-bold ml-1.5">IEEE Xplore &amp; Scopus</span>
           </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-[#00F0B5]/30 text-xs">
-            <span class="text-slate-400">Synthesis Engine:</span>
-            <span class="text-[#00F0B5] font-bold ml-1.5">Zero-Bloat SQLite WAL</span>
-          </div>
-          <div class="px-4 py-2 rounded-xl bg-[#020813]/80 border border-cyan-500/30 text-xs">
+          <div class="px-4 py-2 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-xs">
             <span class="text-slate-400">Empirical Bench:</span>
             <span class="text-cyan-400 font-bold ml-1.5">MIT Lab 304 HIL</span>
           </div>
@@ -70,11 +106,30 @@ const researchMetadata = {
       <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-br from-[#00F0B5]/10 to-[#00693E]/20 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
-    <!-- Interactive Research Discovery Component Island -->
-    <ResearchDiscoveryHub client:load />
+    <!-- Section 1: Version-Controlled Experiment Notebook Studio -->
+    <div class="space-y-3">
+      <div class="flex items-center gap-2 px-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <h3 class="text-base sm:text-lg font-bold text-white font-sans tracking-tight">
+          Hardware Experiment Notebook Studio &amp; Simulation State Capture
+        </h3>
+      </div>
+      <ExperimentNotebookStudio client:load />
+    </div>
+
+    <!-- Section 2: IEEE Technical Literature & AI Synthesis -->
+    <div class="space-y-3 pt-6 border-t border-slate-800/80">
+      <div class="flex items-center gap-2 px-1">
+        <span class="text-lg">📚</span>
+        <h3 class="text-base sm:text-lg font-bold text-white font-sans tracking-tight">
+          IEEE Technical Literature Discovery &amp; Knowledge Synthesis
+        </h3>
+      </div>
+      <ResearchDiscoveryHub client:load />
+    </div>
 
     <!-- Academic Research Ethics & Publishing Standards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
       <div class="p-5 rounded-2xl bg-[#020813]/80 border border-slate-800">
         <div class="flex items-center gap-2 text-emerald-400 text-sm font-bold mb-2">
           <span>📜</span>
@@ -101,11 +156,10 @@ const researchMetadata = {
           <h4>Outcome-Based Education Alignment</h4>
         </div>
         <p class="text-xs text-slate-400 leading-relaxed">
-          Literature reviews directly track Course Outcomes CO1 through CO5, providing verifiable outcome attainment artifacts for academic audits.
+          Literature reviews directly track Course Outcomes CO1 through CO5, providing verifiable outcome attainment artifacts for statutory academic accreditation audits.
         </p>
       </div>
     </div>
 
   </div>
 </MainLayout>
-

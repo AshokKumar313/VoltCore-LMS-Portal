@@ -70,9 +70,13 @@ class StructuredLogger:
         correlation_id: Optional[str] = None,
         extra: Optional[Dict[str, Any]] = None,
         client_id: Optional[str] = None,
-        duration_ms: Optional[float] = None
+        duration_ms: Optional[float] = None,
+        **kwargs
     ) -> Dict[str, Any]:
         """Constructs and returns structured log entry dictionary."""
+        combined_extra = dict(extra) if extra else {}
+        if kwargs:
+            combined_extra.update(kwargs)
         entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "service": self.service_name,
@@ -83,8 +87,8 @@ class StructuredLogger:
         }
         if duration_ms is not None:
             entry["duration_ms"] = round(duration_ms, 2)
-        if extra:
-            entry["context"] = sanitize_payload(extra)
+        if combined_extra:
+            entry["context"] = sanitize_payload(combined_extra)
         return entry
 
     def info(self, message: str, **kwargs) -> Dict[str, Any]:
