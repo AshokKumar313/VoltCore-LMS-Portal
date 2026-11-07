@@ -41,6 +41,15 @@ export interface VivaQuestion {
   answer: string;
 }
 
+export interface MnaLabConfig {
+  presetId: string;
+  analysisType: "TRANSIENT" | "DC_OPERATING_POINT";
+  defaultParams: Record<string, number>;
+  spiceNetlistTemplate?: string;
+  timeWindowMs?: number;
+  expectedMetrics?: Record<string, string>;
+}
+
 export interface LabExercise {
   id: string;
   courseCode: string;
@@ -54,6 +63,7 @@ export interface LabExercise {
   observationColumns: ObservationColumn[];
   vivaQuestions: VivaQuestion[];
   safetyProtocol: string;
+  mnaConfig?: MnaLabConfig;
 }
 
 export const COURSE_LAB_CATALOG: Record<string, LabExercise[]> = {
@@ -355,7 +365,362 @@ export const COURSE_LAB_CATALOG: Record<string, LabExercise[]> = {
           answer: "The drain-to-source voltage must satisfy VDS >= VGS - Vth, causing the inversion channel to pinch off near the drain terminal."
         }
       ],
-      safetyProtocol: "Limit forward diode current below maximum continuous rating (1N4148: 200 mA) to prevent thermal runaway."
+      safetyProtocol: "Limit forward diode current below maximum continuous rating (1N4148: 200 mA) to prevent thermal runaway.",
+      mnaConfig: {
+        presetId: "diode_rectifier",
+        analysisType: "TRANSIENT",
+        defaultParams: { vPeak: 5.0, freqHz: 1000.0, rLoad: 1000.0, cFilterUf: 10.0 },
+        spiceNetlistTemplate: "* EC23C03 Lab 1: Diode Half-Wave Rectifier\nV1 IN 0 SIN(0 5 1000)\nD1 IN OUT 1N4148\nRL OUT 0 1k\nC1 OUT 0 10u\n.tran 20u 3m\n.end"
+      }
+    },
+    {
+      id: "EC23C03_LAB2",
+      courseCode: "EC23C03",
+      title: "BJT Common-Emitter Transistor Small-Signal Voltage Gain & Bias Stability",
+      unitRoman: "III",
+      apparatus: [
+        "Function Generator (1 kHz Sine Wave, 50 mVpp)",
+        "Dual-Channel Digital Storage Oscilloscope (Tektronix TDS2024 / Keysight InfiniiVision)",
+        "NPN Bipolar Junction Transistor (2N2222 / BC547B)",
+        "Regulated DC Power Supply (VCC = 10.0 V)",
+        "Decade Resistance and Capacitance Boxes"
+      ],
+      objectives: [
+        "Design voltage-divider self-bias network for stable Q-point (ICQ ≈ 1.5 mA, VCEQ ≈ 5.0 V).",
+        "Measure small-signal midband voltage gain Av = -gm * (RC || RL) and input impedance Rin = R1 || R2 || rpi.",
+        "Observe 180° phase inversion between input base signal and amplified collector output.",
+        "Evaluate bias stability factor S = dIC / dICO under varying junction temperature."
+      ],
+      parameters: [
+        {
+          id: "vcc",
+          name: "Supply Voltage (VCC)",
+          min: 5.0,
+          max: 15.0,
+          step: 0.5,
+          defaultValue: 10.0,
+          unit: "V",
+          description: "Main DC bias collector rail supply"
+        },
+        {
+          id: "r1",
+          name: "Upper Bias Resistor (R1)",
+          min: 10000,
+          max: 100000,
+          step: 1000,
+          defaultValue: 47000,
+          unit: "Ω",
+          description: "Top resistor of base voltage divider"
+        },
+        {
+          id: "r2",
+          name: "Lower Bias Resistor (R2)",
+          min: 2000,
+          max: 20000,
+          step: 500,
+          defaultValue: 10000,
+          unit: "Ω",
+          description: "Bottom resistor of base voltage divider"
+        },
+        {
+          id: "rc",
+          name: "Collector Resistor (RC)",
+          min: 1000,
+          max: 10000,
+          step: 100,
+          defaultValue: 2200,
+          unit: "Ω",
+          description: "Collector load resistor establishing quiescent drop"
+        },
+        {
+          id: "re",
+          name: "Emitter Resistor (RE)",
+          min: 100,
+          max: 2000,
+          step: 50,
+          defaultValue: 680,
+          unit: "Ω",
+          description: "Emitter thermal stabilization feedback resistor"
+        },
+        {
+          id: "beta",
+          name: "Current Gain (Beta / hfe)",
+          min: 50,
+          max: 300,
+          step: 10,
+          defaultValue: 100,
+          unit: "factor",
+          description: "NPN forward common-emitter current gain"
+        }
+      ],
+      presets: [
+        {
+          name: "Standard Audio CE Bias (ICQ = 1.5 mA)",
+          description: "Nominal 2N2222 audio amplifier configuration with VCEQ ≈ 5.0V",
+          paramValues: { vcc: 10.0, r1: 47000, r2: 10000, rc: 2200, re: 680, beta: 100 }
+        },
+        {
+          name: "High Gain Active Drive (RC = 4.7k)",
+          description: "Increased collector resistance yielding midband voltage gain Av > -30",
+          paramValues: { vcc: 12.0, r1: 47000, r2: 10000, rc: 4700, re: 470, beta: 150 }
+        }
+      ],
+      formulas: [
+        "V_{TH} = V_{CC} \\frac{R_2}{R_1 + R_2}",
+        "R_{TH} = \\frac{R_1 R_2}{R_1 + R_2}",
+        "I_{CQ} \\approx \\frac{V_{TH} - V_{BE}}{R_E + R_{TH} / \\beta}",
+        "V_{CEQ} = V_{CC} - I_{CQ}(R_C + R_E)",
+        "A_v \\approx -\\frac{R_C}{r_e + R_E} \\quad (\\text{without bypass } C_E)"
+      ],
+      observationColumns: [
+        { id: "vthCalc", label: "Vth (Thevenin)", unit: "V" },
+        { id: "ibCalc", label: "Base IB", unit: "μA" },
+        { id: "icqCalc", label: "Collector ICQ", unit: "mA" },
+        { id: "vceqCalc", label: "Quiescent VCEQ", unit: "V" },
+        { id: "voltageGain", label: "Voltage Gain Av", unit: "V/V" },
+        { id: "qpointStatus", label: "Operating Region", unit: "status" }
+      ],
+      vivaQuestions: [
+        {
+          question: "Why does the common-emitter amplifier introduce a 180-degree phase shift?",
+          answer: "As input base voltage increases, base and collector currents increase. Greater collector current produces a larger voltage drop across the collector load RC, pulling collector voltage VOUT downward."
+        },
+        {
+          question: "What is the function of the emitter bypass capacitor CE in a CE amplifier?",
+          answer: "It provides a low-impedance AC ground path around RE for signal frequencies, preventing AC negative feedback and significantly boosting small-signal voltage gain while preserving DC thermal stability."
+        }
+      ],
+      safetyProtocol: "Ensure collector power dissipation PC = VCE * IC does not exceed maximum junction limit (2N2222: 500 mW).",
+      mnaConfig: {
+        presetId: "bjt_ce_amplifier",
+        analysisType: "TRANSIENT",
+        defaultParams: { vcc: 10.0, r1: 47000.0, r2: 10000.0, rc: 2200.0, re: 680.0, beta: 100.0, vinMv: 50.0, freqHz: 1000.0 },
+        spiceNetlistTemplate: "* EC23C03 Lab 2: BJT Common-Emitter Amplifier\nVCC VCC 0 DC 10.0\nVIN IN 0 SIN(0 0.05 1000)\nR1 VCC BASE 47k\nR2 BASE 0 10k\nRC VCC COLL 2.2k\nRE EMIT 0 680\nQ1 COLL BASE EMIT 2N2222\n.tran 10u 3m\n.end"
+      }
+    },
+    {
+      id: "EC23C03_LAB3",
+      courseCode: "EC23C03",
+      title: "NMOS/CMOS Digital Inverter Switching Transient & Propagation Delay",
+      unitRoman: "IV",
+      apparatus: [
+        "High-Speed Pulse Generator (100 kHz Square Wave, 0 to 5V, tr < 2 ns)",
+        "Digital Storage Oscilloscope with 10x Low-Capacitance Probes (<15 pF)",
+        "N-channel Enhancement MOSFET (2N7000 / BS170)",
+        "Precision Metal-Film Pull-Up Resistors (1k to 10k)",
+        "Breadboard and Low-ESR Decoupling Capacitors"
+      ],
+      objectives: [
+        "Measure high-to-low propagation delay tPHL and low-to-high delay tPLH on NMOS inverter.",
+        "Analyze capacitive load charging time constant tau = R_pullup * C_load during low-to-high transition.",
+        "Evaluate inverter voltage transfer characteristics (VTC) and determine logic threshold VM.",
+        "Calculate dynamic switching power dissipation Pdyn = C_load * VDD^2 * f."
+      ],
+      parameters: [
+        {
+          id: "vdd",
+          name: "Supply Rail (VDD)",
+          min: 2.5,
+          max: 5.5,
+          step: 0.1,
+          defaultValue: 5.0,
+          unit: "V",
+          description: "Digital switching DC supply voltage"
+        },
+        {
+          id: "rPullup",
+          name: "Pull-Up Resistor (Rp)",
+          min: 500,
+          max: 10000,
+          step: 250,
+          defaultValue: 2000,
+          unit: "Ω",
+          description: "Passive pull-up load resistor"
+        },
+        {
+          id: "cLoadPf",
+          name: "Load Capacitance (CL)",
+          min: 1.0,
+          max: 100.0,
+          step: 1.0,
+          defaultValue: 10.0,
+          unit: "pF",
+          description: "Effective parasitic node and wiring capacitance"
+        },
+        {
+          id: "vth",
+          name: "Threshold Voltage (Vth)",
+          min: 0.8,
+          max: 2.5,
+          step: 0.1,
+          defaultValue: 1.2,
+          unit: "V",
+          description: "Gate threshold voltage for inversion channel turn-on"
+        },
+        {
+          id: "knMa",
+          name: "Transconductance Parameter (Kn)",
+          min: 5.0,
+          max: 50.0,
+          step: 1.0,
+          defaultValue: 20.0,
+          unit: "mA/V²",
+          description: "MOSFET process transconductance gain"
+        }
+      ],
+      presets: [
+        {
+          name: "Standard NMOS Digital Cell (5V, 2k, 10pF)",
+          description: "Nominal integrated discrete inverter gate with fast falling edge and RC rising edge",
+          paramValues: { vdd: 5.0, rPullup: 2000, cLoadPf: 10.0, vth: 1.2, knMa: 20.0 }
+        },
+        {
+          name: "Heavy Capacitive Load Driving (50pF)",
+          description: "Interconnect bus routing demonstrating asymmetric rise time degradation",
+          paramValues: { vdd: 5.0, rPullup: 2000, cLoadPf: 50.0, vth: 1.2, knMa: 20.0 }
+        }
+      ],
+      formulas: [
+        "t_{PLH} \\approx 0.69 R_{\\text{pullup}} C_{\\text{load}}",
+        "t_{PHL} \\approx \\frac{C_{\\text{load}} V_{DD}}{k_n (V_{DD} - V_{th})^2}",
+        "t_{pd} = \\frac{t_{PLH} + t_{PHL}}{2}",
+        "P_{\\text{dynamic}} = C_{\\text{load}} V_{DD}^2 f_{\\text{clk}}",
+        "V_{OL} \\approx \\frac{V_{DD}}{1 + k_n R_{\\text{pullup}}(V_{DD} - V_{th})}"
+      ],
+      observationColumns: [
+        { id: "tauRiseNs", label: "Rise Constant tau", unit: "ns" },
+        { id: "tPlhNs", label: "Delay tPLH", unit: "ns" },
+        { id: "tPhlNs", label: "Delay tPHL", unit: "ns" },
+        { id: "vOlCalc", label: "VOL Drop", unit: "V" },
+        { id: "dynPowerUw", label: "Dynamic Power", unit: "μW" }
+      ],
+      vivaQuestions: [
+        {
+          question: "Why is the low-to-high transition slower than high-to-low in a resistive-load NMOS inverter?",
+          answer: "During high-to-low, the active NMOS transistor is turned ON and discharges CL through low channel on-resistance (RON ≈ 50-100 Ω). During low-to-high, the NMOS is OFF, and CL must charge passively through the much higher pull-up resistor (e.g. 2 kΩ)."
+        },
+        {
+          question: "How does CMOS topology eliminate static power dissipation compared to NMOS?",
+          answer: "CMOS uses complementary PMOS and NMOS pairs. In both steady HIGH and steady LOW states, one transistor is fully OFF, so no direct current path exists from VDD to GND other than subthreshold leakage."
+        }
+      ],
+      safetyProtocol: "Observe ESD precautions when handling MOSFET devices; ground wrist straps to prevent gate dielectric puncture.",
+      mnaConfig: {
+        presetId: "mosfet_inverter",
+        analysisType: "TRANSIENT",
+        defaultParams: { vdd: 5.0, rPullup: 2000.0, vth: 1.2, knMa: 20.0, cLoadPf: 10.0 },
+        spiceNetlistTemplate: "* EC23C03 Lab 3: NMOS Inverter Switching Pulse\nVDD VDD 0 DC 5.0\nVIN IN 0 PULSE(0 5 0 1n 1n 5u 10u)\nRP VDD OUT 2k\nM1 OUT IN 0 0 NMOS\nCL OUT 0 10p\n.tran 0.1u 25u\n.end"
+      }
+    },
+    {
+      id: "EC23C03_LAB4",
+      courseCode: "EC23C03",
+      title: "2nd-Order Series & Parallel RLC Transient Step Resonator & Damping Factor",
+      unitRoman: "I",
+      apparatus: [
+        "Function Generator (0 to 5V Step Pulse, 200 Hz)",
+        "Dual-Channel Digital Storage Oscilloscope (100 MHz DSO)",
+        "Ferrite-Core Precision Inductor (10 mH shielded)",
+        "Low-Loss Polypropylene Capacitor (1.0 μF)",
+        "Decade Resistance Box (1 Ω to 1000 Ω)"
+      ],
+      objectives: [
+        "Observe underdamped, critically damped, and overdamped 2nd-order step responses.",
+        "Calculate natural resonant frequency f0 = 1 / (2*pi*sqrt(L*C)) and damping ratio zeta = (R/2)*sqrt(C/L).",
+        "Measure damped oscillation frequency fd = f0*sqrt(1 - zeta^2) and peak percentage overshoot (%OS).",
+        "Determine circuit quality factor Q = omega0*L / R and logarithmic decrement."
+      ],
+      parameters: [
+        {
+          id: "vStep",
+          name: "Step Voltage (Vstep)",
+          min: 1.0,
+          max: 10.0,
+          step: 0.5,
+          defaultValue: 5.0,
+          unit: "V",
+          description: "Excitation step pulse amplitude"
+        },
+        {
+          id: "rVal",
+          name: "Series Resistance (R)",
+          min: 5.0,
+          max: 500.0,
+          step: 5.0,
+          defaultValue: 50.0,
+          unit: "Ω",
+          description: "Damping resistor governing oscillation decay rate"
+        },
+        {
+          id: "lValMh",
+          name: "Inductance (L)",
+          min: 1.0,
+          max: 50.0,
+          step: 1.0,
+          defaultValue: 10.0,
+          unit: "mH",
+          description: "Series inductive energy storage element"
+        },
+        {
+          id: "cValUf",
+          name: "Capacitance (C)",
+          min: 0.1,
+          max: 10.0,
+          step: 0.1,
+          defaultValue: 1.0,
+          unit: "μF",
+          description: "Capacitive tank storage element"
+        }
+      ],
+      presets: [
+        {
+          name: "Underdamped Ringing (zeta = 0.25)",
+          description: "Low series damping resistance (R = 50 Ω) showing multiple oscillatory cycles",
+          paramValues: { vStep: 5.0, rVal: 50.0, lValMh: 10.0, cValUf: 1.0 }
+        },
+        {
+          name: "Critical Damping (zeta = 1.0)",
+          description: "Series resistance R = 200 Ω yielding fastest settling without overshoot",
+          paramValues: { vStep: 5.0, rVal: 200.0, lValMh: 10.0, cValUf: 1.0 }
+        },
+        {
+          name: "Overdamped Sluggish Decay (zeta = 2.0)",
+          description: "High series resistance (R = 400 Ω) causing slow exponential charging",
+          paramValues: { vStep: 5.0, rVal: 400.0, lValMh: 10.0, cValUf: 1.0 }
+        }
+      ],
+      formulas: [
+        "\\omega_0 = \\frac{1}{\\sqrt{LC}} = 2\\pi f_0",
+        "\\zeta = \\frac{R}{2} \\sqrt{\\frac{C}{L}}",
+        "\\omega_d = \\omega_0 \\sqrt{1 - \\zeta^2}",
+        "Q = \\frac{1}{2\\zeta} = \\frac{\\omega_0 L}{R}",
+        "\\%\\text{OS} = 100 \\times \\exp\\left( -\\frac{\\pi \\zeta}{\\sqrt{1 - \\zeta^2}} \\right)"
+      ],
+      observationColumns: [
+        { id: "f0Calc", label: "Natural Freq f0", unit: "Hz" },
+        { id: "zetaCalc", label: "Damping Factor zeta", unit: "ratio" },
+        { id: "fdCalc", label: "Ringing Freq fd", unit: "Hz" },
+        { id: "qFactor", label: "Quality Factor Q", unit: "factor" },
+        { id: "osPercent", label: "Overshoot %OS", unit: "%" },
+        { id: "regime", label: "Damping Regime", unit: "status" }
+      ],
+      vivaQuestions: [
+        {
+          question: "What physical mechanism causes voltage overshoot in an underdamped RLC circuit?",
+          answer: "Energy stored in the inductor's magnetic field (1/2 L I^2) continues forcing current into the capacitor even after capacitor voltage reaches the input supply voltage, temporarily charging it to higher potential."
+        },
+        {
+          question: "What is the critical resistance Rc of a series RLC circuit?",
+          answer: "Rc = 2 * sqrt(L / C). At this resistance, zeta = 1.0, and the circuit achieves the fastest settling time to steady-state without any oscillatory overshoot."
+        }
+      ],
+      safetyProtocol: "Check inductive flyback voltages; ensure peak voltage does not exceed component dielectric breakdown rating.",
+      mnaConfig: {
+        presetId: "rlc_resonance",
+        analysisType: "TRANSIENT",
+        defaultParams: { vStep: 5.0, rVal: 50.0, lValMh: 10.0, cValUf: 1.0 },
+        spiceNetlistTemplate: "* EC23C03 Lab 4: Series RLC Step Resonator\nV1 IN 0 STEP 0 5\nR1 IN MID 50\nL1 MID OUT 10m\nC1 OUT 0 1u\n.tran 10u 3m\n.end"
+      }
     }
   ],
 

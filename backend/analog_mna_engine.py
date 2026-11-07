@@ -569,7 +569,7 @@ class NonLinearMNASolver:
             if isinstance(comp, CurrentSource):
                 n_pos = self.circuit.get_or_create_node_idx(comp.n_pos)
                 n_neg = self.circuit.get_or_create_node_idx(comp.n_neg)
-                stamp_current_source(n_neg, n_pos, comp.dc_val)
+                stamp_current_source(n_pos, n_neg, comp.dc_val)
 
         # 3. Stamp Reactive Capacitors (Transient Companion Models)
         for comp in self.circuit.components:
@@ -1275,6 +1275,323 @@ class AnalogMNAEngine:
         res["topology_warnings"] = topology_report["warnings"]
 
         return res
+
+    def simulate_spice_netlist(
+        self,
+        netlist_text: str,
+        analysis_type: Optional[str] = None,
+        t_stop: Optional[float] = None,
+        t_step: Optional[float] = None,
+        integration_method: str = "TRAPEZOIDAL"
+    ) -> Dict[str, Any]:
+        """
+        Parses standard Berkeley SPICE netlist text and simulates it using the NonLinearMNASolver.
+        """
+        circuit, meta = parse_spice_netlist(netlist_text)
+        act_analysis = (analysis_type or meta.get("analysis_type", "TRANSIENT")).upper()
+        act_t_stop = float(t_stop if t_stop is not None else meta.get("t_stop", 3e-3))
+        act_t_step = float(t_step if t_step is not None else meta.get("t_step", 20e-6))
+
+        res = self.run_simulation(
+            circuit=circuit,
+            analysis_type=act_analysis,
+            t_stop=act_t_stop,
+            t_step=act_t_step,
+            integration_method=integration_method
+        )
+        res["meta"] = meta
+        res["netlist"] = netlist_text
+        return res
+
+    def export_preset_spice(self, preset_id: str, params: Optional[Dict[str, Any]] = None) -> str:
+        """Exports a named academic preset circuit into Berkeley SPICE (.cir) text format."""
+        ckt = self.get_preset_circuit(preset_id, params)
+        return circuit_to_spice_netlist(ckt)
+
+
+# ========================================================================================
+# 5. Berkeley SPICE Netlist Parser & Serializer (Phase 13)
+# ========================================================================================
+
+SPICE_SCALE_FACTORS = {
+    "T": 1e12,
+    "G": 1e9,
+    "MEG": 1e6,
+    "K": 1e3,
+    "M": 1e-3,
+    "U": 1e-6,
+    "N": 1e-9,
+    "P": 1e-12,
+    "F": 1e-15,
+}
+
+import re
+
+
+def parse_spice_value(raw_val: Any) -> float:
+    """
+    Parses SPICE numerical formats with standard engineering metric scale factors:
+      T/t = 1e12, G/g = 1e9, MEG/meg = 1e6, K/k = 1e3, M/m = 1e-3 (unless MEG),
+      U/u = 1e-6, N/n = 1e-9, P/p = 1e-12, F/f = 1e-15.
+    Strips trailing unit qualifiers (e.g., '10uF' -> 1e-5, '100Ohm' -> 100.0, '5V' -> 5.0).
+    """
+    s = str(raw_val).strip()
+    if not s:
+        return 0.0
+    try:
+        return float(s)
+    except ValueError:
+        pass
+
+    m = re.match(r"^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*([a-zA-Z]+)?$", s)
+    if not m:
+        raise ValueError(f"Invalid SPICE numerical value: '{raw_val}'")
+
+    base_num = float(m.group(1))
+    suffix_raw = (m.group(2) or "").upper()
+    if not suffix_raw:
+        return base_num
+
+    if suffix_raw.startswith("MEG"):
+        return base_num * 1e6
+
+    first_char = suffix_raw[0]
+    if first_char in SPICE_SCALE_FACTORS:
+        return base_num * SPICE_SCALE_FACTORS[first_char]
+
+    return base_num
+
+
+def parse_source_spec(tokens: List[str]) -> Tuple[str, float, float, float]:
+    """
+    Parses SPICE source excitation specifications:
+      - DC: 'DC 5', '5', '5V'
+      - SINE: 'SIN(0 5 1000)', 'SINE (0, 3.3, 2000)'
+      - STEP: 'STEP 0 5', 'STEP 5'
+      - PULSE: 'PULSE(0 5 0 1n 1n 0.5m 1m)'
+    Returns: (wave_type, amplitude, freq_hz, offset)
+    """
+    rest = " ".join(tokens)
+    # 1. SINE
+    m_sin = re.search(r"SIN(?:E)?\s*\(([^)]+)\)", rest, re.IGNORECASE)
+    if m_sin:
+        args = [a.strip() for a in re.split(r"[\s,]+", m_sin.group(1).strip()) if a.strip()]
+        offset = parse_spice_value(args[0]) if len(args) > 0 else 0.0
+        ampl = parse_spice_value(args[1]) if len(args) > 1 else 1.0
+        freq = parse_spice_value(args[2]) if len(args) > 2 else 1000.0
+        return ("SINE", ampl, freq, offset)
+
+    # 2. PULSE
+    m_pulse = re.search(r"PULSE\s*\(([^)]+)\)", rest, re.IGNORECASE)
+    if m_pulse:
+        args = [a.strip() for a in re.split(r"[\s,]+", m_pulse.group(1).strip()) if a.strip()]
+        v1 = parse_spice_value(args[0]) if len(args) > 0 else 0.0
+        v2 = parse_spice_value(args[1]) if len(args) > 1 else 5.0
+        freq = 1000.0
+        if len(args) >= 7:
+            period = parse_spice_value(args[6])
+            if period > 0:
+                freq = 1.0 / period
+        return ("PULSE", v2 - v1, freq, v1)
+
+    # 3. STEP
+    m_step = re.search(r"STEP\s+([^\s]+)(?:\s+([^\s]+))?", rest, re.IGNORECASE)
+    if m_step:
+        val1 = parse_spice_value(m_step.group(1))
+        val2 = parse_spice_value(m_step.group(2)) if m_step.group(2) else None
+        if val2 is not None:
+            return ("STEP", val2, 0.0, val1)
+        return ("STEP", val1, 0.0, 0.0)
+
+    # 4. DC
+    m_dc = re.search(r"(?:DC\s+)?([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?[a-zA-Z]*)", rest, re.IGNORECASE)
+    if m_dc:
+        return ("DC", parse_spice_value(m_dc.group(1)), 0.0, 0.0)
+
+    return ("DC", 0.0, 0.0, 0.0)
+
+
+def parse_spice_netlist(netlist_text: str) -> Tuple[Circuit, Dict[str, Any]]:
+    """
+    Parses a standard Berkeley SPICE (.cir) netlist string into a VoltCore Circuit instance.
+    Supports R, C, L, V, I, D, Q (BJT), M (MOSFET) components, along with .tran, .op, and .model directives.
+    Returns: (circuit, metadata)
+    """
+    lines = netlist_text.splitlines()
+    title = ""
+    metadata: Dict[str, Any] = {
+        "title": "VoltCore SPICE Circuit",
+        "analysis_type": "TRANSIENT",
+        "t_step": 20e-6,
+        "t_stop": 3e-3,
+        "models": {},
+        "directives": []
+    }
+
+    parsed_lines = []
+    first_non_empty = True
+    for raw in lines:
+        stripped = raw.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(('*', '#', ';')):
+            if first_non_empty and not title:
+                title = stripped.lstrip('*#; ').strip()
+                metadata["title"] = title
+            first_non_empty = False
+            continue
+        if first_non_empty and not stripped.startswith('.'):
+            # Line 1 is title by SPICE convention
+            title = stripped
+            metadata["title"] = title
+            first_non_empty = False
+            continue
+        first_non_empty = False
+        parsed_lines.append(stripped)
+
+    if not title:
+        title = "VoltCore SPICE Circuit"
+        metadata["title"] = title
+
+    circuit = Circuit(title=title)
+
+    for line in parsed_lines:
+        tokens = line.split()
+        if not tokens:
+            continue
+        elem = tokens[0].upper()
+
+        # 1. Directives
+        if elem.startswith('.'):
+            directive = elem[1:]
+            metadata["directives"].append(line)
+            if directive == "TRAN":
+                # .TRAN <tstep> <tstop>
+                if len(tokens) >= 3:
+                    metadata["t_step"] = parse_spice_value(tokens[1])
+                    metadata["t_stop"] = parse_spice_value(tokens[2])
+                elif len(tokens) == 2:
+                    metadata["t_stop"] = parse_spice_value(tokens[1])
+                metadata["analysis_type"] = "TRANSIENT"
+            elif directive == "OP":
+                metadata["analysis_type"] = "DC_OPERATING_POINT"
+            elif directive == "TITLE":
+                title = line[len(tokens[0]):].strip()
+                circuit.title = title
+                metadata["title"] = title
+            elif directive == "MODEL":
+                if len(tokens) >= 3:
+                    model_name = tokens[1].upper()
+                    model_type = tokens[2].upper()
+                    metadata["models"][model_name] = {"type": model_type, "raw": line}
+            continue
+
+        # 2. Components
+        char = elem[0]
+        name = tokens[0].upper()
+
+        if char == 'R':
+            # R<name> <n1> <n2> <value>
+            if len(tokens) >= 4:
+                val = parse_spice_value(tokens[3])
+                circuit.add_resistor(name, tokens[1], tokens[2], val)
+        elif char == 'C':
+            # C<name> <n1> <n2> <value> [IC=<ic>]
+            if len(tokens) >= 4:
+                val = parse_spice_value(tokens[3])
+                ic = 0.0
+                for tok in tokens[4:]:
+                    if tok.upper().startswith("IC="):
+                        ic = parse_spice_value(tok[3:])
+                circuit.add_capacitor(name, tokens[1], tokens[2], val, ic)
+        elif char == 'L':
+            # L<name> <n1> <n2> <value> [IC=<ic>]
+            if len(tokens) >= 4:
+                val = parse_spice_value(tokens[3])
+                ic = 0.0
+                for tok in tokens[4:]:
+                    if tok.upper().startswith("IC="):
+                        ic = parse_spice_value(tok[3:])
+                circuit.add_inductor(name, tokens[1], tokens[2], val, ic)
+        elif char == 'V':
+            # V<name> <n+> <n-> [DC <val> | SIN(...) | PULSE(...) | STEP ... | <val>]
+            if len(tokens) >= 4:
+                wave_type, ampl, freq, offset = parse_source_spec(tokens[3:])
+                if wave_type == "DC":
+                    circuit.add_voltage_source(name, tokens[1], tokens[2], dc_val=ampl)
+                else:
+                    circuit.add_voltage_source(
+                        name, tokens[1], tokens[2],
+                        wave_type=wave_type, amplitude=ampl, freq_hz=freq, offset=offset
+                    )
+        elif char == 'I':
+            # I<name> <n+> <n-> [DC] <val>
+            if len(tokens) >= 4:
+                val_tok = tokens[4] if (len(tokens) >= 5 and tokens[3].upper() == "DC") else tokens[3]
+                val = parse_spice_value(val_tok)
+                circuit.add_current_source(name, tokens[1], tokens[2], dc_val=val)
+        elif char == 'D':
+            # D<name> <n_anode> <n_cathode> [model]
+            if len(tokens) >= 3:
+                circuit.add_diode(name, tokens[1], tokens[2])
+        elif char == 'Q':
+            # Q<name> <n_c> <n_b> <n_e> [model]
+            if len(tokens) >= 4:
+                circuit.add_bjt(name, tokens[1], tokens[2], tokens[3])
+        elif char == 'M':
+            # M<name> <n_d> <n_g> <n_s> [n_b] [model]
+            if len(tokens) >= 4:
+                n_d = tokens[1]
+                n_g = tokens[2]
+                n_s = tokens[3]
+                circuit.add_mosfet(name, n_d, n_g, n_s)
+
+    return circuit, metadata
+
+
+def circuit_to_spice_netlist(circuit: Circuit, t_step: float = 20e-6, t_stop: float = 3e-3) -> str:
+    """
+    Serializes a VoltCore Circuit instance into standard Berkeley SPICE (.cir) netlist format.
+    """
+    lines = [
+        "* VoltCore Apex Academia - Berkeley SPICE Netlist (.cir)",
+        f"* Circuit: {circuit.title}",
+        f"* Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        "* Platform Lead: Ashok Kumar A (Senior Analog IC Design Specialist)",
+        ""
+    ]
+    for comp in circuit.components:
+        if isinstance(comp, Resistor):
+            lines.append(f"{comp.name} {comp.n1} {comp.n2} {comp.resistance:g}")
+        elif isinstance(comp, Capacitor):
+            lines.append(f"{comp.name} {comp.n1} {comp.n2} {comp.capacitance:g}")
+        elif isinstance(comp, Inductor):
+            lines.append(f"{comp.name} {comp.n1} {comp.n2} {comp.inductance:g}")
+        elif isinstance(comp, VoltageSource):
+            if comp.wave_type == "DC":
+                lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} DC {comp.dc_val:g}")
+            elif comp.wave_type in ("SINE", "SIN"):
+                lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} SIN({comp.offset:g} {comp.amplitude:g} {comp.freq_hz:g})")
+            elif comp.wave_type == "STEP":
+                lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} STEP {comp.offset:g} {comp.amplitude:g}")
+            elif comp.wave_type == "PULSE":
+                period = 1.0 / max(1.0, comp.freq_hz)
+                lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} PULSE({comp.offset:g} {comp.offset + comp.amplitude:g} 0 1n 1n {0.5 * period:g} {period:g})")
+            else:
+                lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} {comp.dc_val:g}")
+        elif isinstance(comp, CurrentSource):
+            lines.append(f"{comp.name} {comp.n_pos} {comp.n_neg} DC {comp.dc_val:g}")
+        elif isinstance(comp, Diode):
+            lines.append(f"{comp.name} {comp.n_anode} {comp.n_cathode} 1N4148")
+        elif isinstance(comp, BJT):
+            lines.append(f"{comp.name} {comp.n_c} {comp.n_b} {comp.n_e} 2N2222")
+        elif isinstance(comp, MOSFET):
+            lines.append(f"{comp.name} {comp.n_d} {comp.n_g} {comp.n_s} 0 NMOS")
+
+    lines.append("")
+    lines.append(f".tran {t_step:g} {t_stop:g}")
+    lines.append(".end")
+    return "\n".join(lines)
 
 
 # Global singleton instance for platform-wide use

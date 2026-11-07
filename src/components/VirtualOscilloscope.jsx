@@ -81,11 +81,20 @@ export default function VirtualOscilloscope() {
   const [lastWokwiPacket, setLastWokwiPacket] = useState(null);
   const [telemetrySaved, setTelemetrySaved] = useState(false);
 
+  // Phase 13: MNA Analog Kernel Live Waveform Synchronization
+  const [isMnaSyncActive, setIsMnaSyncActive] = useState(false);
+  const [lastMnaPacket, setLastMnaPacket] = useState(null);
+  const mnaDataRef = useRef(null);
+
+  useEffect(() => {
+    mnaDataRef.current = lastMnaPacket;
+  }, [lastMnaPacket]);
+
   const timebase = TIMEBASE_OPTIONS[timebaseIdx].value;
   const ch1Volts = VOLTS_OPTIONS[ch1VoltsIdx].value;
   const ch2Volts = VOLTS_OPTIONS[ch2VoltsIdx].value;
 
-  // Listen to Wokwi hardware simulation streams
+  // Listen to Wokwi hardware simulation & MNA analog kernel streams
   useEffect(() => {
     const handleWokwiTelemetry = (e) => {
       const data = e.detail || {};
@@ -111,14 +120,29 @@ export default function VirtualOscilloscope() {
       }
     };
 
+    const handleMnaTelemetry = (e) => {
+      const data = e.detail || {};
+      if (data.vinCurve && data.voutCurve) {
+        setIsMnaSyncActive(true);
+        setLastMnaPacket(data);
+        // Automatically link channels to MNA input & output nodes
+        setCh1Waveform('mna_vin');
+        setCh2Waveform('mna_vout');
+      } else if (data.tool && String(data.tool).includes("MNA")) {
+        setIsMnaSyncActive(true);
+      }
+    };
+
     if (typeof window !== 'undefined') {
       window.addEventListener('voltcore:lab-telemetry', handleWokwiTelemetry);
       window.addEventListener('voltcore:hardware-telemetry', handleWokwiTelemetry);
+      window.addEventListener('voltcore:mna-waveform', handleMnaTelemetry);
     }
     return () => {
       if (typeof window !== 'undefined') {
         window.removeEventListener('voltcore:lab-telemetry', handleWokwiTelemetry);
         window.removeEventListener('voltcore:hardware-telemetry', handleWokwiTelemetry);
+        window.removeEventListener('voltcore:mna-waveform', handleMnaTelemetry);
       }
     };
   }, []);
@@ -208,7 +232,15 @@ export default function VirtualOscilloscope() {
             const t = px * dt + phase;
             let v = 0;
 
-            if (ch1Waveform === 'sine') {
+            if (ch1Waveform === 'mna_vin' && mnaDataRef.current && mnaDataRef.current.vinCurve && mnaDataRef.current.vinCurve.length > 0) {
+              const curve = mnaDataRef.current.vinCurve;
+              const sIdx = Math.floor((px / width) * curve.length);
+              v = curve[Math.min(curve.length - 1, Math.max(0, sIdx))] || 0;
+            } else if (ch1Waveform === 'mna_vout' && mnaDataRef.current && mnaDataRef.current.voutCurve && mnaDataRef.current.voutCurve.length > 0) {
+              const curve = mnaDataRef.current.voutCurve;
+              const sIdx = Math.floor((px / width) * curve.length);
+              v = curve[Math.min(curve.length - 1, Math.max(0, sIdx))] || 0;
+            } else if (ch1Waveform === 'sine') {
               v = signalAmplitudeV * Math.sin(2 * Math.PI * signalFreqHz * t);
             } else if (ch1Waveform === 'square') {
               // PWM duty cycle calculation
@@ -250,7 +282,15 @@ export default function VirtualOscilloscope() {
             const t = px * dt + phase;
             let v = 0;
 
-            if (ch2Waveform === 'square') {
+            if (ch2Waveform === 'mna_vout' && mnaDataRef.current && mnaDataRef.current.voutCurve && mnaDataRef.current.voutCurve.length > 0) {
+              const curve = mnaDataRef.current.voutCurve;
+              const sIdx = Math.floor((px / width) * curve.length);
+              v = curve[Math.min(curve.length - 1, Math.max(0, sIdx))] || 0;
+            } else if (ch2Waveform === 'mna_vin' && mnaDataRef.current && mnaDataRef.current.vinCurve && mnaDataRef.current.vinCurve.length > 0) {
+              const curve = mnaDataRef.current.vinCurve;
+              const sIdx = Math.floor((px / width) * curve.length);
+              v = curve[Math.min(curve.length - 1, Math.max(0, sIdx))] || 0;
+            } else if (ch2Waveform === 'square') {
               v = (signalAmplitudeV * 0.8) * (Math.sin(2 * Math.PI * (signalFreqHz / 2) * t) >= 0 ? 1 : -1);
             } else if (ch2Waveform === 'sine') {
               v = (signalAmplitudeV * 0.8) * Math.sin(2 * Math.PI * (signalFreqHz / 2) * t);
@@ -522,6 +562,12 @@ export default function VirtualOscilloscope() {
                 WOKWI LIVE SYNC ACTIVE
               </span>
             )}
+            {isMnaSyncActive && (
+              <span className="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                MNA ANALOG KERNEL SYNC ({lastMnaPacket?.presetName || "ACTIVE"})
+              </span>
+            )}
           </p>
         </div>
 
@@ -747,6 +793,8 @@ export default function VirtualOscilloscope() {
                   <option value="square">Square / PWM</option>
                   <option value="triangle">Triangle</option>
                   <option value="sensor">Bearing Noise</option>
+                  <option value="mna_vin">MNA Kernel: Input Node (Vin)</option>
+                  <option value="mna_vout">MNA Kernel: Output Node (Vout)</option>
                 </select>
               </div>
               <div className="grid grid-cols-3 gap-1">
@@ -786,6 +834,8 @@ export default function VirtualOscilloscope() {
                   <option value="square">Square</option>
                   <option value="sine">Sine</option>
                   <option value="triangle">Triangle</option>
+                  <option value="mna_vout">MNA Kernel: Output Node (Vout)</option>
+                  <option value="mna_vin">MNA Kernel: Input Node (Vin)</option>
                 </select>
               </div>
               <div className="grid grid-cols-3 gap-1">

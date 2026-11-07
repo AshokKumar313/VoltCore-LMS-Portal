@@ -137,6 +137,43 @@ except ImportError:
         Circuit = None
         NonLinearMNASolver = None
 
+try:
+    from backend.math_studio_engine import math_studio_engine, PoleZeroSystem, FourierSeriesEngine
+except ImportError:
+    try:
+        from math_studio_engine import math_studio_engine, PoleZeroSystem, FourierSeriesEngine
+    except Exception:
+        math_studio_engine = None
+        PoleZeroSystem = None
+        FourierSeriesEngine = None
+
+try:
+    from backend.autograder_engine import (
+        autograder_engine,
+        firmware_autograder,
+        verilog_autograder,
+        mna_autograder,
+        lab_report_autograder,
+        obe_engine
+    )
+except ImportError:
+    try:
+        from autograder_engine import (
+            autograder_engine,
+            firmware_autograder,
+            verilog_autograder,
+            mna_autograder,
+            lab_report_autograder,
+            obe_engine
+        )
+    except Exception:
+        autograder_engine = None
+        firmware_autograder = None
+        verilog_autograder = None
+        mna_autograder = None
+        lab_report_autograder = None
+        obe_engine = None
+
 # ANSI Terminal Formatting for High-Precision Diagnostics
 class TerminalColors:
     HEADER = '\033[95m'
@@ -1060,6 +1097,254 @@ if HAS_FLASK:
         ckt = analog_mna_engine.get_preset_circuit(p_id, params)
         report = ckt.validate_topology()
         return jsonify({"status": "SUCCESS", "report": report}), 200
+
+    @app.route("/api/mna/netlist", methods=["POST", "OPTIONS"])
+    def mna_netlist_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not analog_mna_engine:
+            return jsonify({"status": "error", "message": "Analog MNA Engine unavailable"}), 503
+
+        payload = request.get_json(silent=True) or {}
+        netlist_text = payload.get("netlist", "")
+        if not netlist_text.strip():
+            return jsonify({"status": "error", "message": "Netlist text cannot be empty"}), 400
+
+        ana_type = payload.get("analysis_type")
+        method = payload.get("method", payload.get("integration_method", "TRAPEZOIDAL"))
+        t_stop = float(payload.get("t_stop")) if payload.get("t_stop") is not None else None
+        t_step = float(payload.get("t_step")) if payload.get("t_step") is not None else None
+
+        try:
+            res = analog_mna_engine.simulate_spice_netlist(
+                netlist_text=netlist_text,
+                analysis_type=ana_type,
+                t_stop=t_stop,
+                t_step=t_step,
+                integration_method=method
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/mna/export_spice", methods=["GET", "POST", "OPTIONS"])
+    def mna_export_spice_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+
+        if not analog_mna_engine:
+            return jsonify({"status": "error", "message": "Analog MNA Engine unavailable"}), 503
+
+        if request.method == "GET":
+            p_id = request.args.get("preset_id", "rc_transient")
+            spice_netlist = analog_mna_engine.export_preset_spice(p_id)
+            return jsonify({"status": "SUCCESS", "preset_id": p_id, "netlist": spice_netlist}), 200
+        else:
+            payload = request.get_json(silent=True) or {}
+            p_id = payload.get("preset_id", "rc_transient")
+            params = payload.get("params", {})
+            spice_netlist = analog_mna_engine.export_preset_spice(p_id, params)
+            return jsonify({"status": "SUCCESS", "preset_id": p_id, "netlist": spice_netlist}), 200
+
+    # ----------------------------------------------------------------------------------------
+    # Phase 14: Engineering Mathematics & Complex Pole-Zero Studio Endpoints
+    # ----------------------------------------------------------------------------------------
+    @app.route("/api/math/presets", methods=["GET"])
+    def math_presets_endpoint():
+        if not math_studio_engine:
+            return jsonify({"status": "error", "message": "Math Studio Engine unavailable"}), 503
+        presets = math_studio_engine.get_presets()
+        return jsonify({"status": "SUCCESS", "presets": presets}), 200
+
+    @app.route("/api/math/analyze", methods=["GET", "POST", "OPTIONS"])
+    def math_analyze_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+
+        if not math_studio_engine:
+            return jsonify({"status": "error", "message": "Math Studio Engine unavailable"}), 503
+
+        try:
+            if request.method == "GET":
+                preset_id = request.args.get("preset_id", "butterworth_lp2")
+                presets = math_studio_engine.get_presets()
+                if preset_id not in presets:
+                    return jsonify({"status": "error", "message": f"Preset '{preset_id}' not found"}), 404
+                p_cfg = presets[preset_id]
+                res = math_studio_engine.analyze_pole_zero_system(
+                    poles=p_cfg.get("poles", []),
+                    zeros=p_cfg.get("zeros", []),
+                    gain=p_cfg.get("gain", 1.0),
+                    domain=p_cfg.get("domain", "LAPLACE"),
+                    w_min=p_cfg.get("w_range", [0.1, 100.0])[0],
+                    w_max=p_cfg.get("w_range", [0.1, 100.0])[1],
+                    preset_id=preset_id
+                )
+                return jsonify(res), 200
+            else:
+                payload = request.get_json(silent=True) or {}
+                preset_id = payload.get("preset_id")
+                if preset_id and (not payload.get("poles") and not payload.get("zeros")):
+                    presets = math_studio_engine.get_presets()
+                    if preset_id in presets:
+                        p_cfg = presets[preset_id]
+                        poles = p_cfg.get("poles", [])
+                        zeros = p_cfg.get("zeros", [])
+                        gain = payload.get("gain", p_cfg.get("gain", 1.0))
+                        domain = payload.get("domain", p_cfg.get("domain", "LAPLACE"))
+                        w_min = payload.get("w_min", p_cfg.get("w_range", [0.1, 100.0])[0])
+                        w_max = payload.get("w_max", p_cfg.get("w_range", [0.1, 100.0])[1])
+                    else:
+                        poles = payload.get("poles", [])
+                        zeros = payload.get("zeros", [])
+                        gain = float(payload.get("gain", 1.0))
+                        domain = payload.get("domain", "LAPLACE")
+                        w_min = float(payload.get("w_min", 0.1))
+                        w_max = float(payload.get("w_max", 100.0))
+                else:
+                    poles = payload.get("poles", [])
+                    zeros = payload.get("zeros", [])
+                    gain = float(payload.get("gain", 1.0))
+                    domain = payload.get("domain", "LAPLACE")
+                    w_min = float(payload.get("w_min", 0.1))
+                    w_max = float(payload.get("w_max", 100.0))
+
+                t_stop = float(payload.get("t_stop", 2.0))
+                res = math_studio_engine.analyze_pole_zero_system(
+                    poles=poles,
+                    zeros=zeros,
+                    gain=gain,
+                    domain=domain,
+                    w_min=w_min,
+                    w_max=w_max,
+                    t_stop=t_stop,
+                    preset_id=preset_id
+                )
+                return jsonify(res), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/math/fourier", methods=["GET", "POST", "OPTIONS"])
+    def math_fourier_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+
+        if not FourierSeriesEngine:
+            return jsonify({"status": "error", "message": "Fourier Series Engine unavailable"}), 503
+
+        try:
+            if request.method == "GET":
+                waveform = request.args.get("waveform", "SQUARE")
+                amplitude = float(request.args.get("amplitude", 1.0))
+                frequency_hz = float(request.args.get("frequency_hz", 1000.0))
+                num_harmonics = int(request.args.get("num_harmonics", 15))
+                num_points = int(request.args.get("num_points", 200))
+            else:
+                payload = request.get_json(silent=True) or {}
+                waveform = payload.get("waveform", "SQUARE")
+                amplitude = float(payload.get("amplitude", 1.0))
+                frequency_hz = float(payload.get("frequency_hz", 1000.0))
+                num_harmonics = int(payload.get("num_harmonics", 15))
+                num_points = int(payload.get("num_points", 200))
+
+            res = FourierSeriesEngine.synthesize_reconstructed_curve(
+                waveform=waveform,
+                amplitude=amplitude,
+                freq_hz=frequency_hz,
+                num_harmonics=num_harmonics,
+                num_points=num_points
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/math/history", methods=["GET"])
+    def math_history_endpoint():
+        if not math_studio_engine:
+            return jsonify({"status": "error", "message": "Math Studio Engine unavailable"}), 503
+        limit = int(request.args.get("limit", 20))
+        history = math_studio_engine.get_studio_history(limit=limit)
+        return jsonify({"status": "SUCCESS", "history": history}), 200
+
+    # ----------------------------------------------------------------------------------------
+    # Phase 15: Automated Assessment & Grading Pipeline Endpoints
+    # ----------------------------------------------------------------------------------------
+    @app.route("/api/autograder/grade", methods=["POST", "OPTIONS"])
+    def autograder_grade_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not autograder_engine:
+            return jsonify({"status": "error", "message": "Autograder Engine unavailable"}), 503
+
+        try:
+            payload = request.get_json(silent=True) or {}
+            student_id = payload.get("student_id", "STU_ANON")
+            student_name = payload.get("student_name", "Student")
+            module_code = payload.get("module_code", "EC8701")
+            assessment_type = payload.get("assessment_type", "FIRMWARE_C")
+            data = payload.get("payload", payload)
+
+            res = autograder_engine.grade_assessment(
+                student_id=student_id,
+                module_code=module_code,
+                assessment_type=assessment_type,
+                payload=data,
+                student_name=student_name
+            )
+            return jsonify(res), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/autograder/grades", methods=["GET"])
+    def autograder_grades_endpoint():
+        if not autograder_engine:
+            return jsonify({"status": "error", "message": "Autograder Engine unavailable"}), 503
+
+        student_id = request.args.get("student_id", "")
+        module_code = request.args.get("module_code")
+        limit = int(request.args.get("limit", 25))
+
+        grades = autograder_engine.get_student_grades(student_id=student_id, module_code=module_code, limit=limit)
+        return jsonify({"status": "SUCCESS", "grades": grades}), 200
+
+    @app.route("/api/autograder/rubrics", methods=["GET"])
+    def autograder_rubrics_endpoint():
+        if not autograder_engine:
+            return jsonify({"status": "error", "message": "Autograder Engine unavailable"}), 503
+
+        rubrics = autograder_engine.get_rubric_standards()
+        return jsonify({"status": "SUCCESS", "rubrics": rubrics}), 200
+
+    @app.route("/api/autograder/obe_matrix", methods=["GET"])
+    def autograder_obe_matrix_endpoint():
+        if not autograder_engine:
+            return jsonify({"status": "error", "message": "Autograder Engine unavailable"}), 503
+
+        module_code = request.args.get("module_code", "EC8701")
+        summary = autograder_engine.get_cohort_obe_summary(module_code)
+        return jsonify({"status": "SUCCESS", "obe_summary": summary}), 200
 
     @app.route("/api/telemetry/stream", methods=["GET"])
     def telemetry_stream_endpoint():
@@ -5691,6 +5976,108 @@ else:
                     history = analog_mna_engine.get_simulation_history(limit)
                     self._set_cors_headers(200)
                     self.wfile.write(json.dumps({"status": "SUCCESS", "history": history}).encode("utf-8"))
+            elif parsed.path == "/api/mna/export_spice":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    p_id = params.get("preset_id", ["rc_transient"])[0]
+                    spice_netlist = analog_mna_engine.export_preset_spice(p_id)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "preset_id": p_id, "netlist": spice_netlist}).encode("utf-8"))
+            elif parsed.path == "/api/math/presets":
+                if not math_studio_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Math Studio Engine unavailable"}).encode("utf-8"))
+                else:
+                    presets = math_studio_engine.get_presets()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "presets": presets}).encode("utf-8"))
+            elif parsed.path == "/api/math/analyze":
+                if not math_studio_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Math Studio Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    preset_id = params.get("preset_id", ["butterworth_lp2"])[0]
+                    presets = math_studio_engine.get_presets()
+                    if preset_id not in presets:
+                        self._set_cors_headers(404)
+                        self.wfile.write(json.dumps({"status": "error", "message": f"Preset '{preset_id}' not found"}).encode("utf-8"))
+                    else:
+                        p_cfg = presets[preset_id]
+                        res = math_studio_engine.analyze_pole_zero_system(
+                            poles=p_cfg.get("poles", []),
+                            zeros=p_cfg.get("zeros", []),
+                            gain=p_cfg.get("gain", 1.0),
+                            domain=p_cfg.get("domain", "LAPLACE"),
+                            w_min=p_cfg.get("w_range", [0.1, 100.0])[0],
+                            w_max=p_cfg.get("w_range", [0.1, 100.0])[1],
+                            preset_id=preset_id
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps(res).encode("utf-8"))
+            elif parsed.path == "/api/math/fourier":
+                if not FourierSeriesEngine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Fourier Series Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    waveform = params.get("waveform", ["SQUARE"])[0]
+                    amp = float(params.get("amplitude", [1.0])[0])
+                    freq = float(params.get("frequency_hz", [1000.0])[0])
+                    harmonics = int(params.get("num_harmonics", [15])[0])
+                    pts = int(params.get("num_points", [200])[0])
+                    res = FourierSeriesEngine.synthesize_reconstructed_curve(
+                        waveform=waveform,
+                        amplitude=amp,
+                        freq_hz=freq,
+                        num_harmonics=harmonics,
+                        num_points=pts
+                    )
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+            elif parsed.path == "/api/math/history":
+                if not math_studio_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Math Studio Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    limit = int(params.get("limit", [20])[0])
+                    history = math_studio_engine.get_studio_history(limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "history": history}).encode("utf-8"))
+            elif parsed.path == "/api/autograder/grades":
+                if not autograder_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Autograder Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    student_id = params.get("student_id", [""])[0]
+                    module_code = params.get("module_code", [None])[0]
+                    limit = int(params.get("limit", [25])[0])
+                    grades = autograder_engine.get_student_grades(student_id=student_id, module_code=module_code, limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "grades": grades}).encode("utf-8"))
+            elif parsed.path == "/api/autograder/rubrics":
+                if not autograder_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Autograder Engine unavailable"}).encode("utf-8"))
+                else:
+                    rubrics = autograder_engine.get_rubric_standards()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "rubrics": rubrics}).encode("utf-8"))
+            elif parsed.path == "/api/autograder/obe_matrix":
+                if not autograder_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Autograder Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    module_code = params.get("module_code", ["EC8701"])[0]
+                    summary = autograder_engine.get_cohort_obe_summary(module_code)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "obe_summary": summary}).encode("utf-8"))
             elif parsed.path == "/api/tutor/status":
                 num_docs = ai_rag_indexer.num_docs if ai_rag_indexer else 0
                 self._set_cors_headers(200)
@@ -6702,6 +7089,169 @@ else:
                 sim_data = parse_and_run_spice_simulation(circuit_id, params)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(sim_data).encode("utf-8"))
+            elif parsed.path == "/api/mna/simulate":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    p_id = payload.get("preset_id", "rc_transient")
+                    params = payload.get("params", {})
+                    ana_type = payload.get("analysis_type", "TRANSIENT")
+                    method = payload.get("method", payload.get("integration_method", "TRAPEZOIDAL"))
+                    t_stop = float(payload.get("t_stop", 3e-3))
+                    t_step = float(payload.get("t_step", 20e-6))
+                    ckt = analog_mna_engine.get_preset_circuit(p_id, params)
+                    res = analog_mna_engine.run_simulation(
+                        circuit=ckt,
+                        analysis_type=ana_type,
+                        t_stop=t_stop,
+                        t_step=t_step,
+                        integration_method=method
+                    )
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+            elif parsed.path == "/api/mna/validate":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    p_id = payload.get("preset_id", "rc_transient")
+                    params = payload.get("params", {})
+                    ckt = analog_mna_engine.get_preset_circuit(p_id, params)
+                    report = ckt.validate_topology()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "report": report}).encode("utf-8"))
+            elif parsed.path == "/api/mna/netlist":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    netlist_text = payload.get("netlist", "")
+                    if not netlist_text.strip():
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": "Netlist text cannot be empty"}).encode("utf-8"))
+                    else:
+                        ana_type = payload.get("analysis_type")
+                        method = payload.get("method", payload.get("integration_method", "TRAPEZOIDAL"))
+                        t_stop = float(payload.get("t_stop")) if payload.get("t_stop") is not None else None
+                        t_step = float(payload.get("t_step")) if payload.get("t_step") is not None else None
+                        try:
+                            res = analog_mna_engine.simulate_spice_netlist(
+                                netlist_text=netlist_text,
+                                analysis_type=ana_type,
+                                t_stop=t_stop,
+                                t_step=t_step,
+                                integration_method=method
+                            )
+                            self._set_cors_headers(200)
+                            self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                        except Exception as e:
+                            self._set_cors_headers(400)
+                            self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/mna/export_spice":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    p_id = payload.get("preset_id", "rc_transient")
+                    params = payload.get("params", {})
+                    spice_netlist = analog_mna_engine.export_preset_spice(p_id, params)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "preset_id": p_id, "netlist": spice_netlist}).encode("utf-8"))
+            elif parsed.path == "/api/math/analyze":
+                if not math_studio_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Math Studio Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        preset_id = payload.get("preset_id")
+                        if preset_id and (not payload.get("poles") and not payload.get("zeros")):
+                            presets = math_studio_engine.get_presets()
+                            if preset_id in presets:
+                                p_cfg = presets[preset_id]
+                                poles = p_cfg.get("poles", [])
+                                zeros = p_cfg.get("zeros", [])
+                                gain = payload.get("gain", p_cfg.get("gain", 1.0))
+                                domain = payload.get("domain", p_cfg.get("domain", "LAPLACE"))
+                                w_min = payload.get("w_min", p_cfg.get("w_range", [0.1, 100.0])[0])
+                                w_max = payload.get("w_max", p_cfg.get("w_range", [0.1, 100.0])[1])
+                            else:
+                                poles = payload.get("poles", [])
+                                zeros = payload.get("zeros", [])
+                                gain = float(payload.get("gain", 1.0))
+                                domain = payload.get("domain", "LAPLACE")
+                                w_min = float(payload.get("w_min", 0.1))
+                                w_max = float(payload.get("w_max", 100.0))
+                        else:
+                            poles = payload.get("poles", [])
+                            zeros = payload.get("zeros", [])
+                            gain = float(payload.get("gain", 1.0))
+                            domain = payload.get("domain", "LAPLACE")
+                            w_min = float(payload.get("w_min", 0.1))
+                            w_max = float(payload.get("w_max", 100.0))
+
+                        t_stop = float(payload.get("t_stop", 2.0))
+                        res = math_studio_engine.analyze_pole_zero_system(
+                            poles=poles,
+                            zeros=zeros,
+                            gain=gain,
+                            domain=domain,
+                            w_min=w_min,
+                            w_max=w_max,
+                            t_stop=t_stop,
+                            preset_id=preset_id
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps(res).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/math/fourier":
+                if not FourierSeriesEngine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Fourier Series Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        waveform = payload.get("waveform", "SQUARE")
+                        amplitude = float(payload.get("amplitude", 1.0))
+                        frequency_hz = float(payload.get("frequency_hz", 1000.0))
+                        num_harmonics = int(payload.get("num_harmonics", 15))
+                        num_points = int(payload.get("num_points", 200))
+                        res = FourierSeriesEngine.synthesize_reconstructed_curve(
+                            waveform=waveform,
+                            amplitude=amplitude,
+                            freq_hz=frequency_hz,
+                            num_harmonics=num_harmonics,
+                            num_points=num_points
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/autograder/grade":
+                if not autograder_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Autograder Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        student_id = payload.get("student_id", "STU_ANON")
+                        student_name = payload.get("student_name", "Student")
+                        module_code = payload.get("module_code", "EC8701")
+                        assessment_type = payload.get("assessment_type", "FIRMWARE_C")
+                        data = payload.get("payload", payload)
+                        res = autograder_engine.grade_assessment(
+                            student_id=student_id,
+                            module_code=module_code,
+                            assessment_type=assessment_type,
+                            payload=data,
+                            student_name=student_name
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps(res).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
             elif parsed.path == "/api/telemetry/broadcast":
                 ev_type = payload.get("event_type", "custom_telemetry")
                 data = payload.get("data", {})

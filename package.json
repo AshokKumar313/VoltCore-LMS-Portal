@@ -12,7 +12,8 @@
     "astro": "astro",
     "qa": "python scripts/content_qa_validator.py --strict",
     "schematics": "python backend/schematic_generator.py",
-    "test": "pytest tests"
+    "test": "pytest tests",
+    "test:e2e": "playwright test --config=tests/e2e/playwright.config.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^3.1.9",

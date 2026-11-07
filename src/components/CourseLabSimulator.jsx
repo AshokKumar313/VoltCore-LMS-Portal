@@ -4,6 +4,8 @@ import VirtualOscilloscope from './VirtualOscilloscope.jsx';
 import WokwiSimulationController from './WokwiSimulationController.jsx';
 import WebUsbFlashingPanel from './WebUsbFlashingPanel.jsx';
 import GeminiTutorChat from './GeminiTutorChat.jsx';
+import MnaAnalogWorkbench from './MnaAnalogWorkbench.jsx';
+import MathStudioHub from './MathStudioHub.jsx';
 
 /**
  * ========================================================================================
@@ -680,6 +682,32 @@ export default function CourseLabSimulator({
             {/* 2. EC23C03: SEMICONDUCTOR DIODE & MOSFET IV CURVE TRACER */}
             {courseCode === "EC23C03" && deviceSimData && (
               <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-5">
+                {currentLab?.mnaConfig && (
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 via-cyan-950/30 to-[#020813] border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl">🎛️</span>
+                      <div>
+                        <div className="text-emerald-300 font-bold">
+                          Interactive Modified Nodal Analysis (MNA) &amp; SPICE Deck Available
+                        </div>
+                        <div className="text-slate-400 text-[11px]">
+                          Preset: <span className="text-white">{currentLab.mnaConfig.presetId}</span> • Numerical Matrix Solver &amp; Transient Waveform Synchronization
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("instruments");
+                        setActiveBench("mna");
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/40 font-bold transition-all flex items-center gap-1.5 whitespace-nowrap self-start sm:self-auto cursor-pointer"
+                    >
+                      <span>⚡</span>
+                      <span>Launch MNA Workbench &amp; SPICE</span>
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                   <div>
                     <h4 className="font-bold text-sm text-white font-mono flex items-center gap-2">
@@ -989,6 +1017,8 @@ export default function CourseLabSimulator({
             <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
               {[
                 { id: 'dso', label: 'Virtual DSO (Rigol DS1054Z)', icon: '📈' },
+                { id: 'mna', label: 'MNA Analog Lab', icon: '🎛️' },
+                { id: 'math', label: 'Math Studio (Poles/Zeros)', icon: '📐' },
                 { id: 'wokwi', label: 'Wokwi Silicon Controller', icon: '⚡' },
                 { id: 'flasher', label: 'WebUSB/Serial Flasher', icon: '🔌' },
                 { id: 'tutor', label: 'Gemini AI Lab Tutor', icon: '🤖' }
@@ -1012,6 +1042,8 @@ export default function CourseLabSimulator({
 
           <div className="transition-all duration-200">
             {activeBench === 'dso' && <VirtualOscilloscope />}
+            {activeBench === 'mna' && <MnaAnalogWorkbench themeColor={themeColor} />}
+            {activeBench === 'math' && <MathStudioHub themeColor={themeColor} />}
             {activeBench === 'wokwi' && <WokwiSimulationController />}
             {activeBench === 'flasher' && <WebUsbFlashingPanel />}
             {activeBench === 'tutor' && <GeminiTutorChat />}
