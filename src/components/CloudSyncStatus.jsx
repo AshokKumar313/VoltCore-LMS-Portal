@@ -8,7 +8,7 @@ import { triggerToast } from './ToastNotifications.jsx';
  * ----------------------------------------------------------------------------------------
  * Component: src/components/CloudSyncStatus.jsx
  * Platform Lead / Architect: Ashok Kumar A (2023MITEC042)
- * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+ * Standards: Autonomous Engineering Cluster Standards • Lead Systems Architect: Ashok Kumar A
  * Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
  * 
  * Hardware Safety & Concurrency Hardening:
@@ -57,12 +57,17 @@ export default function CloudSyncStatus() {
 
     try {
       // Attempt cloud synchronization
-      const res = await fetch('http://localhost:5000/api/attendance/bulk_sync', {
+      const res = await fetch('/api/sync/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: '2023MITEC042', events: items }),
+        signal: AbortSignal.timeout(2500)
+      }).catch(() => fetch('http://localhost:5000/api/attendance/bulk_sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scans: items }),
         signal: AbortSignal.timeout(2500)
-      });
+      }));
 
       const elapsed = Math.round(performance.now() - t0);
       setSyncLatencyMs(elapsed);

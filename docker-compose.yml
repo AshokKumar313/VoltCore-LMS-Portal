@@ -15,18 +15,25 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: Dockerfile
     container_name: voltcore_api_gateway
     restart: unless-stopped
     ports:
       - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/system/health || curl -f http://localhost:5000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
       - PYTHONUNBUFFERED=1
-      - LMS_DB_PATH=/app/voltcore_lms.db
+      - LMS_DB_PATH=/app/data/voltcore_lms.db
+      - TELEMETRY_DB_PATH=/app/data/voltcore_telemetry.db
       - VOLTCORE_JWT_SECRET=${VOLTCORE_JWT_SECRET:-MIT_CHROMEPET_ECE_SECURE_JWT_KEY_2026_@P3X}
       # Secured / Restricted Metadata - Isolated via Environment Variables & RBAC
-      - SECURE_ADMIN_EMAIL=${SECURE_ADMIN_EMAIL:-ashokkumar2008313@gmail.com}
-      - SECURE_ADMIN_PHONE=${SECURE_ADMIN_PHONE:-+91 9597382878}
+      - SECURE_ADMIN_EMAIL=${SECURE_ADMIN_EMAIL:-scholar@voltcore.org}
+      - SECURE_ADMIN_PHONE=${SECURE_ADMIN_PHONE:-+91 94440 00000}
       - PUBLIC_ADMIN_EMAIL=${PUBLIC_ADMIN_EMAIL:-ashokkumar3132008@gmail.com}
       - REDIS_HOST=cache
       - REDIS_PORT=6379
@@ -37,8 +44,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
+      - voltcore_db_data:/app/data
       - ./voltcore_lms.db:/app/voltcore_lms.db
-      - ./backend/offline_spool.json:/app/backend/offline_spool.json
+      - ./backend/offline_spool.json:/app/backend/offline_spool.json:ro
     depends_on:
       - cache
     deploy:
@@ -112,6 +120,8 @@ services:
       - voltcore_net
 
 volumes:
+  voltcore_db_data:
+    driver: local
   ollama_storage:
 
 networks:

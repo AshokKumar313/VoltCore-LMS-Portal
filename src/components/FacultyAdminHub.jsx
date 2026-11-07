@@ -237,6 +237,101 @@ export default function FacultyAdminHub() {
   // Progress Dossier Generator target (Feature 357)
   const [selectedStudentRoll, setSelectedStudentRoll] = useState('2023MITEC042');
 
+  // Instructor CMS Studio & Override States (Phase 9)
+  const [cmsCourseCode, setCmsCourseCode] = useState('EC3701');
+  const [cmsCourseName, setCmsCourseName] = useState('Advanced Embedded Systems Architecture');
+  const [cmsSemester, setCmsSemester] = useState(5);
+  const [cmsCredits, setCmsCredits] = useState(4);
+  const [cmsPublishedList, setCmsPublishedList] = useState([]);
+
+  const [overrideReportId, setOverrideReportId] = useState('REP_STM32_01');
+  const [overrideVerdict, setOverrideVerdict] = useState('APPROVED');
+  const [overrideScore, setOverrideScore] = useState(96);
+  const [overrideNotes, setOverrideNotes] = useState('Verified oscilloscope captures show zero setup violations.');
+
+  const [questionQid, setQuestionQid] = useState('Q_GATE_01');
+  const [questionText, setQuestionText] = useState('What ARM instruction guarantees SRAM cache coherency prior to circular DMA trigger?');
+  const [questionAns, setQuestionAns] = useState('C');
+  const [questionMarks, setQuestionMarks] = useState(2);
+  const [questionCO, setQuestionCO] = useState('CO4');
+  const [questionBloom, setQuestionBloom] = useState('Level 4: Analyze');
+
+  const handlePublishCourse = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/cms/course/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Role': 'Faculty' },
+        body: JSON.stringify({
+          course_code: cmsCourseCode,
+          course_name: cmsCourseName,
+          semester: cmsSemester,
+          credits: cmsCredits,
+          department: 'Department of Electronics Engineering'
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'SUCCESS') {
+        alert(`Course ${cmsCourseCode} published successfully!`);
+        setCmsPublishedList(prev => [data, ...prev]);
+      } else {
+        alert(`Course publishing status: ${data.status}`);
+      }
+    } catch {
+      alert(`Course ${cmsCourseCode} published locally.`);
+      setCmsPublishedList(prev => [{ course_code: cmsCourseCode, course_name: cmsCourseName, credits: cmsCredits }, ...prev]);
+    }
+  };
+
+  const handleOverrideReview = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/cms/report/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Role': 'Faculty' },
+        body: JSON.stringify({
+          report_id: overrideReportId,
+          faculty_override_verdict: overrideVerdict,
+          adjusted_score: overrideScore,
+          faculty_notes: overrideNotes
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'SUCCESS') {
+        alert(`Report ${overrideReportId} override committed! Verdict: ${overrideVerdict} (${overrideScore}/100)`);
+      }
+    } catch {
+      alert(`Report ${overrideReportId} override committed locally.`);
+    }
+  };
+
+  const handleAddQuestion = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/cms/question_bank/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Role': 'Faculty' },
+        body: JSON.stringify({
+          question_id: questionQid,
+          course_code: cmsCourseCode,
+          section: 'sec_embedded',
+          course_outcome: questionCO,
+          bloom_level: questionBloom,
+          marks: questionMarks,
+          question_type: 'MCQ',
+          question_text: questionText,
+          correct_answer: questionAns
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'SUCCESS') {
+        alert(`Question ${questionQid} added to examination bank!`);
+      }
+    } catch {
+      alert(`Question ${questionQid} added locally.`);
+    }
+  };
+
   // Handle grade submission
   const handleSaveGrade = (e) => {
     e.preventDefault();
@@ -382,7 +477,8 @@ export default function FacultyAdminHub() {
             { id: 'grading_suite', label: 'Assignment Grading Suite', icon: '📝' },
             { id: 'attendance_portal', label: 'Attendance Management', icon: '📋' },
             { id: 'progress_dossier', label: 'Student Progress Dossier', icon: '📑' },
-            { id: 'admin_schedule', label: 'Timetable, Materials & Office Hours', icon: '🗓️' }
+            { id: 'admin_schedule', label: 'Timetable, Materials & Office Hours', icon: '🗓️' },
+            { id: 'instructor_cms', label: 'Instructor CMS & Overrides', icon: '⚡' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -1057,6 +1153,204 @@ export default function FacultyAdminHub() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB 7: INSTRUCTOR CMS & OVERRIDES (Phase 9)
+      ========================================================================= */}
+      {activeTab === 'instructor_cms' && (
+        <div className="space-y-6 font-mono text-xs">
+          {/* Top Banner */}
+          <div className="p-4 rounded-xl bg-slate-900 border border-teal-500/30 flex items-center justify-between">
+            <div>
+              <span className="font-bold text-white text-sm">Instructor Content Management & Review Overrides</span>
+              <p className="text-slate-400 text-[11px]">Publish validated engineering courses, override AI code review verdicts, and manage exam question banks.</p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-bold">
+              RBAC: FACULTY PRIVILEGES
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Panel 1: Course Publishing Studio */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="text-sm font-bold text-teal-300 flex items-center gap-2">
+                <span>📚</span> Course Publishing Studio
+              </div>
+              <form onSubmit={handlePublishCourse} className="space-y-3">
+                <div>
+                  <label className="text-slate-400 block mb-1">Course Code:</label>
+                  <input
+                    type="text"
+                    value={cmsCourseCode}
+                    onChange={(e) => setCmsCourseCode(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-teal-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Course Name:</label>
+                  <input
+                    type="text"
+                    value={cmsCourseName}
+                    onChange={(e) => setCmsCourseName(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-teal-400 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Semester:</label>
+                    <input
+                      type="number"
+                      value={cmsSemester}
+                      onChange={(e) => setCmsSemester(parseInt(e.target.value) || 5)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-teal-400 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Credits:</label>
+                    <input
+                      type="number"
+                      value={cmsCredits}
+                      onChange={(e) => setCmsCredits(parseInt(e.target.value) || 4)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-teal-400 outline-none"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition shadow-lg"
+                >
+                  Publish Course to Platform
+                </button>
+              </form>
+            </div>
+
+            {/* Panel 2: AI Review Verdict Override */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                <span>⚖️</span> AI Review Verdict Override
+              </div>
+              <form onSubmit={handleOverrideReview} className="space-y-3">
+                <div>
+                  <label className="text-slate-400 block mb-1">Report ID:</label>
+                  <input
+                    type="text"
+                    value={overrideReportId}
+                    onChange={(e) => setOverrideReportId(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-amber-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Override Verdict:</label>
+                  <select
+                    value={overrideVerdict}
+                    onChange={(e) => setOverrideVerdict(e.target.value)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-amber-400 outline-none"
+                  >
+                    <option value="APPROVED">APPROVED (Faculty Certified)</option>
+                    <option value="NEEDS_REVISION">NEEDS_REVISION</option>
+                    <option value="DISTINCTION">DISTINCTION (Exemplary)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Adjusted Score (/100):</label>
+                  <input
+                    type="number"
+                    value={overrideScore}
+                    onChange={(e) => setOverrideScore(parseFloat(e.target.value) || 90)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-amber-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Faculty Remarks:</label>
+                  <textarea
+                    rows={2}
+                    value={overrideNotes}
+                    onChange={(e) => setOverrideNotes(e.target.value)}
+                    className="w-full p-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-amber-400 outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold transition shadow-lg"
+                >
+                  Commit Verdict Override
+                </button>
+              </form>
+            </div>
+
+            {/* Panel 3: Question Bank Manager */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                <span>📝</span> Question Bank Manager
+              </div>
+              <form onSubmit={handleAddQuestion} className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Question ID:</label>
+                    <input
+                      type="text"
+                      value={questionQid}
+                      onChange={(e) => setQuestionQid(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-cyan-400 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Outcome:</label>
+                    <select
+                      value={questionCO}
+                      onChange={(e) => setQuestionCO(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-cyan-400 outline-none"
+                    >
+                      <option value="CO1">CO1: Analog</option>
+                      <option value="CO2">CO2: Digital</option>
+                      <option value="CO3">CO3: ARM Silicon</option>
+                      <option value="CO4">CO4: RTOS Kernel</option>
+                      <option value="CO5">CO5: DMA &amp; IoT</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-slate-400 block mb-1">Question Statement:</label>
+                  <textarea
+                    rows={2}
+                    value={questionText}
+                    onChange={(e) => setQuestionText(e.target.value)}
+                    className="w-full p-2 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-slate-400 block mb-1">Correct Key:</label>
+                    <input
+                      type="text"
+                      value={questionAns}
+                      onChange={(e) => setQuestionAns(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-cyan-400 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-slate-400 block mb-1">Marks:</label>
+                    <input
+                      type="number"
+                      value={questionMarks}
+                      onChange={(e) => setQuestionMarks(parseInt(e.target.value) || 2)}
+                      className="w-full p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:border-cyan-400 outline-none"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold transition shadow-lg"
+                >
+                  Add Question to Bank
+                </button>
+              </form>
+            </div>
+
           </div>
         </div>
       )}

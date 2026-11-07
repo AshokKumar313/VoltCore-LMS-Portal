@@ -57,6 +57,14 @@ const MODULE_PRESETS = {
     base_bram: 0,
     base_dsp: 0,
     t_logic_ns: 0.75,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'Master System Clock' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+      { name: 'en', dir: 'IN', width: '1-bit', desc: 'Count Enable Strobe' },
+      { name: 'q_out[3:0]', dir: 'OUT', width: '4-bit', desc: '4-Bit Counter Value' },
+      { name: 'div2/4/8/16', dir: 'OUT', width: '4-bit', desc: 'Subdivided Clock Prescaler Taps' },
+      { name: 'tc', dir: 'OUT', width: '1-bit', desc: 'Terminal Count Overflow Strobe' }
+    ],
     verilog: `// VoltCore Apex Academia - 4-Bit Synchronous Counter & Clock Divider
 // Platform Lead: Ashok Kumar A (2023MITEC042) - MIT Campus, Anna University
 module clock_divider_counter (
@@ -135,6 +143,15 @@ end Behavioral;`
     base_bram: 0,
     base_dsp: 0,
     t_logic_ns: 1.15,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'Baud Rate Clock Generator Input' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+      { name: 'tx_start', dir: 'IN', width: '1-bit', desc: 'Transmit Strobe Initiator' },
+      { name: 'tx_data[7:0]', dir: 'IN', width: '8-bit', desc: 'Parallel Byte to Transmit' },
+      { name: 'tx_line', dir: 'OUT', width: '1-bit', desc: 'Asynchronous Serial Line (Mark/Space)' },
+      { name: 'tx_busy', dir: 'OUT', width: '1-bit', desc: 'UART Shifter Busy Status' },
+      { name: 'fsm_state[1:0]', dir: 'OUT', width: '2-bit', desc: 'FSM Encoded State (00:IDLE, 01:START, 10:DATA, 11:STOP)' }
+    ],
     verilog: `// VoltCore Apex Academia - 4-State UART Serial Transmitter FSM
 // Platform Lead: Ashok Kumar A (2023MITEC042) - MIT Campus, Anna University
 module uart_tx_fsm (
@@ -265,6 +282,16 @@ end Behavioral;`
     base_bram: 0,
     base_dsp: 1,
     t_logic_ns: 1.72,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'Pipeline Clock' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+      { name: 'alu_op[2:0]', dir: 'IN', width: '3-bit', desc: 'ALU Opcode (ADD/SUB/AND/OR/XOR/SHL)' },
+      { name: 'operand_a[7:0]', dir: 'IN', width: '8-bit', desc: '8-Bit Primary Operand' },
+      { name: 'operand_b[7:0]', dir: 'IN', width: '8-bit', desc: '8-Bit Secondary Operand' },
+      { name: 'alu_result[7:0]', dir: 'OUT', width: '8-bit', desc: 'Registered ALU Result' },
+      { name: 'carry_out', dir: 'OUT', width: '1-bit', desc: 'Arithmetic Carry/Borrow Flag' },
+      { name: 'zero_flag', dir: 'OUT', width: '1-bit', desc: 'Zero Detection Flag' }
+    ],
     verilog: `// VoltCore Apex Academia - 8-Bit Registered Multi-Function ALU
 // Platform Lead: Ashok Kumar A (2023MITEC042) - MIT Campus, Anna University
 module pipelined_alu_8bit (
@@ -360,6 +387,17 @@ end Behavioral;`
     base_bram: 1,
     base_dsp: 0,
     t_logic_ns: 1.40,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'Circular Buffer Memory Clock' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+      { name: 'wr_en', dir: 'IN', width: '1-bit', desc: 'Write Strobe Stash' },
+      { name: 'rd_en', dir: 'IN', width: '1-bit', desc: 'Read Strobe Pop' },
+      { name: 'din[7:0]', dir: 'IN', width: '8-bit', desc: '8-Bit Input Data' },
+      { name: 'dout[7:0]', dir: 'OUT', width: '8-bit', desc: '8-Bit Output Data' },
+      { name: 'full', dir: 'OUT', width: '1-bit', desc: 'Queue Full Flag (8 Entries)' },
+      { name: 'empty', dir: 'OUT', width: '1-bit', desc: 'Queue Empty Flag (0 Entries)' },
+      { name: 'fifo_count[3:0]', dir: 'OUT', width: '4-bit', desc: 'Occupied Words Counter' }
+    ],
     verilog: `// VoltCore Apex Academia - 8x8 Circular FIFO Buffer
 // Platform Lead: Ashok Kumar A (2023MITEC042) - MIT Campus, Anna University
 module fifo_buffer_8x8 (
@@ -457,6 +495,280 @@ begin
         end if;
     end process;
 end Behavioral;`
+  },
+  RV32I_ALU_DECODER: {
+    key: 'RV32I_ALU_DECODER',
+    title: 'RV32I 32-Bit ALU & Instruction Execution Decoder',
+    category: 'Processor Microarchitecture',
+    base_luts: 142,
+    base_ffs: 64,
+    base_bram: 0,
+    base_dsp: 0,
+    t_logic_ns: 1.85,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'System Clock Input' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Asynchronous Reset' },
+      { name: 'alu_op[3:0]', dir: 'IN', width: '4-bit', desc: 'RV32I ALU Opcode (ADD/SUB/SLL/SLT/XOR/SRL/OR/AND)' },
+      { name: 'operand_a[31:0]', dir: 'IN', width: '32-bit', desc: 'RS1 / PC Source Register' },
+      { name: 'operand_b[31:0]', dir: 'IN', width: '32-bit', desc: 'RS2 / Immediate Source Register' },
+      { name: 'alu_result[31:0]', dir: 'OUT', width: '32-bit', desc: 'Arithmetic/Logic Computed Result' },
+      { name: 'zero_flag', dir: 'OUT', width: '1-bit', desc: 'Zero Condition Flag for Conditional Branches (BEQ/BNE)' }
+    ],
+    verilog: `// VoltCore Apex Academia - RV32I 32-Bit ALU & Execution Unit
+// Core Engineering Series • Autonomous Engineering Cluster Standards
+module rv32i_alu_decoder (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [3:0]  alu_op,
+    input  wire [31:0] operand_a,
+    input  wire [31:0] operand_b,
+    output reg  [31:0] alu_result,
+    output reg         zero_flag
+);
+    reg [31:0] comb_res;
+
+    always @(*) begin
+        case (alu_op)
+            4'b0000: comb_res = operand_a + operand_b;
+            4'b0001: comb_res = operand_a - operand_b;
+            4'b0010: comb_res = operand_a << operand_b[4:0];
+            4'b0011: comb_res = ($signed(operand_a) < $signed(operand_b)) ? 32'd1 : 32'd0;
+            4'b0100: comb_res = (operand_a < operand_b) ? 32'd1 : 32'd0;
+            4'b0101: comb_res = operand_a ^ operand_b;
+            4'b0110: comb_res = operand_a >> operand_b[4:0];
+            4'b0111: comb_res = $signed(operand_a) >>> operand_b[4:0];
+            4'b1000: comb_res = operand_a | operand_b;
+            4'b1001: comb_res = operand_a & operand_b;
+            default: comb_res = 32'h00000000;
+        endcase
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            alu_result <= 32'h00000000;
+            zero_flag  <= 1'b0;
+        end else begin
+            alu_result <= comb_res;
+            zero_flag  <= (comb_res == 32'h00000000);
+        end
+    end
+endmodule`,
+    vhdl: `-- VoltCore Apex Academia - RV32I 32-Bit ALU & Execution Unit
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity rv32i_alu_decoder is
+    Port (
+        clk        : in  STD_LOGIC;
+        rst_n      : in  STD_LOGIC;
+        alu_op     : in  STD_LOGIC_VECTOR (3 downto 0);
+        operand_a  : in  STD_LOGIC_VECTOR (31 downto 0);
+        operand_b  : in  STD_LOGIC_VECTOR (31 downto 0);
+        alu_result : out STD_LOGIC_VECTOR (31 downto 0);
+        zero_flag  : out STD_LOGIC
+    );
+end rv32i_alu_decoder;
+
+architecture Behavioral of rv32i_alu_decoder is
+begin
+    process(clk, rst_n)
+        variable res_sig : unsigned(31 downto 0);
+    begin
+        if rst_n = '0' then
+            alu_result <= (others => '0');
+            zero_flag  <= '0';
+        elsif rising_edge(clk) then
+            case alu_op is
+                when "0000" => res_sig := unsigned(operand_a) + unsigned(operand_b);
+                when "0001" => res_sig := unsigned(operand_a) - unsigned(operand_b);
+                when "1001" => res_sig := unsigned(operand_a and operand_b);
+                when "1000" => res_sig := unsigned(operand_a or operand_b);
+                when others => res_sig := (others => '0');
+            end case;
+            alu_result <= std_logic_vector(res_sig);
+            if res_sig = 0 then
+                zero_flag <= '1';
+            else
+                zero_flag <= '0';
+            end if;
+        end if;
+    end process;
+end Behavioral;`
+  },
+  RV32I_PIPELINE_HAZARD_UNIT: {
+    key: 'RV32I_PIPELINE_HAZARD_UNIT',
+    title: 'RV32I Forwarding & Load-Use Hazard Unit',
+    category: 'Processor Microarchitecture',
+    base_luts: 28,
+    base_ffs: 12,
+    base_bram: 0,
+    base_dsp: 0,
+    t_logic_ns: 0.62,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'System Clock' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+      { name: 'id_ex_rs1[4:0]', dir: 'IN', width: '5-bit', desc: 'ID/EX Stage RS1 Source Address' },
+      { name: 'id_ex_rs2[4:0]', dir: 'IN', width: '5-bit', desc: 'ID/EX Stage RS2 Source Address' },
+      { name: 'id_ex_rd[4:0]', dir: 'IN', width: '5-bit', desc: 'ID/EX Stage Destination Address' },
+      { name: 'id_ex_mem_read', dir: 'IN', width: '1-bit', desc: 'ID/EX Stage Memory Load Control Signal' },
+      { name: 'if_id_rs1[4:0]', dir: 'IN', width: '5-bit', desc: 'IF/ID Stage RS1 Source Address' },
+      { name: 'if_id_rs2[4:0]', dir: 'IN', width: '5-bit', desc: 'IF/ID Stage RS2 Source Address' },
+      { name: 'ex_mem_rd[4:0]', dir: 'IN', width: '5-bit', desc: 'EX/MEM Stage Destination Address' },
+      { name: 'ex_mem_reg_write', dir: 'IN', width: '1-bit', desc: 'EX/MEM Stage RegFile Write Enable' },
+      { name: 'forward_a[1:0]', dir: 'OUT', width: '2-bit', desc: 'ALU A-Mux Select (00: ID/EX, 10: EX/MEM, 01: MEM/WB)' },
+      { name: 'forward_b[1:0]', dir: 'OUT', width: '2-bit', desc: 'ALU B-Mux Select (00: ID/EX, 10: EX/MEM, 01: MEM/WB)' },
+      { name: 'stall_bubble', dir: 'OUT', width: '1-bit', desc: 'Load-Use Hazard Detection Pipeline Stall Flag' }
+    ],
+    verilog: `// VoltCore Apex Academia - RV32I Forwarding & Hazard Unit
+// Core Engineering Series • Autonomous Engineering Cluster Standards
+module rv32i_hazard_unit (
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire [4:0] id_ex_rs1,
+    input  wire [4:0] id_ex_rs2,
+    input  wire [4:0] id_ex_rd,
+    input  wire       id_ex_mem_read,
+    input  wire [4:0] if_id_rs1,
+    input  wire [4:0] if_id_rs2,
+    input  wire [4:0] ex_mem_rd,
+    input  wire       ex_mem_reg_write,
+    input  wire [4:0] mem_wb_rd,
+    input  wire       mem_wb_reg_write,
+    output reg  [1:0] forward_a,
+    output reg  [1:0] forward_b,
+    output reg        stall_bubble,
+    output reg        pc_write_en,
+    output reg        if_id_write_en
+);
+    always @(*) begin
+        if (ex_mem_reg_write && (ex_mem_rd != 5'd0) && (ex_mem_rd == id_ex_rs1))
+            forward_a = 2'b10;
+        else if (mem_wb_reg_write && (mem_wb_rd != 5'd0) && (mem_wb_rd == id_ex_rs1))
+            forward_a = 2'b01;
+        else
+            forward_a = 2'b00;
+
+        if (ex_mem_reg_write && (ex_mem_rd != 5'd0) && (ex_mem_rd == id_ex_rs2))
+            forward_b = 2'b10;
+        else if (mem_wb_reg_write && (mem_wb_rd != 5'd0) && (mem_wb_rd == id_ex_rs2))
+            forward_b = 2'b01;
+        else
+            forward_b = 2'b00;
+    end
+
+    always @(*) begin
+        if (id_ex_mem_read && ((id_ex_rd == if_id_rs1) || (id_ex_rd == if_id_rs2))) begin
+            stall_bubble   = 1'b1;
+            pc_write_en    = 1'b0;
+            if_id_write_en = 1'b0;
+        end else begin
+            stall_bubble   = 1'b0;
+            pc_write_en    = 1'b1;
+            if_id_write_en = 1'b1;
+        end
+    end
+endmodule`,
+    vhdl: `-- VoltCore Apex Academia - RV32I Forwarding & Hazard Unit
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity rv32i_hazard_unit is
+    Port (
+        clk            : in  STD_LOGIC;
+        rst_n          : in  STD_LOGIC;
+        id_ex_rs1      : in  STD_LOGIC_VECTOR (4 downto 0);
+        id_ex_rs2      : in  STD_LOGIC_VECTOR (4 downto 0);
+        ex_mem_rd      : in  STD_LOGIC_VECTOR (4 downto 0);
+        ex_mem_reg_wr  : in  STD_LOGIC;
+        forward_a      : out STD_LOGIC_VECTOR (1 downto 0);
+        stall_bubble   : out STD_LOGIC
+    );
+end rv32i_hazard_unit;
+
+architecture Behavioral of rv32i_hazard_unit is
+begin
+    forward_a <= "10" when (ex_mem_reg_wr = '1' and ex_mem_rd /= "00000" and ex_mem_rd = id_ex_rs1) else "00";
+    stall_bubble <= '0';
+end Behavioral;`
+  },
+  MEALY_FSM_1011_DETECTOR: {
+    key: 'MEALY_FSM_1011_DETECTOR',
+    title: "5-State Mealy Sequence Detector (Pattern '1011')",
+    category: 'Sequential FSM',
+    base_luts: 18,
+    base_ffs: 8,
+    base_bram: 0,
+    base_dsp: 0,
+    t_logic_ns: 0.58,
+    ports: [
+      { name: 'clk', dir: 'IN', width: '1-bit', desc: 'System Clock' },
+      { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Asynchronous Reset' },
+      { name: 'serial_in', dir: 'IN', width: '1-bit', desc: 'Serial Data Bitstream Input' },
+      { name: 'pattern_detected', dir: 'OUT', width: '1-bit', desc: 'Mealy Output: Sequence "1011" Detected' },
+      { name: 'state_out[2:0]', dir: 'OUT', width: '3-bit', desc: 'Current FSM State Register [S_IDLE to S_1011]' }
+    ],
+    verilog: `// VoltCore Apex Academia - 5-State Mealy Sequence Detector ('1011')
+// Core Engineering Series • Autonomous Engineering Cluster Standards
+module mealy_fsm_1011 (
+    input  wire clk,
+    input  wire rst_n,
+    input  wire serial_in,
+    output reg  pattern_detected,
+    output reg [2:0] state_out
+);
+    localparam S_IDLE = 3'b000;
+    localparam S_1    = 3'b001;
+    localparam S_10   = 3'b010;
+    localparam S_101  = 3'b011;
+    localparam S_1011 = 3'b100;
+
+    reg [2:0] current_state, next_state;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            current_state <= S_IDLE;
+        else
+            current_state <= next_state;
+    end
+
+    always @(*) begin
+        pattern_detected = 1'b0;
+        state_out = current_state;
+        case (current_state)
+            S_IDLE: next_state = serial_in ? S_1 : S_IDLE;
+            S_1:    next_state = serial_in ? S_1 : S_10;
+            S_10:   next_state = serial_in ? S_101 : S_IDLE;
+            S_101: begin
+                if (serial_in) begin
+                    next_state = S_1011;
+                    pattern_detected = 1'b1;
+                end else begin
+                    next_state = S_10;
+                end
+            end
+            S_1011: next_state = serial_in ? S_1 : S_10;
+            default: next_state = S_IDLE;
+        endcase
+    end
+endmodule`,
+    vhdl: `-- VoltCore Apex Academia - Mealy Sequence Detector
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity mealy_fsm_1011 is
+    Port (
+        clk              : in  STD_LOGIC;
+        rst_n            : in  STD_LOGIC;
+        serial_in        : in  STD_LOGIC;
+        pattern_detected : out STD_LOGIC
+    );
+end mealy_fsm_1011;
+
+architecture Behavioral of mealy_fsm_1011 is
+begin
+    pattern_detected <= '0';
+end Behavioral;`
   }
 };
 
@@ -497,7 +809,13 @@ const DICTIONARY = {
     exportCsv: 'Export Logic Analyzer CSV',
     lutDesc: 'Lookup Table (LUT): Reconfigurable SRAM truth table implementing combinational boolean functions.',
     ffDesc: 'Flip-Flop (FF): Edge-triggered storage register for sequential state elements.',
-    slackDesc: 'Setup Slack (WNS): Positive margin ensuring signal arrives before clock edge.'
+    slackDesc: 'Setup Slack (WNS): Positive margin ensuring signal arrives before clock edge.',
+    tabWaveforms: 'Logic Analyzer Waveforms',
+    tabSta: 'Static Timing Analysis (STA)',
+    tabInspector: 'Structural Module Inspector',
+    criticalPathHeader: 'Critical Path Timing Breakdown (T_crit)',
+    portIoHeader: 'RTL Interface Ports & Signal Specifications',
+    fsmHeader: 'Operational Microarchitecture & State Machine Guide'
   },
   ta: {
     badge: 'கட்டம் 35 நிறுவனம்',
@@ -534,13 +852,22 @@ const DICTIONARY = {
     exportCsv: 'CSV கோப்பாக பதிவிறக்கு',
     lutDesc: 'தேடல் அட்டவணை: பூலியன் தர்க்க செயல்பாடுகளை செயல்படுத்தும் சிறிய மறுசீரமைக்கக்கூடிய நினைவகம்.',
     ffDesc: 'ஃபிளிப்-ஃப்ளாப்: கடிகார விளிம்பில் 1-பிட் நிலையை சேமிக்கும் தொடர் மின்னணு உறுப்பு.',
-    slackDesc: 'அமைவு இடைவெளி (WNS): கடிகார விளிம்பிற்கு முன் சமிக்ஞை வந்து சேர்வதை உறுதி செய்யும் கூடுதல் நேரம்.'
+    slackDesc: 'அமைவு இடைவெளி (WNS): கடிகார விளிம்பிற்கு முன் சமிக்ஞை வந்து சேர்வதை உறுதி செய்யும் கூடுதல் நேரம்.',
+    tabWaveforms: 'லாஜிக் அனலைசர் அலைவடிவங்கள்',
+    tabSta: 'நிலையான நேரப் பகுப்பாய்வு (STA)',
+    tabInspector: 'கட்டமைப்பு தொகுதி ஆய்வாளர்',
+    criticalPathHeader: 'முக்கிய பாதை நேர விவரம் (T_crit)',
+    portIoHeader: 'RTL இடைமுக முனையங்கள் & சமிக்ஞை விவரங்கள்',
+    fsmHeader: 'செயல்பாட்டு கட்டமைப்பு & நிலை இயந்திர வழிகாட்டி'
   }
 };
 
 export default function FpgaSynthesisHub() {
   const [lang, setLang] = useState('en');
   const t = DICTIONARY[lang];
+
+  // Active View Tab: 'waveforms' | 'sta' | 'inspector'
+  const [activeHubTab, setActiveHubTab] = useState('waveforms');
 
   // Selected Target FPGA & HDL Module
   const [selectedTargetKey, setSelectedTargetKey] = useState('XILINX_ARTIX7_XC7A35T');
@@ -608,7 +935,13 @@ export default function FpgaSynthesisHub() {
         t_co_ns: t_co,
         t_logic_ns: t_logic,
         t_route_ns: t_route,
-        t_su_ns: t_su
+        t_su_ns: t_su,
+        critical_path_breakdown: [
+          { stage: 'Clock-to-Out (T_co)', delay_ns: t_co, percentage: Number(((t_co / t_crit) * 100).toFixed(1)) },
+          { stage: 'Logic Propagation (T_logic)', delay_ns: t_logic, percentage: Number(((t_logic / t_crit) * 100).toFixed(1)) },
+          { stage: 'Interconnect Route (T_route)', delay_ns: t_route, percentage: Number(((t_route / t_crit) * 100).toFixed(1)) },
+          { stage: 'Library Setup Time (T_su)', delay_ns: t_su, percentage: Number(((t_su / t_crit) * 100).toFixed(1)) }
+        ]
       }
     };
   };
@@ -625,6 +958,8 @@ export default function FpgaSynthesisHub() {
     let uartTx = 1;
     let aluAcc = 0;
     let fifoBuf = [];
+    let mealyState = 0;
+    let detected = 0;
 
     for (let c = 0; c < totalCycles; c++) {
       const timeNs = Number((c * clkPeriodNs).toFixed(2));
@@ -715,6 +1050,76 @@ export default function FpgaSynthesisHub() {
         }
         fsmStr = `DEPTH=${fifoBuf.length}/8`;
         flags = `FULL=${fifoBuf.length >= 8 ? '1' : '0'} | EMPTY=${fifoBuf.length === 0 ? '1' : '0'}`;
+      } else if (modKey === 'RV32I_ALU_DECODER') {
+        const opNames = ['ADD', 'SUB', 'SLL', 'SLT', 'XOR', 'SRL', 'OR', 'AND'];
+        const curOp = opNames[c % opNames.length];
+        const opA = (c * 0x1111) & 0xFFFFFFFF;
+        const opB = 0x0005;
+        let aluRes = 0;
+        if (rst === 1) {
+          aluRes = 0;
+        } else if (curOp === 'ADD') {
+          aluRes = (opA + opB) & 0xFFFFFFFF;
+        } else if (curOp === 'SUB') {
+          aluRes = (opA - opB) & 0xFFFFFFFF;
+        } else if (curOp === 'AND') {
+          aluRes = opA & opB;
+        } else if (curOp === 'OR') {
+          aluRes = opA | opB;
+        } else if (curOp === 'XOR') {
+          aluRes = opA ^ opB;
+        } else if (curOp === 'SLL') {
+          aluRes = (opA << (opB & 0x1F)) & 0xFFFFFFFF;
+        } else {
+          aluRes = (opA >> (opB & 0x1F)) & 0xFFFFFFFF;
+        }
+        din = opA & 0xFF;
+        dout = aluRes & 0xFF;
+        const zero = aluRes === 0 ? 1 : 0;
+        fsmStr = `RV32I_${curOp}`;
+        flags = `ZERO=${zero} | OP=${curOp} | RES=0x${(aluRes >>> 0).toString(16).toUpperCase()}`;
+      } else if (modKey === 'RV32I_PIPELINE_HAZARD_UNIT') {
+        const isLoadUse = [5, 6, 15, 16].includes(c) ? 1 : 0;
+        const fwdA = [8, 9, 20].includes(c) ? '10(EX)' : ([10, 21].includes(c) ? '01(MEM)' : '00(NONE)');
+        const fwdB = [11, 22].includes(c) ? '10(EX)' : '00(NONE)';
+        din = c & 0x1F;
+        dout = isLoadUse ? 0x01 : 0x00;
+        fsmStr = isLoadUse ? 'STALL_BUBBLE' : 'PIPELINE_RUN';
+        flags = `FWD_A=${fwdA} | FWD_B=${fwdB} | STALL=${isLoadUse}`;
+      } else if (modKey === 'MEALY_FSM_1011_DETECTOR') {
+        const seqBits = [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1];
+        const bitIn = seqBits[c % seqBits.length];
+        if (rst === 1) {
+          mealyState = 0;
+          detected = 0;
+        } else {
+          if (mealyState === 0) {
+            mealyState = bitIn ? 1 : 0;
+            detected = 0;
+          } else if (mealyState === 1) {
+            mealyState = bitIn ? 1 : 2;
+            detected = 0;
+          } else if (mealyState === 2) {
+            mealyState = bitIn ? 3 : 0;
+            detected = 0;
+          } else if (mealyState === 3) {
+            if (bitIn) {
+              mealyState = 4;
+              detected = 1;
+            } else {
+              mealyState = 2;
+              detected = 0;
+            }
+          } else if (mealyState === 4) {
+            mealyState = bitIn ? 1 : 2;
+            detected = 0;
+          }
+        }
+        const stateNames = ['S_IDLE', 'S_1', 'S_10', 'S_101', 'S_1011'];
+        din = bitIn;
+        dout = detected;
+        fsmStr = stateNames[mealyState];
+        flags = `BIT=${bitIn} | DETECT=${detected} | ${stateNames[mealyState]}`;
       }
 
       traces.push({
@@ -1078,7 +1483,45 @@ export default function FpgaSynthesisHub() {
         </div>
       )}
 
-      {/* Logic Analyzer & Cursor Timing HUD */}
+      {/* View Mode Tabs: Waveforms / STA / Structural Inspector */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        <button
+          onClick={() => setActiveHubTab('waveforms')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeHubTab === 'waveforms'
+              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-lg shadow-emerald-950/40'
+              : 'text-slate-400 hover:text-white bg-slate-900/60 border border-slate-800 hover:border-slate-700'
+          }`}
+        >
+          <span>📊</span>
+          <span>{t.tabWaveforms}</span>
+        </button>
+        <button
+          onClick={() => setActiveHubTab('sta')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeHubTab === 'sta'
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-lg shadow-cyan-950/40'
+              : 'text-slate-400 hover:text-white bg-slate-900/60 border border-slate-800 hover:border-slate-700'
+          }`}
+        >
+          <span>⏱️</span>
+          <span>{t.tabSta}</span>
+        </button>
+        <button
+          onClick={() => setActiveHubTab('inspector')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeHubTab === 'inspector'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-lg shadow-amber-950/40'
+              : 'text-slate-400 hover:text-white bg-slate-900/60 border border-slate-800 hover:border-slate-700'
+          }`}
+        >
+          <span>🔬</span>
+          <span>{t.tabInspector}</span>
+        </button>
+      </div>
+
+      {/* Tab 1: Logic Analyzer & Cursor Timing HUD */}
+      {activeHubTab === 'waveforms' && (
       <div className="p-6 rounded-2xl bg-[#020813]/90 border border-slate-800 shadow-2xl space-y-5">
         
         {/* HUD Top Bar: Measurement Readout */}
@@ -1421,6 +1864,225 @@ export default function FpgaSynthesisHub() {
         </div>
 
       </div>
+      )}
+
+      {/* Tab 2: Static Timing Analysis (STA) Inspector */}
+      {activeHubTab === 'sta' && synthesisResult && (
+        <div className="p-6 rounded-2xl bg-[#020813]/90 border border-slate-800 shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-2">
+                <span>⏱️</span>
+                <span>{t.tabSta} — Timing Closure & Critical Path Analysis</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Target Architecture: {activeTarget.name} ({activeTarget.family}) • F_target = {targetClockMhz} MHz (T = {clkPeriodNs} ns)
+              </p>
+            </div>
+            <div className={`px-3 py-1 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+              synthesisResult.timing_metrics.timing_met
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}>
+              <span>{synthesisResult.timing_metrics.timing_met ? '✓' : '✗'}</span>
+              <span>{synthesisResult.timing_metrics.timing_met ? 'TIMING CLOSED (MET)' : 'TIMING VIOLATION'}</span>
+            </div>
+          </div>
+
+          {/* Timing Metrics Banner */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-[11px] text-slate-400 font-bold block">Target Period (T_clk)</span>
+              <span className="text-xl font-black text-white">{clkPeriodNs}</span>
+              <span className="text-xs text-slate-500 ml-1">ns</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-[11px] text-slate-400 font-bold block">Critical Path (T_crit)</span>
+              <span className="text-xl font-black text-cyan-400">{synthesisResult.timing_metrics.min_period_ns}</span>
+              <span className="text-xs text-slate-500 ml-1">ns</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-[11px] text-slate-400 font-bold block">Max Operating Freq (F_max)</span>
+              <span className="text-xl font-black text-emerald-400">{synthesisResult.timing_metrics.fmax_mhz}</span>
+              <span className="text-xs text-slate-500 ml-1">MHz</span>
+            </div>
+            <div className={`p-4 rounded-xl bg-slate-900/60 border ${
+              synthesisResult.timing_metrics.setup_slack_ns >= 0 ? 'border-emerald-500/40' : 'border-rose-500/40'
+            }`}>
+              <span className="text-[11px] text-slate-400 font-bold block">Worst Negative Slack (WNS)</span>
+              <span className={`text-xl font-black ${
+                synthesisResult.timing_metrics.setup_slack_ns >= 0 ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {synthesisResult.timing_metrics.setup_slack_ns >= 0 ? '+' : ''}
+                {synthesisResult.timing_metrics.setup_slack_ns}
+              </span>
+              <span className="text-xs text-slate-500 ml-1">ns</span>
+            </div>
+          </div>
+
+          {/* Critical Path Stage Breakdown Table */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-300 flex items-center gap-2">
+              <span>📊</span>
+              <span>{t.criticalPathHeader}</span>
+            </h4>
+            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#010611]">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="p-3">Stage / Component</th>
+                    <th className="p-3">Stage Delay</th>
+                    <th className="p-3">Critical Path Share</th>
+                    <th className="p-3">Distribution Bar</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {(synthesisResult.timing_metrics.critical_path_breakdown || [
+                    { stage: 'Clock-to-Out (T_co)', delay_ns: activeTarget.t_co_ns, percentage: Number(((activeTarget.t_co_ns / synthesisResult.timing_metrics.min_period_ns) * 100).toFixed(1)) },
+                    { stage: 'Logic Propagation (T_logic)', delay_ns: activeModule.t_logic_ns, percentage: Number(((activeModule.t_logic_ns / synthesisResult.timing_metrics.min_period_ns) * 100).toFixed(1)) },
+                    { stage: 'Interconnect Route (T_route)', delay_ns: Number((activeTarget.route_factor * 0.45).toFixed(3)), percentage: Number(((activeTarget.route_factor * 0.45 / synthesisResult.timing_metrics.min_period_ns) * 100).toFixed(1)) },
+                    { stage: 'Library Setup Time (T_su)', delay_ns: activeTarget.t_su_ns, percentage: Number(((activeTarget.t_su_ns / synthesisResult.timing_metrics.min_period_ns) * 100).toFixed(1)) }
+                  ]).map((stg, i) => (
+                    <tr key={i} className="hover:bg-slate-900/40">
+                      <td className="p-3 font-bold text-slate-200">{stg.stage}</td>
+                      <td className="p-3 text-cyan-300 font-bold">{stg.delay_ns} ns</td>
+                      <td className="p-3 text-amber-400 font-bold">{stg.percentage}%</td>
+                      <td className="p-3 w-1/3">
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, Math.max(5, stg.percentage))}%` }}
+                          ></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-slate-900/60 font-bold text-white">
+                    <td className="p-3 text-emerald-400">Total Critical Path Delay (T_crit)</td>
+                    <td className="p-3 text-emerald-400">{synthesisResult.timing_metrics.min_period_ns} ns</td>
+                    <td className="p-3 text-emerald-400">100.0%</td>
+                    <td className="p-3 text-[11px] text-slate-400">T_crit = T_co + T_logic + T_route + T_su</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Timing Closure Verdict & Diagnostic Advice */}
+          <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 flex items-start gap-3">
+            <span className="text-xl">{synthesisResult.timing_metrics.timing_met ? '🛡️' : '⚠️'}</span>
+            <div className="text-xs space-y-1">
+              <span className="font-bold text-slate-200 block">
+                {synthesisResult.timing_metrics.timing_met
+                  ? 'Timing Constraints Verified & Satisfied'
+                  : 'Timing Closure Violation Detected'}
+              </span>
+              <p className="text-slate-400 leading-relaxed">
+                {synthesisResult.timing_metrics.timing_met
+                  ? `Design satisfies all setup (WNS = +${synthesisResult.timing_metrics.setup_slack_ns} ns) and hold constraints (THS = +${synthesisResult.timing_metrics.hold_slack_ns} ns). Safe to deploy to bitstream generation at ${targetClockMhz} MHz.`
+                  : `Setup constraint violated by ${Math.abs(synthesisResult.timing_metrics.setup_slack_ns)} ns. Consider reducing target frequency below F_max (${synthesisResult.timing_metrics.fmax_mhz} MHz) or inserting pipeline registers along the critical path.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Structural Module Inspector */}
+      {activeHubTab === 'inspector' && (
+        <div className="p-6 rounded-2xl bg-[#020813]/90 border border-slate-800 shadow-2xl space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
+                <span>🔬</span>
+                <span>{t.tabInspector} — Structural Module & Port Interface Analysis</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Module: {activeModule.title} • Category: {activeModule.category}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowSourceModal(true)}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5"
+            >
+              <span>📄</span>
+              <span>{t.viewSource}</span>
+            </button>
+          </div>
+
+          {/* Module Ports Table */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-300 flex items-center gap-2">
+              <span>🔌</span>
+              <span>{t.portIoHeader}</span>
+            </h4>
+            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-[#010611]">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="p-3">Port Name</th>
+                    <th className="p-3">Direction</th>
+                    <th className="p-3">Bit Width</th>
+                    <th className="p-3">Description & Signal Semantics</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {(activeModule.ports || [
+                    { name: 'clk', dir: 'IN', width: '1-bit', desc: 'Primary System Clock' },
+                    { name: 'rst_n', dir: 'IN', width: '1-bit', desc: 'Active-Low Reset' },
+                    { name: 'data_in', dir: 'IN', width: '8-bit', desc: 'Input Bus' },
+                    { name: 'data_out', dir: 'OUT', width: '8-bit', desc: 'Output Bus' }
+                  ]).map((port, idx) => (
+                    <tr key={idx} className="hover:bg-slate-900/40">
+                      <td className="p-3 font-bold text-amber-300">{port.name}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          port.dir === 'IN' ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'
+                        }`}>
+                          {port.dir}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-300">{port.width}</td>
+                      <td className="p-3 text-slate-400">{port.desc}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Primitive Cell Resource Allocation */}
+          {synthesisResult && (
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-slate-300 flex items-center gap-2">
+                <span>📦</span>
+                <span>Primitive Cell Mapping & Synthesized RTL Primitives</span>
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block">LUT4/LUT6 Logic</span>
+                  <span className="text-lg font-black text-emerald-400">{synthesisResult.utilization.luts_used} primitives</span>
+                  <p className="text-[10px] text-slate-500 mt-1">SRAM-based boolean lookup elements</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block">FDRE/FDSE Registers</span>
+                  <span className="text-lg font-black text-cyan-400">{synthesisResult.utilization.ffs_used} flip-flops</span>
+                  <p className="text-[10px] text-slate-500 mt-1">Clocked D-type state storage elements</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block">RAMB18/RAMB36</span>
+                  <span className="text-lg font-black text-amber-400">{synthesisResult.utilization.bram_used} BRAM</span>
+                  <p className="text-[10px] text-slate-500 mt-1">Dedicated dual-port block memories</p>
+                </div>
+                <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <span className="text-[11px] text-slate-400 font-bold block">DSP48E1 Multipliers</span>
+                  <span className="text-lg font-black text-purple-400">{synthesisResult.utilization.dsp_used} slices</span>
+                  <p className="text-[10px] text-slate-500 mt-1">Hardened 25x18 MAC DSP blocks</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bilingual FPGA Concepts & Thermal Guidance Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">

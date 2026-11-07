@@ -4,15 +4,14 @@ import { triggerToast } from './ToastNotifications.jsx';
 /**
  * ========================================================================================
  * VoltCore Apex Academia - Enterprise Teacher & Administrator Analytics Dashboard
- * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * Autonomous Engineering Cluster Standards • Lead Systems Architect: Ashok Kumar A
  * ----------------------------------------------------------------------------------------
- * Platform Lead / Architect: Ashok Kumar A
- * Public Contact: ashokkumar3132008@gmail.com | https://github.com/AshokKumar313
  * Privacy Standard: Private Admin Email & Phone isolated via RBAC & Environment Variables
  * Features:
  *   - Class Weak-Topic Matrices derived from Wokwi AutoGrader failure logs
  *   - At-Risk Student Early Warning System via Statistical Attendance Z-Scores (Z = (X - μ) / σ)
  *   - Automated NBA / NAAC Course Outcome (CO1-CO5) and Program Outcome (PO) Attainment Engine
+ *   - OBE & ABET/NBA Matrix with Cohort Velocity, Score Distribution & Lab Bottlenecks
  *   - Interactive Role-Based Access Control (RBAC) Data Privacy Isolation Toggle
  * ========================================================================================
  */
@@ -68,6 +67,39 @@ const DEFAULT_CO_ATTAINMENT = [
   { co: 'CO5', title: 'Advanced DMA Circular Zero-Copy Instrumentation', target: 70.0, attained: 82.0, level: 2.46, status: 'ATTAINED', pos: ['PO1', 'PO5', 'PO12'] },
 ];
 
+const DEFAULT_PO_MATRIX = [
+  { po: 'PO1', title: 'Engineering Knowledge', coWeights: { CO1: 3, CO2: 3, CO3: 3, CO4: 3, CO5: 3 }, attainment: 77.0, status: 'MET' },
+  { po: 'PO2', title: 'Problem Analysis', coWeights: { CO1: 3, CO2: 3, CO3: 3, CO4: 3, CO5: 3 }, attainment: 76.5, status: 'MET' },
+  { po: 'PO3', title: 'Design Solutions', coWeights: { CO1: 2, CO2: 3, CO3: 3, CO4: 3, CO5: 3 }, attainment: 75.2, status: 'MET' },
+  { po: 'PO4', title: 'Complex Investigations', coWeights: { CO1: 2, CO2: 2, CO3: 3, CO4: 3, CO5: 3 }, attainment: 74.8, status: 'MET' },
+  { po: 'PO5', title: 'Modern Tools Usage', coWeights: { CO1: 3, CO2: 3, CO3: 3, CO4: 2, CO5: 3 }, attainment: 79.4, status: 'MET' },
+  { po: 'PO7', title: 'Sustainability & Power', coWeights: { CO4: 2, CO5: 3 }, attainment: 75.2, status: 'MET' },
+  { po: 'PO12', title: 'Life-Long Learning', coWeights: { CO1: 2, CO2: 2, CO3: 3, CO4: 3, CO5: 3 }, attainment: 77.8, status: 'MET' },
+  { po: 'PSO1', title: 'Silicon & RTL Engineering', coWeights: { CO1: 2, CO2: 3, CO3: 3, CO4: 3, CO5: 3 }, attainment: 77.2, status: 'MET' },
+  { po: 'PSO2', title: 'Edge IoT & Telemetry', coWeights: { CO1: 1, CO2: 2, CO3: 2, CO4: 3, CO5: 3 }, attainment: 75.8, status: 'MET' }
+];
+
+const DEFAULT_SCORE_DISTRIBUTION = {
+  sample_size: 40,
+  mean_score: 83.2,
+  std_deviation: 7.4,
+  histogram_bins: {
+    '0-40 (Remedial)': 1,
+    '41-55 (Grade B)': 3,
+    '56-70 (Grade B+)': 6,
+    '71-85 (Grade A/A+)': 18,
+    '86-100 (Grade O)': 12
+  },
+  grade_counts: { O: 12, 'A+': 11, A: 7, 'B+': 6, B: 3, RA: 1 },
+  pass_rate_pct: 97.5
+};
+
+const DEFAULT_LAB_BOTTLENECKS = [
+  { lab_id: 'LAB_DMA_02', title: 'DMA Circular Streaming & Memory Barriers', failure_rate: 38.5, trap: 'Omitting __DMB() memory barrier before enabling DMA_SxCR_EN bit.', severity: 'CRITICAL' },
+  { lab_id: 'LAB_RTOS_04', title: 'FreeRTOS Mutex Priority Inversion & Ceilings', failure_rate: 32.0, trap: 'Taking recursive mutex inside high-frequency ISR context.', severity: 'HIGH' },
+  { lab_id: 'LAB_I2C_03', title: 'I2C Open-Drain Clock Stretching Recovery', failure_rate: 24.5, trap: 'Unbounded busy-wait loop on SCL line without hardware timeout.', severity: 'MEDIUM' }
+];
+
 const DEFAULT_AT_RISK_ROSTER = [
   { id: '2023MITEC051', name: 'Manojkumar T', attendance: 62.5, zScore: -2.31, labScore: 48.0, vivaScore: 40.0, riskTier: 'CRITICAL_DEFICIT', compliant: false },
   { id: '2023MITEC023', name: 'Harish R', attendance: 68.0, zScore: -1.78, labScore: 52.0, vivaScore: 45.0, riskTier: 'CRITICAL_DEFICIT', compliant: false },
@@ -82,21 +114,26 @@ const DEFAULT_AT_RISK_ROSTER = [
 export default function TeacherAnalyticsDashboard({
   backendUrl = 'http://127.0.0.1:5000'
 }) {
-  const [activeTab, setActiveTab] = useState('weak_topics'); // 'weak_topics' | 'at_risk' | 'nba_attainment' | 'rbac_privacy'
+  const [activeTab, setActiveTab] = useState('obe_matrix'); // 'obe_matrix' | 'weak_topics' | 'at_risk' | 'nba_attainment' | 'rbac_privacy'
   const [userRole, setUserRole] = useState('Teacher'); // 'Student' | 'Teacher' | 'Admin_Owner'
+  const [selectedCohort, setSelectedCohort] = useState('COHORT_2023_2027_ECE_A');
   const [adminMetadata, setAdminMetadata] = useState(null);
   const [weakTopics, setWeakTopics] = useState(DEFAULT_WEAK_TOPICS);
   const [atRiskRoster, setAtRiskRoster] = useState(DEFAULT_AT_RISK_ROSTER);
   const [coAttainment, setCoAttainment] = useState(DEFAULT_CO_ATTAINMENT);
+  const [poMatrix, setPoMatrix] = useState(DEFAULT_PO_MATRIX);
+  const [scoreDistribution, setScoreDistribution] = useState(DEFAULT_SCORE_DISTRIBUTION);
+  const [labBottlenecks, setLabBottlenecks] = useState(DEFAULT_LAB_BOTTLENECKS);
   const [alertDispatched, setAlertDispatched] = useState({});
 
-  // Sync Analytics from Flask API on Mount
+  // Sync Analytics from API on Mount
   useEffect(() => {
     async function fetchAnalytics() {
       try {
-        const [wtRes, attRes] = await Promise.all([
+        const [wtRes, attRes, obeRes] = await Promise.all([
           fetch(`${backendUrl}/api/analytics/weak_topics`),
-          fetch(`${backendUrl}/api/analytics/attainment`)
+          fetch(`${backendUrl}/api/analytics/attainment`),
+          fetch(`${backendUrl}/api/analytics/obe-matrix?cohort_id=${selectedCohort}`)
         ]);
 
         if (wtRes.ok) {
@@ -111,80 +148,64 @@ export default function TeacherAnalyticsDashboard({
           if (attData.course_outcomes) setCoAttainment(attData.course_outcomes);
           if (attData.at_risk_roster) setAtRiskRoster(attData.at_risk_roster);
         }
-      } catch (e) {
-        console.log('Backend offline, using deterministic Anna University MIT Campus dataset.');
+
+        if (obeRes.ok) {
+          const obeData = await obeRes.json();
+          if (obeData.score_distribution) setScoreDistribution(obeData.score_distribution);
+          if (obeData.lab_bottlenecks) setLabBottlenecks(obeData.lab_bottlenecks);
+        }
+      } catch {
+        // Deterministic offline fallback
       }
     }
     fetchAnalytics();
-  }, [backendUrl]);
+  }, [backendUrl, selectedCohort]);
 
-  // Fetch RBAC Protected Audit Metadata based on active role
+  // Handle RBAC Audit Metadata fetch
   useEffect(() => {
-    async function fetchRbacData() {
+    async function fetchAudit() {
       try {
         const res = await fetch(`${backendUrl}/api/admin/audit_metadata?role=${userRole}`);
         if (res.ok) {
           const data = await res.json();
           setAdminMetadata(data);
         }
-      } catch (e) {
-        // Fallback RBAC simulation
-        if (userRole === 'Admin_Owner') {
-          setAdminMetadata({
-            platform_lead: 'Ashok Kumar A',
-            public_email: 'ashokkumar3132008@gmail.com',
-            admin_email: '[SECURED - CONNECT BACKEND ENV: SECURE_ADMIN_EMAIL]',
-            admin_phone: '[SECURED - CONNECT BACKEND ENV: SECURE_ADMIN_PHONE]',
-            rbac_access_level: 'PRIVILEGED_ADMIN_ACCESS',
-            institution: 'Madras Institute of Technology (MIT) Campus, Anna University'
-          });
-        } else {
-          setAdminMetadata({
-            platform_lead: 'Ashok Kumar A',
-            public_email: 'ashokkumar3132008@gmail.com',
-            admin_email: '[REDACTED - REQUIRES PRIVILEGED RBAC ACCESS]',
-            admin_phone: '[REDACTED - REQUIRES PRIVILEGED RBAC ACCESS]',
-            rbac_access_level: 'PUBLIC_UNPRIVILEGED',
-            institution: 'Madras Institute of Technology (MIT) Campus, Anna University'
-          });
-        }
+      } catch {
+        // Local fallback
+        setAdminMetadata({
+          platform_lead: 'Ashok Kumar A',
+          institution: 'Autonomous Engineering Cluster',
+          rbac_access_level: userRole === 'Admin_Owner' ? 'PRIVILEGED_ADMIN_ACCESS' : 'PUBLIC_UNPRIVILEGED'
+        });
       }
     }
-    fetchRbacData();
-  }, [backendUrl, userRole]);
+    fetchAudit();
+  }, [userRole, backendUrl]);
 
-  // Dispatch Remedial Action
-  const handleDispatchRemedialAlert = (studentId, studentName) => {
-    setAlertDispatched((prev) => ({ ...prev, [studentId]: true }));
-    triggerToast({
-      type: 'security',
-      title: 'Remedial Telemetry Dispatched',
-      message: `Notification & 1-on-1 lab viva schedule dispatched to ${studentName} (${studentId}). Mandatory 75% attendance notice issued.`,
-      duration: 4500
-    });
-  };
-
-  // Export NBA Attainment SAR Report
   const handleExportNbaCsv = () => {
-    let csv = "Course Outcome,Title,Target (%),Attained (%),Attainment Level (Scale 0-3),Status,Mapped POs\n";
-    coAttainment.forEach((c) => {
-      csv += `"${c.co}","${c.title}",${c.target || c.target_pct},${c.attained || c.attained_pct},${c.level || c.attainment_level},"${c.status}","${(c.pos || c.mapped_pos || []).join(';')}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "NBA_Tier1_CO_PO_Attainment_EC8708_MIT_Campus.csv");
+    const csvContent =
+      'data:text/csv;charset=utf-8,Course Outcome,Title,Target %,Attained %,Level (3.0),Status,Mapped POs\n' +
+      coAttainment
+        .map(
+          (c) =>
+            `"${c.co}","${c.title}",${c.target || 70.0},${c.attained || 0},${
+              c.level || 0
+            },"${c.status}","${(c.pos || []).join(', ')}"`
+        )
+        .join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `NBA_SAR_CO_PO_Attainment_${selectedCohort}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     triggerToast({
+      title: 'NBA SAR Export Complete',
+      message: `Exported Course Outcome attainment metrics for ${selectedCohort}.`,
       type: 'success',
-      title: 'NBA SAR Attainment Report Downloaded',
-      message: 'Generated verified CSV audit report for Anna University Academic Council & NBA Committee.',
-      duration: 4000
+      category: 'academic'
     });
   };
 
@@ -199,57 +220,77 @@ export default function TeacherAnalyticsDashboard({
               Department Executive Console
             </span>
             <span className="text-xs font-mono text-slate-400">
-              Anna University / MIT Campus (ECE R2023)
+              Autonomous Engineering Cluster • OBE Attainment
             </span>
           </div>
           <h2 className="text-lg md:text-xl font-bold text-slate-100">
-            Teacher Analytics, At-Risk Early Warning & NBA SAR Attainment
+            Multi-Tenant Learning Analytics, At-Risk Radar & CO-PO Attainment
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Real-time Wokwi firmware failure matrices, statistical Z-score anomaly tracking, and automated accreditation reports.
+            Cohort learning velocity, Wokwi firmware failure matrices, and automated accreditation reports.
           </p>
         </div>
 
-        {/* RBAC Role Switcher Toggle */}
-        <div className="flex flex-col items-end gap-1.5 font-mono text-xs">
-          <div className="text-[10px] text-slate-400 uppercase tracking-wider">Simulated RBAC Role:</div>
-          <div className="flex items-center gap-1 bg-[#020813] p-1 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setUserRole('Student')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-[11px] ${
-                userRole === 'Student'
-                  ? 'bg-slate-700 text-white font-bold'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+        {/* Cohort Selector & RBAC Switcher */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex flex-col font-mono text-xs">
+            <span className="text-[10px] text-slate-400 uppercase">Target Cohort:</span>
+            <select
+              value={selectedCohort}
+              onChange={(e) => setSelectedCohort(e.target.value)}
+              className="px-2.5 py-1.5 rounded-xl bg-[#020813] border border-slate-700 text-white text-xs font-mono focus:border-[#00F0B5] outline-none"
             >
-              Student / Guest
-            </button>
-            <button
-              onClick={() => setUserRole('Teacher')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-[11px] ${
-                userRole === 'Teacher'
-                  ? 'bg-[#00693E] text-[#00F0B5] font-bold border border-[#00F0B5]/40'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Teacher
-            </button>
-            <button
-              onClick={() => setUserRole('Admin_Owner')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-[11px] ${
-                userRole === 'Admin_Owner'
-                  ? 'bg-gradient-to-r from-amber-500 to-[#00F0B5] text-[#020813] font-bold shadow-[0_0_12px_rgba(255,183,3,0.35)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              👑 Owner / Architect
-            </button>
+              <option value="COHORT_2023_2027_ECE_A">Batch 2023-2027 ECE (Section A)</option>
+              <option value="COHORT_2023_2027_ECE_B">Batch 2023-2027 ECE (Section B)</option>
+              <option value="COHORT_2024_2028_ECE">Batch 2024-2028 ECE (Second Year)</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col font-mono text-xs">
+            <span className="text-[10px] text-slate-400 uppercase">Simulated RBAC Role:</span>
+            <div className="flex items-center gap-1 bg-[#020813] p-1 rounded-xl border border-slate-800">
+              <button
+                onClick={() => setUserRole('Student')}
+                className={`px-2 py-1 rounded-lg transition-all text-[11px] ${
+                  userRole === 'Student' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Student
+              </button>
+              <button
+                onClick={() => setUserRole('Teacher')}
+                className={`px-2 py-1 rounded-lg transition-all text-[11px] ${
+                  userRole === 'Teacher' ? 'bg-[#00693E] text-[#00F0B5] font-bold border border-[#00F0B5]/40' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Faculty
+              </button>
+              <button
+                onClick={() => setUserRole('Admin_Owner')}
+                className={`px-2 py-1 rounded-lg transition-all text-[11px] ${
+                  userRole === 'Admin_Owner' ? 'bg-gradient-to-r from-amber-500 to-[#00F0B5] text-[#020813] font-bold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Admin
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        <button
+          onClick={() => setActiveTab('obe_matrix')}
+          className={`px-4 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2 ${
+            activeTab === 'obe_matrix'
+              ? 'bg-[#00F0B5] text-[#020813] font-bold shadow-emerald-glow'
+              : 'bg-[#041026]/80 text-slate-400 border border-slate-800 hover:text-white'
+          }`}
+        >
+          <span>📊 OBE CO-PO Attainment & Velocity</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('weak_topics')}
           className={`px-4 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2 ${
@@ -283,96 +324,207 @@ export default function TeacherAnalyticsDashboard({
               : 'bg-[#041026]/80 text-slate-400 border border-slate-800 hover:text-white'
           }`}
         >
-          <span>🏛️ NBA / NAAC CO-PO Attainment</span>
+          <span>🏛️ NBA / NAAC SAR Cards</span>
         </button>
 
         <button
           onClick={() => setActiveTab('rbac_privacy')}
           className={`px-4 py-2 rounded-xl text-xs font-mono transition-all flex items-center gap-2 ${
             activeTab === 'rbac_privacy'
-              ? 'bg-cyan-400 text-[#020813] font-bold shadow-[0_0_15px_rgba(0,216,246,0.3)]'
+              ? 'bg-cyan-400 text-[#020813] font-bold shadow-[0_0_15px_rgba(6,182,212,0.35)]'
               : 'bg-[#041026]/80 text-slate-400 border border-slate-800 hover:text-white'
           }`}
         >
-          <span>🔐 Data Privacy & Admin Isolation</span>
+          <span>🔒 Data Privacy & Audit</span>
         </button>
       </div>
 
-      {/* TAB 1: Class Weak-Topic Matrix */}
-      {activeTab === 'weak_topics' && (
-        <div className="flex flex-col gap-4">
-          <div className="p-4 rounded-xl bg-[#041026]/80 border border-slate-800 backdrop-blur-xl flex items-center justify-between text-xs font-mono">
+      {/* ========================================================================= */}
+      {/* TAB 1: OBE CO-PO ATTAINMENT MATRIX, VELOCITY & BOTTLENECKS */}
+      {/* ========================================================================= */}
+      {activeTab === 'obe_matrix' && (
+        <div className="space-y-6">
+          {/* Top Banner & Export */}
+          <div className="p-4 rounded-xl bg-[#041026]/90 border border-emerald-500/30 backdrop-blur-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <span className="text-slate-400">Cohort:</span>{' '}
-              <span className="text-[#00F0B5] font-bold">64 Students (ECE R2023)</span> |{' '}
-              <span className="text-slate-400">Evaluations Sampled:</span>{' '}
-              <span className="text-white font-bold">384 Submissions</span>
+              <div className="text-xs font-mono font-bold text-[#00F0B5] uppercase tracking-wider">
+                ABET / NBA Criterion 3 • Outcome-Based Education Framework
+              </div>
+              <h3 className="text-base font-bold text-white mt-0.5">
+                Program Outcome (PO1-PO12, PSO1-PSO2) Attainment Matrix
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                Cohort: <strong className="text-white">{selectedCohort}</strong> • Target Threshold: 70.0% Attainment (Level 2.1)
+              </p>
             </div>
-            <div className="text-slate-500 text-[11px]">
-              Derived directly from automated Wokwi firmware test bench failures
-            </div>
+
+            <button
+              onClick={handleExportNbaCsv}
+              className="px-4 py-2 rounded-xl bg-[#00F0B5] hover:brightness-110 text-[#020813] font-mono font-bold text-xs transition-all shadow-emerald-glow flex items-center gap-2 flex-shrink-0"
+            >
+              <span>📥 Export CO-PO Matrix (CSV)</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {weakTopics.map((item, idx) => (
+          {/* PO Attainment Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {poMatrix.map((item) => (
               <div
-                key={idx}
-                className="p-5 rounded-2xl bg-[#041026]/90 border border-slate-800 hover:border-[#00F0B5]/40 backdrop-blur-xl transition-all shadow-glass flex flex-col justify-between"
+                key={item.po}
+                className="p-4 rounded-2xl bg-[#020813] border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700">
-                      {item.module}
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-[#00F0B5] border border-[#00F0B5]/30">
+                      {item.po}
                     </span>
-                    <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase ${
-                        item.severity === 'CRITICAL'
-                          ? 'bg-rose-950/40 text-rose-300 border-rose-500/40'
-                          : item.severity === 'HIGH'
-                          ? 'bg-amber-950/40 text-amber-300 border-amber-500/40'
-                          : 'bg-cyan-950/40 text-cyan-300 border-cyan-500/40'
-                      }`}
-                    >
-                      {item.severity} SEVERITY
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-emerald-400 border border-emerald-500/30">
+                      {item.status}
                     </span>
                   </div>
-
-                  <h3 className="text-sm font-bold text-slate-100 leading-snug">
-                    {item.topic}
-                  </h3>
-
-                  {/* Failure Rate Progress Bar */}
-                  <div className="mt-3">
-                    <div className="flex justify-between items-center text-xs font-mono mb-1">
-                      <span className="text-slate-400">Failure Rate:</span>
-                      <span
-                        className={`font-bold ${
-                          item.failureRate > 35 ? 'text-rose-400' : 'text-amber-400'
-                        }`}
-                      >
-                        {item.failureRate}% of Class
-                      </span>
+                  <h4 className="text-xs font-bold text-white line-clamp-1">{item.title}</h4>
+                  
+                  <div className="mt-3 p-2.5 rounded-xl bg-[#041026] border border-slate-800/80 font-mono text-xs">
+                    <div className="flex justify-between items-center mb-1 text-[11px]">
+                      <span className="text-slate-400">Attainment:</span>
+                      <span className="font-bold text-[#00F0B5]">{item.attainment}%</span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+                    <div className="w-full h-1.5 rounded-full bg-slate-900 overflow-hidden">
                       <div
-                        className={`h-full transition-all ${
-                          item.failureRate > 35
-                            ? 'bg-gradient-to-r from-amber-500 to-rose-500'
-                            : 'bg-gradient-to-r from-[#00693E] to-amber-500'
-                        }`}
-                        style={{ width: `${item.failureRate}%` }}
-                      />
+                        className="h-full bg-gradient-to-r from-[#00693E] to-[#00F0B5]"
+                        style={{ width: `${item.attainment}%` }}
+                      ></div>
                     </div>
-                  </div>
-
-                  <div className="mt-3 text-xs text-slate-300 bg-[#020813] p-2.5 rounded-xl border border-slate-800/80 leading-relaxed font-mono">
-                    <span className="text-slate-500">Root Cause:</span> {item.commonMistake}
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/80 text-[11px] font-mono text-[#00F0B5] flex items-center gap-1.5">
-                  <span>💡 Action:</span>
-                  <span className="text-slate-300">{item.action}</span>
+                <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
+                  <span>Correlation Weights:</span>
+                  <span className="text-slate-300 font-bold font-mono">High (3.0)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Score Distribution Histogram & Bottlenecks */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Histogram (7 cols) */}
+            <div className="lg:col-span-7 p-6 rounded-2xl bg-[#020813] border border-slate-800 space-y-4 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="font-bold text-white text-sm">Cohort Score Distribution & Grade Breakdown</span>
+                <span className="text-emerald-400 font-bold">Pass Rate: {scoreDistribution.pass_rate_pct}%</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div className="text-[10px] text-slate-400">Mean Score</div>
+                  <div className="text-lg font-bold text-white mt-0.5">{scoreDistribution.mean_score} / 100</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div className="text-[10px] text-slate-400">Std Deviation (σ)</div>
+                  <div className="text-lg font-bold text-amber-400 mt-0.5">{scoreDistribution.std_deviation}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                  <div className="text-[10px] text-slate-400">Grade O (Mastery)</div>
+                  <div className="text-lg font-bold text-[#00F0B5] mt-0.5">{scoreDistribution.grade_counts.O} Students</div>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                {Object.entries(scoreDistribution.histogram_bins).map(([binName, count]) => {
+                  const pct = Math.round((count / scoreDistribution.sample_size) * 100);
+                  return (
+                    <div key={binName} className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-slate-300">{binName}</span>
+                        <span className="font-bold text-white">{count} ({pct}%)</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#00693E] to-[#00F0B5]"
+                          style={{ width: `${pct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Bottlenecks Panel (5 cols) */}
+            <div className="lg:col-span-5 p-6 rounded-2xl bg-[#020813] border border-rose-500/30 space-y-4 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="font-bold text-rose-400 text-sm flex items-center gap-2">
+                  <span>⚠</span> Laboratory Completion Bottlenecks
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-500/30">
+                  3 Flagged Labs
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {labBottlenecks.map((b) => (
+                  <div key={b.lab_id} className="p-3.5 rounded-xl bg-[#041026] border border-slate-800 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white text-[11px]">{b.title}</span>
+                      <span className="text-rose-400 font-bold text-[10px]">{b.failure_rate}% Drop-Off</span>
+                    </div>
+                    <p className="text-[10px] text-slate-300 font-sans leading-relaxed">
+                      <strong>Root Trap:</strong> {b.trap}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: CLASS WEAK-TOPIC MATRIX */}
+      {/* ========================================================================= */}
+      {activeTab === 'weak_topics' && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-[#041026]/90 border border-slate-800 flex items-center justify-between text-xs font-mono">
+            <div>
+              <span className="font-bold text-white text-sm">Class Failure Patterns from Virtual Testbenches</span>
+              <p className="text-slate-400 text-[11px]">Derived automatically from Wokwi simulation runs and static code review logs.</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-[10px]">
+              {weakTopics.length} Common Inquiries
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {weakTopics.map((wt, idx) => (
+              <div key={idx} className="p-4 rounded-2xl bg-[#020813] border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-xs">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm">{wt.topic}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                      {wt.module}
+                    </span>
+                  </div>
+                  <div className="text-slate-400 text-[11px] font-sans">
+                    <strong>Mistake:</strong> {wt.commonMistake}
+                  </div>
+                  <div className="text-emerald-400 text-[11px] font-sans">
+                    <strong>Remedy:</strong> {wt.action}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-rose-400 font-bold text-sm">{wt.failureRate}%</div>
+                    <div className="text-[9px] text-slate-500">Error Frequency</div>
+                  </div>
+                  <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold border ${
+                    wt.severity === 'CRITICAL' ? 'bg-rose-950/80 text-rose-300 border-rose-500/40' : 'bg-amber-950/60 text-amber-300 border-amber-500/30'
+                  }`}>
+                    {wt.severity}
+                  </span>
                 </div>
               </div>
             ))}
@@ -380,123 +532,91 @@ export default function TeacherAnalyticsDashboard({
         </div>
       )}
 
-      {/* TAB 2: At-Risk Early Warning System (Z-Scores) */}
+      {/* ========================================================================= */}
+      {/* TAB 3: AT-RISK STUDENTS */}
+      {/* ========================================================================= */}
       {activeTab === 'at_risk' && (
-        <div className="flex flex-col gap-4">
-          <div className="p-4 rounded-xl bg-gradient-to-r from-rose-950/40 to-[#041026] border border-rose-500/30 backdrop-blur-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs font-mono">
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-[#041026]/90 border border-rose-500/30 flex items-center justify-between text-xs font-mono">
             <div>
-              <div className="text-rose-400 font-bold uppercase tracking-wider text-[11px]">
-                Statistical Anomaly Detector Formula:
-              </div>
-              <div className="text-white text-sm mt-0.5 font-mono">
-                {'Z = (X_i - μ_att) / σ_att  [μ = 84.88%, σ = 12.82%]'}
-              </div>
-              <div className="text-slate-400 text-[11px] mt-1">
-                Students with $Z &lt; -1.50$ or attendance below Anna University mandatory 75% threshold are flagged for immediate academic intervention.
-              </div>
+              <span className="font-bold text-white text-sm">Statistical Attendance & CIE Z-Score Radar</span>
+              <p className="text-slate-400 text-[11px]">Identifies candidates with Z &lt; -1.2 standard deviations requiring remedial faculty counseling.</p>
             </div>
-            <div className="px-3 py-1.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-center flex-shrink-0">
-              <div className="text-rose-300 font-bold text-lg">
-                {atRiskRoster.filter((s) => !s.compliant).length}
-              </div>
-              <div className="text-[10px] text-rose-400">Attendance Deficit (&lt; 75%)</div>
-            </div>
+            <span className="px-2.5 py-1 rounded-lg bg-rose-950 text-rose-300 border border-rose-500/30 text-[10px] font-bold">
+              Regulation Cutoff: 75% Attendance
+            </span>
           </div>
 
-          {/* Student Roster Table */}
-          <div className="rounded-2xl bg-[#041026] border border-slate-800 overflow-hidden shadow-glass">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-[#020813] text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="p-3.5">Roll Number</th>
-                    <th className="p-3.5">Student Name</th>
-                    <th className="p-3.5">Attendance</th>
-                    <th className="p-3.5">Z-Score</th>
-                    <th className="p-3.5">Lab Score</th>
-                    <th className="p-3.5">Status Tier</th>
-                    <th className="p-3.5 text-right">Intervention Action</th>
+          <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-[#020813]">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-[#041026] text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th className="p-3.5">Roll No</th>
+                  <th className="p-3.5">Student Name</th>
+                  <th className="p-3.5">Attendance</th>
+                  <th className="p-3.5">Z-Score</th>
+                  <th className="p-3.5">Lab Score</th>
+                  <th className="p-3.5">Viva Score</th>
+                  <th className="p-3.5">Risk Status</th>
+                  <th className="p-3.5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                {atRiskRoster.map((st) => (
+                  <tr key={st.id} className="hover:bg-slate-900/40 transition-colors">
+                    <td className="p-3.5 font-bold text-white">{st.id}</td>
+                    <td className="p-3.5">{st.name}</td>
+                    <td className="p-3.5">
+                      <span className={st.attendance < 75.0 ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {st.attendance}%
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-slate-400">{st.zScore}</td>
+                    <td className="p-3.5">{st.labScore} / 100</td>
+                    <td className="p-3.5">{st.vivaScore} / 100</td>
+                    <td className="p-3.5">
+                      <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                        st.riskTier === 'CRITICAL_DEFICIT'
+                          ? 'bg-rose-950 text-rose-300 border border-rose-500/40'
+                          : (st.riskTier === 'MODERATE_WARNING' ? 'bg-amber-950 text-amber-300 border border-amber-500/30' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/30')
+                      }`}>
+                        {st.riskTier}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAlertDispatched(prev => ({ ...prev, [st.id]: true }));
+                          triggerToast({
+                            title: 'Remedial Notice Dispatched',
+                            message: `Dispatched academic notice to ${st.name} (${st.id}).`,
+                            type: 'info',
+                            category: 'academic'
+                          });
+                        }}
+                        className={`text-[10px] px-2.5 py-1 rounded-lg border font-bold transition-all ${
+                          alertDispatched[st.id]
+                            ? 'bg-slate-800 text-slate-500 border-slate-700'
+                            : 'bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white border-rose-500/40'
+                        }`}
+                      >
+                        {alertDispatched[st.id] ? '✓ Dispatched' : 'Counsel'}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {atRiskRoster.map((student) => (
-                    <tr
-                      key={student.id}
-                      className={`hover:bg-[#020813]/60 transition-colors ${
-                        student.riskTier === 'CRITICAL_DEFICIT'
-                          ? 'bg-rose-950/20'
-                          : student.riskTier === 'MODERATE_WARNING'
-                          ? 'bg-amber-950/10'
-                          : ''
-                      }`}
-                    >
-                      <td className="p-3.5 font-bold text-slate-200">{student.id}</td>
-                      <td className="p-3.5 text-white">{student.name}</td>
-                      <td className="p-3.5 font-bold">
-                        <span
-                          className={
-                            student.attendance < 75.0 ? 'text-rose-400' : 'text-emerald-400'
-                          }
-                        >
-                          {student.attendance}%
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            student.zScore < -1.5
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                              : student.zScore < -0.8
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              : 'bg-slate-800 text-slate-300'
-                          }`}
-                        >
-                          Z = {student.zScore}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-slate-300">{student.labScore}%</td>
-                      <td className="p-3.5">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                            student.riskTier === 'CRITICAL_DEFICIT'
-                              ? 'bg-rose-500/30 text-rose-300 border border-rose-500/40'
-                              : student.riskTier === 'MODERATE_WARNING'
-                              ? 'bg-amber-500/30 text-amber-300 border border-amber-500/40'
-                              : 'bg-emerald-500/20 text-emerald-400'
-                          }`}
-                        >
-                          {student.riskTier.replace('_', ' ')}
-                        </span>
-                      </td>
-                      <td className="p-3.5 text-right">
-                        {student.riskTier !== 'NORMAL' ? (
-                          <button
-                            onClick={() => handleDispatchRemedialAlert(student.id, student.name)}
-                            disabled={alertDispatched[student.id]}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] transition-all font-bold ${
-                              alertDispatched[student.id]
-                                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                : 'bg-rose-500 hover:bg-rose-400 text-white shadow-md'
-                            }`}
-                          >
-                            {alertDispatched[student.id] ? '✓ Alert Dispatched' : '🚨 Issue Notice'}
-                          </button>
-                        ) : (
-                          <span className="text-slate-500 text-[11px]">Good Standing</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* TAB 3: NBA / NAAC Course Outcome (CO) & Program Outcome (PO) Attainment */}
+      {/* ========================================================================= */}
+      {/* TAB 4: NBA / NAAC SAR CARDS */}
+      {/* ========================================================================= */}
       {activeTab === 'nba_attainment' && (
-        <div className="flex flex-col gap-4">
+        <div className="space-y-6">
           <div className="p-4 rounded-xl bg-[#041026]/90 border border-amber-500/30 backdrop-blur-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
@@ -518,7 +638,6 @@ export default function TeacherAnalyticsDashboard({
             </button>
           </div>
 
-          {/* Attainment Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {coAttainment.map((coItem, cIdx) => (
               <div
@@ -545,27 +664,20 @@ export default function TeacherAnalyticsDashboard({
                     {coItem.title}
                   </h4>
 
-                  {/* Level Progress */}
                   <div className="mt-4 p-3 rounded-xl bg-[#020813] border border-slate-800">
                     <div className="flex justify-between items-center text-xs font-mono mb-1">
                       <span className="text-slate-400">Attainment Score:</span>
                       <span className="font-bold text-[#00F0B5]">
-                        {coItem.level || coItem.attainment_level} / 3.00 (
-                        {coItem.attained || coItem.attained_pct}%)
+                        {coItem.level || coItem.attainment_level} / 3.00 ({coItem.attained || coItem.attained_pct}%)
                       </span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
                       <div
                         className={`h-full ${
-                          (coItem.attained || coItem.attained_pct) >= 70.0
-                            ? 'bg-[#00F0B5]'
-                            : 'bg-rose-500'
+                          (coItem.attained || coItem.attained_pct) >= 70.0 ? 'bg-[#00F0B5]' : 'bg-rose-500'
                         }`}
                         style={{
-                          width: `${Math.min(
-                            100,
-                            ((coItem.attained || coItem.attained_pct) / 100) * 100
-                          )}%`
+                          width: `${Math.min(100, ((coItem.attained || coItem.attained_pct) / 100) * 100)}%`
                         }}
                       />
                     </div>
@@ -576,10 +688,7 @@ export default function TeacherAnalyticsDashboard({
                   <span className="text-slate-400">Mapped POs:</span>
                   <div className="flex items-center gap-1">
                     {(coItem.pos || coItem.mapped_pos || []).map((po, pIdx) => (
-                      <span
-                        key={pIdx}
-                        className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]"
-                      >
+                      <span key={pIdx} className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
                         {po}
                       </span>
                     ))}
@@ -591,7 +700,9 @@ export default function TeacherAnalyticsDashboard({
         </div>
       )}
 
-      {/* TAB 4: Data Privacy & Admin Isolation Audit */}
+      {/* ========================================================================= */}
+      {/* TAB 5: DATA PRIVACY & RBAC ISOLATION AUDIT */}
+      {/* ========================================================================= */}
       {activeTab === 'rbac_privacy' && (
         <div className="p-6 rounded-2xl bg-[#041026]/90 border border-cyan-500/30 backdrop-blur-xl shadow-glass flex flex-col gap-4 font-mono text-xs">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -615,7 +726,6 @@ export default function TeacherAnalyticsDashboard({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Public Metadata Card */}
             <div className="p-4 rounded-xl bg-[#020813] border border-slate-800 space-y-2.5">
               <div className="text-[#00F0B5] font-bold flex items-center gap-2">
                 <span>🌐 Public Contact Metadata</span>
@@ -629,7 +739,7 @@ export default function TeacherAnalyticsDashboard({
               </div>
               <div>
                 <span className="text-slate-500">Public Contact Email:</span>{' '}
-                <span className="text-slate-200">{adminMetadata?.public_email || 'ashokkumar3132008@gmail.com'}</span>
+                <span className="text-slate-200">scholar@voltcore.org</span>
               </div>
               <div>
                 <span className="text-slate-500">GitHub Repository:</span>{' '}
@@ -644,11 +754,10 @@ export default function TeacherAnalyticsDashboard({
               </div>
               <div>
                 <span className="text-slate-500">Institution:</span>{' '}
-                <span className="text-slate-300">{adminMetadata?.institution || 'MIT Campus, Anna University'}</span>
+                <span className="text-slate-300">{adminMetadata?.institution || 'Autonomous Engineering Cluster'}</span>
               </div>
             </div>
 
-            {/* Restricted Private Admin Metadata Card */}
             <div
               className={`p-4 rounded-xl border space-y-2.5 ${
                 userRole === 'Admin_Owner'
@@ -676,7 +785,7 @@ export default function TeacherAnalyticsDashboard({
               </div>
 
               <div>
-                <span className="text-slate-500">Private Admin Email (SECURE_ADMIN_EMAIL):</span>
+                <span className="text-slate-500">Role Status:</span>
                 <div
                   className={`mt-0.5 p-2 rounded-lg ${
                     userRole === 'Admin_Owner'
@@ -684,25 +793,12 @@ export default function TeacherAnalyticsDashboard({
                       : 'bg-black/50 text-slate-500 italic'
                   }`}
                 >
-                  {adminMetadata?.admin_email || '[REDACTED - REQUIRES PRIVILEGED RBAC ACCESS]'}
-                </div>
-              </div>
-
-              <div>
-                <span className="text-slate-500">Admin Telemetry Phone (SECURE_ADMIN_PHONE):</span>
-                <div
-                  className={`mt-0.5 p-2 rounded-lg ${
-                    userRole === 'Admin_Owner'
-                      ? 'bg-[#020813] text-amber-300 font-bold border border-amber-500/25'
-                      : 'bg-black/50 text-slate-500 italic'
-                  }`}
-                >
-                  {adminMetadata?.admin_phone || '[REDACTED - REQUIRES PRIVILEGED RBAC ACCESS]'}
+                  {userRole === 'Admin_Owner' ? 'PRIVILEGED_ROOT_OPERATOR' : '[REDACTED - REQUIRES PRIVILEGED RBAC ACCESS]'}
                 </div>
               </div>
 
               <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-800/80">
-                Notice: Private admin credentials are isolated via backend environment variables and never leaked to public headers or client HTML bundles.
+                Notice: Private admin credentials are strictly isolated via RBAC and never leaked to public headers or static client bundles.
               </div>
             </div>
           </div>

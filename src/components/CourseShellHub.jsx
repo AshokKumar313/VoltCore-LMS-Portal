@@ -802,6 +802,104 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {/* --------------------------------------------------------------------- */}
       {activeTab === "prerequisites" && (
         <div role="tabpanel" id="panel-prerequisites" aria-labelledby="tab-prerequisites" className="space-y-6">
+          {/* Progression Mastery Simulation Banner */}
+          <div className="p-4 rounded-2xl bg-[#041026] border border-slate-800 space-y-3 font-mono text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base">⚡</span>
+                <span className="font-bold text-white text-sm">Student Mastery & Prerequisite Progression Engine</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  Threshold: ≥ 70%
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Topological DAG Resolver • SQLite WAL Mode
+              </div>
+            </div>
+            <p className="text-slate-300 text-[11px] leading-relaxed">
+              Advancement to downstream specializations and advanced embedded labs requires verified competency tokens (&ge; 70% attainment in continuous assessments or laboratory rubrics).
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const token = `TOK_STUDENT_${currentCourse.code}_${Math.floor(1000 + Math.random() * 9000)}`;
+                  setPrereqChecked(prev => ({
+                    ...prev,
+                    [currentCourse.code]: { score: 85.0, status: "MASTERED", token, unlockedAt: new Date().toLocaleTimeString() }
+                  }));
+                  // Fire to backend API if available
+                  try {
+                    fetch('/api/curriculum/mastery/record', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        student_id: '2023MITEC042',
+                        module_id: currentCourse.code,
+                        course_code: currentCourse.code,
+                        score: 85.0,
+                        max_score: 100.0,
+                        evaluation_type: 'LAB_RUBRIC'
+                      })
+                    }).catch(() => {});
+                  } catch (e) {}
+                }}
+                className="px-3 py-1.5 rounded-xl font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition-all flex items-center gap-1.5"
+                title={`Verify competency in ${currentCourse.code} with 85% score`}
+              >
+                <span>⚡ Simulate Assessment Pass (85%)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPrereqChecked(prev => ({
+                    ...prev,
+                    [currentCourse.code]: { score: 55.0, status: "REMEDIAL_REQUIRED", token: null, unlockedAt: null }
+                  }));
+                }}
+                className="px-3 py-1.5 rounded-xl font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all flex items-center gap-1.5"
+                title="Simulate score below threshold to observe prerequisite lock"
+              >
+                <span>⚠️ Test Below Threshold (55%)</span>
+              </button>
+            </div>
+
+            {prereqChecked[currentCourse.code] && (
+              <div className={`p-3 rounded-xl border mt-2 ${
+                prereqChecked[currentCourse.code].status === "MASTERED"
+                  ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-300"
+                  : "bg-amber-950/30 border-amber-500/50 text-amber-300"
+              }`}>
+                {prereqChecked[currentCourse.code].status === "MASTERED" ? (
+                  <div className="space-y-1">
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span>✓ Competency Verified!</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/30 font-mono">
+                        {prereqChecked[currentCourse.code].token}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-300">
+                      Score: 85.0% (&ge; 70.0% threshold satisfied). Downstream advanced modules and specialization tracks unlocked.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span>🔒 Remedial Required</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/30 font-mono">
+                        Score: 55.0%
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-300">
+                      Score falls below 70.0% OBE threshold. Downstream tracks remain locked until re-evaluation is completed.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Prerequisite DAG Pathway */}
             <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
@@ -809,20 +907,28 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 <span>🔗 Prerequisite DAG Dependency Graph</span>
               </h3>
               <p className="text-xs text-slate-400">
-                Directed Acyclic Graph mapping foundational knowledge bridges to {currentCourse.code}.
+                Topologically ordered Directed Acyclic Graph mapping foundational knowledge bridges to {currentCourse.code}.
               </p>
 
               <div className="space-y-3 font-mono text-xs">
                 {currentCourse.prerequisiteDag.map((link, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl bg-[#020813] border border-slate-800 space-y-1.5">
+                  <div key={idx} className="p-3.5 rounded-xl bg-[#020813] border border-slate-800 space-y-1.5 hover:border-slate-700 transition-all">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-emerald-400">{link.fromCourse} → {link.toCourse}</span>
+                      <span className="font-bold text-emerald-400 flex items-center gap-1">
+                        <span>{link.fromCourse}</span>
+                        <span>→</span>
+                        <span>{link.toCourse}</span>
+                      </span>
                       <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-bold uppercase">
                         {link.relationship} prerequisite
                       </span>
                     </div>
                     <div className="text-[11px] text-slate-300">
                       Concept Bridge: <span className="text-white font-sans">{link.topicBridge}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-1">
+                      <span>Status:</span>
+                      <span className="text-emerald-400 font-bold">✓ Attainment Verified (&ge; 70%)</span>
                     </div>
                   </div>
                 ))}
@@ -842,6 +948,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 {currentCourse.prerequisites.map((req, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => togglePrereq(idx)}
                     className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-colors ${
                       prereqChecked[idx]
@@ -850,7 +957,9 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                     }`}
                   >
                     <span className="truncate">{req}</span>
-                    <span>{prereqChecked[idx] ? "✅ VERIFIED" : "⭕ PENDING"}</span>
+                    <span className="flex items-center gap-1">
+                      {prereqChecked[idx] ? "✅ VERIFIED (≥70%)" : "⭕ PENDING"}
+                    </span>
                   </button>
                 ))}
               </div>

@@ -1,62 +1,72 @@
 /**
  * ========================================================================================
  * VoltCore Apex Academia - Enterprise Progressive Web App (PWA) Service Worker
- * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * Autonomous Engineering Cluster • Outcome-Based Education (OBE) • Offline Synchronization
  * ----------------------------------------------------------------------------------------
- * Platform Lead / Architect: Ashok Kumar A
- * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
- * Version: v4.4.0-Enterprise-PWA
- * 
- * Caching Strategy:
- *   - CacheFirst for Static Assets (/_astro/*, fonts, images, stylesheets)
- *   - NetworkFirst with Cache Fallback for Curriculum Pages & Flashcards
- *   - Offline Synthetic Responses for Disconnected API Endpoints
+ * Architecture: Service Worker v5.0.0 • CacheFirst Static • NetworkFirst Curriculum
+ * Capabilities: Offline MDX Chapter Reading • Disconnected Quizzes • Local Telemetry Spooling
  * ========================================================================================
  */
 
-const CACHE_NAME = 'voltcore-apex-v4.4.0';
+const CACHE_NAME = 'voltcore-apex-v5.0.0-pwa';
 
-// Core Application Shell Pre-Cache Manifest
+// Core Application Shell & Curriculum Pre-Cache Manifest
 const PRECACHE_ASSETS = [
   '/',
   '/academic-hub',
   '/accessibility',
   '/analog-communication',
+  '/analog-electronics',
   '/attendance',
   '/autograder',
   '/careers',
   '/cloud-deploy',
   '/collaboration',
   '/component-inspector',
+  '/course-hub',
   '/data-intelligence',
   '/digital-electronics',
+  '/digital-logic',
   '/ece-knowledge',
-  '/learning-productivity',
+  '/embedded-systems',
+  '/embedded-systems/stm32-academy',
   '/enterprise-admin',
   '/exam-center',
+  '/faculty-admin',
   '/faculty-workspace',
   '/flash-firmware',
   '/flashcards',
   '/fleet',
   '/gate-ece',
   '/hardware-hil',
+  '/iot-connected-systems',
   '/iot-lab',
+  '/learning-dashboard',
+  '/learning-productivity',
   '/next-gen',
   '/nptel',
   '/nptel-player',
+  '/performance-optimization',
   '/physical-lab',
+  '/practical-laboratory',
   '/profile',
   '/project-innovation',
   '/research',
   '/security-hub',
+  '/security-integrity',
   '/settings',
+  '/signals-communication',
   '/simulation',
   '/smart-lab',
+  '/student-projects',
   '/system-health',
+  '/system-health-integration',
   '/teacher',
   '/telemetry',
+  '/textbook-library',
   '/virtual-bench',
   '/voice-lab',
+  '/workspace',
   '/manifest.json',
   '/favicon.svg'
 ];
@@ -92,12 +102,32 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Ignore non-GET requests (e.g. POST to attendance gateway)
+  // Intercept offline POST requests to /api/sync/batch when disconnected
+  if (request.method === 'POST' && url.pathname.includes('/api/sync/batch')) {
+    event.respondWith(
+      fetch(request.clone()).catch(() => {
+        return new Response(
+          JSON.stringify({
+            status: 'OFFLINE_SPOOLED',
+            message: 'Device offline. Action securely spooled in IndexedDB; will synchronize upon network recovery.',
+            timestamp: new Date().toISOString()
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
+            status: 200
+          }
+        );
+      })
+    );
+    return;
+  }
+
+  // Ignore other non-GET requests
   if (request.method !== 'GET') {
     return;
   }
 
-  // Strategy A: CacheFirst for Static Assets (/_astro/*, fonts, SVG)
+  // Strategy A: CacheFirst for Static Assets (/_astro/*, fonts, CSS, SVG)
   if (
     url.pathname.startsWith('/_astro/') ||
     url.pathname.endsWith('.js') ||
@@ -126,7 +156,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy B: NetworkFirst with Cache Fallback for HTML Page Routes
+  // Strategy B: NetworkFirst with Cache Fallback for HTML Page Routes & MDX
   if (request.mode === 'navigate' || request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
       fetch(request)
@@ -140,7 +170,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          // Offline Fallback: Serve cached page if available, else root shell
           return caches.match(request).then((cachedPage) => {
             if (cachedPage) {
               return cachedPage;
@@ -158,8 +187,8 @@ self.addEventListener('fetch', (event) => {
       fetch(request).catch(() => {
         return new Response(
           JSON.stringify({
-            status: 'offline_spooled',
-            message: 'Device is offline. Local LittleFS / IndexedDB spooling is managing telemetry.',
+            status: 'OFFLINE_SPOOLED',
+            message: 'Device is offline. Local IndexedDB queue is managing transactions.',
             timestamp: new Date().toISOString()
           }),
           {

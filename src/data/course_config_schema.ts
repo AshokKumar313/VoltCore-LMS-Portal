@@ -1677,6 +1677,7 @@ export interface Tier3SpecializationTrack {
   simRoute: string;
   summary: string;
   hardwareKit: string[];
+  prerequisites?: string[];
 }
 
 export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
@@ -1693,7 +1694,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "IoTSensorSimulatorHub",
     simRoute: "/iot-lab",
     summary: "Master bare-metal memory-mapped GPIO register manipulation, ultra-low-power deep sleep modes, SAR ADC calibration, and PIR sensor acoustics.",
-    hardwareKit: ["ESP32 DevKit v4 Microcontroller", "PIR Motion Sensor (HC-SR501)", "Analog Ambient Light Sensor (LDR / TEMT6000)", "Digital Multimeter"]
+    hardwareKit: ["ESP32 DevKit v4 Microcontroller", "PIR Motion Sensor (HC-SR501)", "Analog Ambient Light Sensor (LDR / TEMT6000)", "Digital Multimeter"],
+    prerequisites: ["EC8702", "EC23C03"]
   },
   {
     id: "automotive_radar",
@@ -1708,7 +1710,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "VirtualOscilloscope",
     simRoute: "/virtual-bench",
     summary: "Design automotive ultrasonic Time-of-Flight obstacle detection and CAN-bus telemetry nodes, analyzing acoustic multipath reflections and thermal drift.",
-    hardwareKit: ["HC-SR04 40kHz Ultrasonic Transducer Module", "MCP2515 CAN Bus Controller + TJA1050 Transceiver (SPI)", "DS18B20 1-Wire Digital Temperature Sensor", "ESP32 Automotive Gateway Node"]
+    hardwareKit: ["HC-SR04 40kHz Ultrasonic Transducer Module", "MCP2515 CAN Bus Controller + TJA1050 Transceiver (SPI)", "DS18B20 1-Wire Digital Temperature Sensor", "ESP32 Automotive Gateway Node"],
+    prerequisites: ["IOT8701", "EC23C04"]
   },
   {
     id: "defense_uav",
@@ -1723,7 +1726,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "IotTelemetryHub",
     simRoute: "/telemetry",
     summary: "Design anti-jamming UAV telemetry links using Semtech SX1280 2.4 GHz transceivers, pseudorandom frequency hopping, and FreeRTOS deterministic SPI DMA pipelines.",
-    hardwareKit: ["Semtech SX1280 2.4 GHz LoRa Transceiver (SPI)", "Semtech SX1262 915 MHz Sub-GHz Transceiver", "ESP32-S3 Dual-Core Xtensa LX7 Microcontroller", "0.5 PPM TCXO"]
+    hardwareKit: ["Semtech SX1280 2.4 GHz LoRa Transceiver (SPI)", "Semtech SX1262 915 MHz Sub-GHz Transceiver", "ESP32-S3 Dual-Core Xtensa LX7 Microcontroller", "0.5 PPM TCXO"],
+    prerequisites: ["EC23C04", "EC23C03"]
   },
   {
     id: "railway_ai",
@@ -1738,7 +1742,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "TinyMlEngineHub",
     simRoute: "/embedded-systems",
     summary: "Deploy quantized TinyML convolutional neural networks (MobileNet-V2 INT8) on edge hardware to detect rail cracks, missing fasteners, and gauge variations.",
-    hardwareKit: ["NVIDIA Jetson Nano Developer Kit", "ESP32-CAM (OV2640 2MP Camera Module)", "ADXL345 3-Axis Digital Accelerometer", "High-Speed Global Shutter USB3 Camera"]
+    hardwareKit: ["NVIDIA Jetson Nano Developer Kit", "ESP32-CAM (OV2640 2MP Camera Module)", "ADXL345 3-Axis Digital Accelerometer", "High-Speed Global Shutter USB3 Camera"],
+    prerequisites: ["IOT8701", "EC23C03"]
   },
   {
     id: "riscv_rtl",
@@ -1753,7 +1758,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "FpgaSynthesisHub",
     simRoute: "/simulation",
     summary: "Architect and synthesize a 5-stage classic pipelined 32-bit RISC-V (RV32I) soft-core processor in Verilog HDL for Xilinx Artix-7 FPGAs with hazard forwarding.",
-    hardwareKit: ["Digilent Basys 3 / Nexys A7 FPGA Board (Artix-7 XC7A35T)", "Xilinx Vivado Design Suite", "JTAG HS2 Programming Cable", "Digilent Pmod USBUART"]
+    hardwareKit: ["Digilent Basys 3 / Nexys A7 FPGA Board (Artix-7 XC7A35T)", "Xilinx Vivado Design Suite", "JTAG HS2 Programming Cable", "Digilent Pmod USBUART"],
+    prerequisites: ["EC3352", "EC23C05"]
   },
   {
     id: "freertos_scheduling",
@@ -1768,7 +1774,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "RtosSchedulerHub",
     simRoute: "/embedded-systems",
     summary: "Master FreeRTOS kernel internals on ARM Cortex-M and dual-core Xtensa ESP32, analyzing priority inversion inheritance, RMS vs EDF bounds, and PendSV switching.",
-    hardwareKit: ["STMicroelectronics STM32F401RE Nucleo-64", "ESP32-S3 Dual-Core Xtensa LX7 DevKit", "Segger J-Link EDU Mini Debugger", "Rigol DS1054Z 4-Channel Oscilloscope"]
+    hardwareKit: ["STMicroelectronics STM32F401RE Nucleo-64", "ESP32-S3 Dual-Core Xtensa LX7 DevKit", "Segger J-Link EDU Mini Debugger", "Rigol DS1054Z 4-Channel Oscilloscope"],
+    prerequisites: ["EC8702", "EC23C03"]
   },
   {
     id: "advanced_analog",
@@ -1783,7 +1790,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "LtspiceSimulationViewer",
     simRoute: "/virtual-bench",
     summary: "Rigorous analytical textbook covering BJT/MOSFET small-signal hybrid-pi derivations, pole-zero transfer functions, Maxwell EM boundary equations, and Shannon-Hartley capacity.",
-    hardwareKit: ["Keysight InfiniiVision 4-Channel 200MHz DSO", "Rohde & Schwarz Vector Network Analyzer", "High-Frequency FR-4 Microstrip Coupon (50-Ohm)", "BJT 2N2222A & MOSFET 2N7000"]
+    hardwareKit: ["Keysight InfiniiVision 4-Channel 200MHz DSO", "Rohde & Schwarz Vector Network Analyzer", "High-Frequency FR-4 Microstrip Coupon (50-Ohm)", "BJT 2N2222A & MOSFET 2N7000"],
+    prerequisites: ["EC3451", "EC23S01"]
   },
   {
     id: "zero_copy_ipc",
@@ -1798,7 +1806,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "DmaNvicHub",
     simRoute: "/virtual-bench",
     summary: "High-throughput DMA controller architectures on ARM Cortex-M4/M7, analyzing multi-layer AHB crossbar bus matrix contention, circular ping-pong buffering, and zero-copy stream buffers.",
-    hardwareKit: ["STMicroelectronics STM32F446RE Nucleo-64", "ESP32-S3 Dual-Core Xtensa LX7 DevKit with GDMA", "Analog Devices AD7606 16-Bit ADC", "Keysight DSOX1204G Oscilloscope"]
+    hardwareKit: ["STMicroelectronics STM32F446RE Nucleo-64", "ESP32-S3 Dual-Core Xtensa LX7 DevKit with GDMA", "Analog Devices AD7606 16-Bit ADC", "Keysight DSOX1204G Oscilloscope"],
+    prerequisites: ["EC8702", "EC23C05"]
   },
   {
     id: "tinyml",
@@ -1813,7 +1822,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "TinyMlEngineHub",
     simRoute: "/embedded-systems",
     summary: "Edge AI TinyML neural network inference on microcontrollers, covering post-training INT8 asymmetric quantization, 64-point FFT feature extraction, and CMSIS-NN SIMD vectorization.",
-    hardwareKit: ["ESP32-S3 Dual-Core Xtensa LX7 DevKit", "STMicroelectronics STM32F446RE Nucleo-64", "Analog Devices ADXL345 Accelerometer", "TI TMP117 High-Precision Temp Sensor"]
+    hardwareKit: ["ESP32-S3 Dual-Core Xtensa LX7 DevKit", "STMicroelectronics STM32F446RE Nucleo-64", "Analog Devices ADXL345 Accelerometer", "TI TMP117 High-Precision Temp Sensor"],
+    prerequisites: ["IOT8701", "EC23S01"]
   },
   {
     id: "instrumentation",
@@ -1828,7 +1838,8 @@ export const TIER3_SPECIALIZATION_TRACKS: Tier3SpecializationTrack[] = [
     simulationComponent: "GateEceInteractiveSolvers",
     simRoute: "/gate-ece",
     summary: "Comprehensive analytical guide to digital logic synthesis, 4-variable Gray code Karnaugh map minimization, Bode plot frequency stability, and ARM Cortex-M pipelined assembly tracing.",
-    hardwareKit: ["Keysight DSOX1204G Digital Storage Oscilloscope", "Xilinx Artix-7 FPGA Evaluation Board"]
+    hardwareKit: ["Keysight DSOX1204G Digital Storage Oscilloscope", "Xilinx Artix-7 FPGA Evaluation Board"],
+    prerequisites: ["EC3451", "EC23C03"]
   }
 ];
 

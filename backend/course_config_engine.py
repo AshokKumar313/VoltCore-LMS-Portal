@@ -20,7 +20,13 @@ Hardware Safe: Zero background polling loops, SQLite WAL mode, passive CPU footp
 
 import os
 import json
-from typing import Dict, Any, List, Optional, Set
+import sqlite3
+import hashlib
+import datetime
+from typing import Dict, Any, List, Optional, Set, Tuple
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "voltcore_telemetry.db")
 
 # Priority courses catalog specification
 COURSE_REGISTRY_DATA: Dict[str, Dict[str, Any]] = {
@@ -571,38 +577,125 @@ class CourseConfigEngine:
         """
         Build and resolve the directed acyclic graph (DAG) of prerequisites.
         Detects cycles and returns topological learning sequence.
+        Supports Tier 1, Tier 2, Tier 3 Specializations, and STM32 Academy nodes.
         """
+        target_norm = target_course.upper().strip()
         visited: Set[str] = set()
         visiting: Set[str] = set()
         order: List[str] = []
+        cycle_detected = False
+        cycle_path: List[str] = []
 
-        def dfs(node: str) -> bool:
+        def dfs(node: str, current_path: List[str]) -> bool:
+            nonlocal cycle_detected, cycle_path
             if node in visiting:
+                cycle_detected = True
+                cycle_path = current_path + [node]
                 return False  # Cycle detected
             if node in visited:
                 return True
 
             visiting.add(node)
+
+            # Query course prerequisites from registry or unified prerequisite graph
+            prereqs = []
             course_data = self.get_course(node)
-            if course_data:
-                for prereq in course_data.get("prerequisites", []):
-                    if not dfs(prereq):
-                        return False
+            if course_data and "prerequisites" in course_data:
+                prereqs = course_data.get("prerequisites", [])
+            elif node in CURRICULUM_PREREQUISITE_GRAPH:
+                prereqs = CURRICULUM_PREREQUISITE_GRAPH[node].get("prerequisites", [])
+
+            for prereq in prereqs:
+                p_norm = prereq.upper().strip()
+                if not dfs(p_norm, current_path + [node]):
+                    return False
 
             visiting.remove(node)
             visited.add(node)
             order.append(node)
             return True
 
-        has_no_cycle = dfs(target_course.upper().strip())
+        has_no_cycle = dfs(target_norm, [])
+
+        direct_prereqs = []
+        c_data = self.get_course(target_norm)
+        if c_data and "prerequisites" in c_data:
+            direct_prereqs = [p.upper().strip() for p in c_data["prerequisites"]]
+        elif target_norm in CURRICULUM_PREREQUISITE_GRAPH:
+            direct_prereqs = [p.upper().strip() for p in CURRICULUM_PREREQUISITE_GRAPH[target_norm].get("prerequisites", [])]
+
+        downstream = self.get_downstream_unlocked_nodes(target_norm)
 
         return {
-            "target": target_course.upper().strip(),
+            "target": target_norm,
             "has_cycle": not has_no_cycle,
             "is_valid_dag": has_no_cycle,
-            "prerequisite_sequence": order[:-1],  # Exclude target itself from prereqs
-            "total_prerequisites": len(order) - 1
+            "cycle_path": cycle_path if not has_no_cycle else [],
+            "prerequisite_sequence": order[:-1] if has_no_cycle else [],  # Exclude target itself
+            "total_prerequisites": len(order) - 1 if has_no_cycle else 0,
+            "direct_prerequisites": direct_prereqs,
+            "downstream_unlocked_nodes": downstream
         }
+
+    def get_downstream_unlocked_nodes(self, completed_node: str) -> List[str]:
+        """Finds all downstream curriculum nodes directly dependent on completed_node."""
+        node_norm = completed_node.upper().strip()
+        downstream = []
+        for code, data in CURRICULUM_PREREQUISITE_GRAPH.items():
+            prereqs = [p.upper().strip() for p in data.get("prerequisites", [])]
+            if node_norm in prereqs and code != node_norm:
+                downstream.append(code)
+        for code, data in self.registry.items():
+            prereqs = [p.upper().strip() for p in data.get("prerequisites", [])]
+            if node_norm in prereqs and code not in downstream and code != node_norm:
+                downstream.append(code)
+        return sorted(list(set(downstream)))
+
+    def get_topological_sort(self, node_subset: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Computes the complete topological sort for all curriculum nodes or a subset.
+        Returns topological ordering and validates global acyclicity.
+        """
+        all_nodes = set(node_subset) if node_subset else set(CURRICULUM_PREREQUISITE_GRAPH.keys()).union(self.registry.keys())
+        in_degree: Dict[str, int] = {n: 0 for n in all_nodes}
+        adj: Dict[str, List[str]] = {n: [] for n in all_nodes}
+
+        for node in all_nodes:
+            prereqs = []
+            if node in self.registry:
+                prereqs = self.registry[node].get("prerequisites", [])
+            elif node in CURRICULUM_PREREQUISITE_GRAPH:
+                prereqs = CURRICULUM_PREREQUISITE_GRAPH[node].get("prerequisites", [])
+            for p in prereqs:
+                p_norm = p.upper().strip()
+                if p_norm in all_nodes:
+                    adj[p_norm].append(node)
+                    in_degree[node] += 1
+
+        queue = [n for n, deg in in_degree.items() if deg == 0]
+        order = []
+
+        while queue:
+            curr = queue.pop(0)
+            order.append(curr)
+            for neighbor in adj[curr]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+        has_cycle = len(order) < len(all_nodes)
+        return {
+            "is_valid_dag": not has_cycle,
+            "has_cycle": has_cycle,
+            "topological_order": order if not has_cycle else [],
+            "total_nodes": len(all_nodes),
+            "unresolved_nodes": [n for n, deg in in_degree.items() if deg > 0] if has_cycle else []
+        }
+
+    def validate_no_cycles(self) -> bool:
+        """Verifies zero circular dependencies across the entire curriculum graph."""
+        res = self.get_topological_sort()
+        return res["is_valid_dag"]
 
     def audit_academic_rigor(self, code: str) -> Dict[str, Any]:
         """Verify Bloom's Taxonomy rigor distribution and syllabus duration."""
@@ -829,4 +922,574 @@ TIER3_SPECIALIZATION_TRACKS: List[Dict[str, Any]] = [
         "hardware_kit": ["Keysight DSOX1204G Digital Storage Oscilloscope", "Xilinx Artix-7 FPGA Evaluation Board"]
     }
 ]
+
+
+# ========================================================================================
+# UNIFIED CURRICULUM PREREQUISITE GRAPH (TIER 1, TIER 2, TIER 3 & STM32 ACADEMY)
+# ========================================================================================
+CURRICULUM_PREREQUISITE_GRAPH: Dict[str, Dict[str, Any]] = {
+    # Tier 2: Pre-Engineering & Mathematical Foundations
+    "MA23C01": {
+        "code": "MA23C01",
+        "title": "Applied Mathematics & Linear Algebra",
+        "tier": "Tier 2: Foundation",
+        "category": "Basic Sciences (BSC)",
+        "prerequisites": [],
+        "min_mastery_pct": 70.0
+    },
+    "PH23C01": {
+        "code": "PH23C01",
+        "title": "Engineering Physics & Semiconductor Physics",
+        "tier": "Tier 2: Foundation",
+        "category": "Basic Sciences (BSC)",
+        "prerequisites": [],
+        "min_mastery_pct": 70.0
+    },
+    "EE23C01": {
+        "code": "EE23C01",
+        "title": "Electric Circuit Analysis & Network Theorems",
+        "tier": "Tier 2: Foundation",
+        "category": "Engineering Sciences (ESC)",
+        "prerequisites": [],
+        "min_mastery_pct": 70.0
+    },
+    "EC23C04": {
+        "code": "EC23C04",
+        "title": "Signals and Systems (Continuous & Discrete)",
+        "tier": "Tier 2: Foundation",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["MA23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC23C02": {
+        "code": "EC23C02",
+        "title": "Electromagnetic Fields & Guided Waves",
+        "tier": "Tier 2: Foundation",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["PH23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC3352": {
+        "code": "EC3352",
+        "title": "Digital Systems & Verilog HDL",
+        "tier": "Tier 2: Foundation",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["EE23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC3451": {
+        "code": "EC3451",
+        "title": "Linear Integrated Circuits & Operational Amplifiers",
+        "tier": "Tier 2: Foundation",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["EE23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC23C05": {
+        "code": "EC23C05",
+        "title": "Microprocessors and Microcontrollers",
+        "tier": "Tier 2: Foundation",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["EC3352"],
+        "min_mastery_pct": 70.0
+    },
+
+    # Tier 1: Core Priority Engineering Disciplines
+    "EC23C03": {
+        "code": "EC23C03",
+        "title": "Electronic Devices and Circuits",
+        "tier": "Tier 1: Core",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["PH23C01", "EE23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC23S01": {
+        "code": "EC23S01",
+        "title": "Python Digital Signal Processing",
+        "tier": "Tier 1: Core",
+        "category": "Employability Enhancement (EEC)",
+        "prerequisites": ["EC23C04", "MA23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC23E04": {
+        "code": "EC23E04",
+        "title": "Optics, Lasers and Fiber Optics",
+        "tier": "Tier 1: Core",
+        "category": "Professional Elective (PEC)",
+        "prerequisites": ["EC23C02", "PH23C01"],
+        "min_mastery_pct": 70.0
+    },
+    "EC8702": {
+        "code": "EC8702",
+        "title": "Advanced Embedded Systems Architecture",
+        "tier": "Tier 1: Core",
+        "category": "Professional Core (PCC)",
+        "prerequisites": ["EC23C05", "EC3352"],
+        "min_mastery_pct": 70.0
+    },
+
+    # Tier 3: Advanced Specialization Tracks
+    "IOT8701": {
+        "code": "IOT8701",
+        "title": "IoT Edge Node Foundations, Bare-Metal GPIO & Low-Power Sleep Architecture",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC8702", "EC23C03"],
+        "min_mastery_pct": 70.0
+    },
+    "AUTO8702": {
+        "code": "AUTO8702",
+        "title": "Automotive Radar & Ultrasonic Edge Sensing Telemetry",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["IOT8701", "EC23S01"],
+        "min_mastery_pct": 70.0
+    },
+    "UAV8703": {
+        "code": "UAV8703",
+        "title": "Defense UAV Telemetry & Frequency-Hopping Spread Spectrum (FHSS)",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["AUTO8702", "EC23S01"],
+        "min_mastery_pct": 70.0
+    },
+    "RAIL8704": {
+        "code": "RAIL8704",
+        "title": "High-Speed Railway Edge AI & Optical Track Defect Classification",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["IOT8701", "EC23S01"],
+        "min_mastery_pct": 70.0
+    },
+    "RISCV8705": {
+        "code": "RISCV8705",
+        "title": "5-Stage Pipelined RV32I RISC-V Soft-Core Processor Design",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC8702", "EC3352"],
+        "min_mastery_pct": 70.0
+    },
+    "RTOS8706": {
+        "code": "RTOS8706",
+        "title": "Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC8702"],
+        "min_mastery_pct": 70.0
+    },
+    "ANLG8707": {
+        "code": "ANLG8707",
+        "title": "Advanced Analog Small-Signal Foundations & High-Frequency Signal Integrity",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC23C03", "EC3451"],
+        "min_mastery_pct": 70.0
+    },
+    "DMA8708": {
+        "code": "DMA8708",
+        "title": "Advanced ARM Cortex-M DMA Architecture & FreeRTOS Zero-Copy IPC",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["RTOS8706", "EC8702"],
+        "min_mastery_pct": 70.0
+    },
+    "TML8709": {
+        "code": "TML8709",
+        "title": "TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC23S01", "EC8702", "IOT8701"],
+        "min_mastery_pct": 70.0
+    },
+    "INST8710": {
+        "code": "INST8710",
+        "title": "Advanced ECE Instrumentation, K-Map Minimization & Bode Plot Dynamics",
+        "tier": "Tier 3: Specialization",
+        "category": "Specialization Track",
+        "prerequisites": ["EC23C03", "EC23S01"],
+        "min_mastery_pct": 70.0
+    },
+
+    # STM32 Academy 5-Tier Curriculum Structure
+    "STM32_T1": {
+        "code": "STM32_T1",
+        "title": "STM32 Academy Tier 1: Architecture & Toolchain",
+        "tier": "STM32 Academy",
+        "category": "Bare-Metal Embedded",
+        "prerequisites": ["EC8702"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_T2": {
+        "code": "STM32_T2",
+        "title": "STM32 Academy Tier 2: Core Peripherals (GPIO, Timers, EXTI)",
+        "tier": "STM32 Academy",
+        "category": "Bare-Metal Embedded",
+        "prerequisites": ["STM32_T1"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_T3": {
+        "code": "STM32_T3",
+        "title": "STM32 Academy Tier 3: Serial Buses & DMA (SPI, I2C, CAN)",
+        "tier": "STM32 Academy",
+        "category": "Bare-Metal Embedded",
+        "prerequisites": ["STM32_T2"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_T4": {
+        "code": "STM32_T4",
+        "title": "STM32 Academy Tier 4: RTOS Kernel Internals & PendSV Context Switching",
+        "tier": "STM32 Academy",
+        "category": "Real-Time OS",
+        "prerequisites": ["STM32_T3", "RTOS8706"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_T5": {
+        "code": "STM32_T5",
+        "title": "STM32 Academy Tier 5: Industrial Hardware & Edge AI",
+        "tier": "STM32 Academy",
+        "category": "Industrial Systems",
+        "prerequisites": ["STM32_T4", "TML8709"],
+        "min_mastery_pct": 70.0
+    },
+
+    # Granular STM32 Modules
+    "STM32_MOD_01": {
+        "code": "STM32_MOD_01",
+        "title": "Memory Architecture & Reset Sequences",
+        "tier": "STM32 Academy",
+        "prerequisites": ["EC8702"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_05": {
+        "code": "STM32_MOD_05",
+        "title": "Memory-Mapped GPIO & BSRR Atomic Writes",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_01"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_12": {
+        "code": "STM32_MOD_12",
+        "title": "Direct Memory Access (DMA) Circular Streaming",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_05"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_14": {
+        "code": "STM32_MOD_14",
+        "title": "SysTick Timer & Cooperative Multitasking",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_12"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_15": {
+        "code": "STM32_MOD_15",
+        "title": "FreeRTOS Kernel Porting & PendSV Context Switch",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_14", "RTOS8706"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_16": {
+        "code": "STM32_MOD_16",
+        "title": "RTOS Queues, Mutexes & Priority Inversion",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_15"],
+        "min_mastery_pct": 70.0
+    },
+    "STM32_MOD_21": {
+        "code": "STM32_MOD_21",
+        "title": "TinyML Edge AI Inference with CMSIS-NN",
+        "tier": "STM32 Academy",
+        "prerequisites": ["STM32_MOD_16", "TML8709"],
+        "min_mastery_pct": 70.0
+    }
+}
+
+
+# ========================================================================================
+# STUDENT MASTERY PROGRESSION & TOKEN VERIFICATION ENGINE (SQLITE WAL MODE)
+# ========================================================================================
+
+class CurriculumMasteryEngine:
+    """
+    Governs curriculum unlocking via mastery token verification in SQLite WAL mode.
+    Enforces the >= 70% attainment threshold before downstream modules can be accessed.
+    """
+
+    def __init__(self, db_path: str = DEFAULT_DB_PATH, graph: Optional[Dict[str, Any]] = None):
+        self.db_path = db_path
+        self.graph = graph or CURRICULUM_PREREQUISITE_GRAPH
+        self._init_db()
+
+    def _get_connection(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.db_path, timeout=10.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        return conn
+
+    def _init_db(self):
+        conn = self._get_connection()
+        try:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS student_progress (
+                    student_id TEXT NOT NULL,
+                    module_id TEXT NOT NULL,
+                    course_code TEXT NOT NULL,
+                    score REAL NOT NULL,
+                    max_score REAL DEFAULT 100.0,
+                    attainment_pct REAL NOT NULL,
+                    status TEXT NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (student_id, module_id)
+                );
+            """)
+
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS module_mastery_tokens (
+                    token_id TEXT PRIMARY KEY,
+                    student_id TEXT NOT NULL,
+                    module_id TEXT NOT NULL,
+                    course_code TEXT NOT NULL,
+                    attainment_pct REAL NOT NULL,
+                    token_signature TEXT NOT NULL,
+                    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, module_id)
+                );
+            """)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def record_mastery_evaluation(
+        self,
+        student_id: str,
+        module_id: str,
+        course_code: str,
+        score: float,
+        max_score: float = 100.0,
+        evaluation_type: str = "QUIZ"
+    ) -> Dict[str, Any]:
+        """
+        Records student score for a unit, quiz, or lab experiment.
+        Awards a verified mastery token if attainment >= 70.0%.
+        Returns unlocked downstream nodes upon milestone completion.
+        """
+        student_clean = student_id.strip().upper()
+        module_clean = module_id.strip().upper()
+        course_clean = course_code.strip().upper()
+        max_pts = max(1.0, float(max_score))
+        attainment_pct = round((float(score) / max_pts) * 100.0, 2)
+        mastery_achieved = attainment_pct >= 70.0
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        conn = self._get_connection()
+        try:
+            status_val = "COMPLETED" if mastery_achieved else "REMEDIAL_REQUIRED"
+            conn.execute("""
+                INSERT INTO student_progress (student_id, module_id, course_code, score, max_score, attainment_pct, status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(student_id, module_id) DO UPDATE SET
+                    score = excluded.score,
+                    max_score = excluded.max_score,
+                    attainment_pct = excluded.attainment_pct,
+                    status = excluded.status,
+                    updated_at = excluded.updated_at;
+            """, (student_clean, module_clean, course_clean, float(score), max_pts, attainment_pct, status_val, now_str))
+
+            token_id = None
+            if mastery_achieved:
+                sig_raw = f"{student_clean}:{module_clean}:{attainment_pct}:VOLTCORE_APEX_KEY_2026"
+                token_sig = hashlib.sha256(sig_raw.encode("utf-8")).hexdigest()[:24]
+                token_id = f"TOK_{student_clean}_{module_clean}_{os.urandom(2).hex()}"
+                conn.execute("""
+                    INSERT INTO module_mastery_tokens (token_id, student_id, module_id, course_code, attainment_pct, token_signature, issued_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(student_id, module_id) DO UPDATE SET
+                        attainment_pct = excluded.attainment_pct,
+                        token_signature = excluded.token_signature,
+                        issued_at = excluded.issued_at;
+                """, (token_id, student_clean, module_clean, course_clean, attainment_pct, token_sig, now_str))
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        # Determine newly unlocked downstream nodes
+        unlocked_nodes = []
+        if mastery_achieved:
+            downstream = course_config_engine.get_downstream_unlocked_nodes(module_clean)
+            for node in downstream:
+                check = self.verify_node_unlocked(student_clean, node)
+                if check["is_unlocked"]:
+                    unlocked_nodes.append(node)
+
+        return {
+            "status": "SUCCESS" if mastery_achieved else "REMEDIAL_REQUIRED",
+            "student_id": student_clean,
+            "module_id": module_clean,
+            "course_code": course_clean,
+            "score": float(score),
+            "max_score": max_pts,
+            "attainment_pct": attainment_pct,
+            "mastery_achieved": mastery_achieved,
+            "token_id": token_id,
+            "evaluation_type": evaluation_type,
+            "unlocked_downstream_nodes": unlocked_nodes,
+            "evaluated_at": now_str
+        }
+
+    def verify_node_unlocked(self, student_id: str, target_node: str) -> Dict[str, Any]:
+        """
+        Verifies whether target_node is unlocked for student_id by checking
+        that all prerequisite nodes possess a verified mastery token (>= 70%).
+        """
+        student_clean = student_id.strip().upper()
+        node_clean = target_node.strip().upper()
+
+        # Look up direct prerequisites
+        prereqs = []
+        if node_clean in self.graph:
+            prereqs = self.graph[node_clean].get("prerequisites", [])
+        elif node_clean in course_config_engine.registry:
+            prereqs = course_config_engine.registry[node_clean].get("prerequisites", [])
+
+        if not prereqs:
+            return {
+                "student_id": student_clean,
+                "target_node": node_clean,
+                "is_unlocked": True,
+                "status": "UNLOCKED",
+                "total_prerequisites": 0,
+                "satisfied_prerequisites": [],
+                "missing_prerequisites": [],
+                "reason": "Foundational entry node (no prerequisites required)."
+            }
+
+        conn = self._get_connection()
+        satisfied = []
+        missing = []
+        tokens = {}
+        try:
+            cur = conn.cursor()
+            for p in prereqs:
+                p_clean = p.strip().upper()
+                cur.execute("""
+                    SELECT token_id, attainment_pct, issued_at
+                    FROM module_mastery_tokens
+                    WHERE student_id = ? AND module_id = ? AND attainment_pct >= 70.0;
+                """, (student_clean, p_clean))
+                row = cur.fetchone()
+                if row:
+                    satisfied.append(p_clean)
+                    tokens[p_clean] = {"token_id": row[0], "attainment_pct": row[1], "issued_at": row[2]}
+                else:
+                    missing.append(p_clean)
+        finally:
+            conn.close()
+
+        is_unlocked = len(missing) == 0
+        return {
+            "student_id": student_clean,
+            "target_node": node_clean,
+            "is_unlocked": is_unlocked,
+            "status": "UNLOCKED" if is_unlocked else "LOCKED",
+            "total_prerequisites": len(prereqs),
+            "satisfied_prerequisites": satisfied,
+            "missing_prerequisites": missing,
+            "mastery_tokens": tokens,
+            "reason": "All prerequisite competencies verified." if is_unlocked else f"Locked: Requires >= 70% mastery in {', '.join(missing)}."
+        }
+
+    def get_student_curriculum_state(self, student_id: str) -> Dict[str, Any]:
+        """
+        Compiles the entire curriculum graph status for student_id,
+        marking each node as MASTERED, UNLOCKED, or LOCKED.
+        """
+        student_clean = student_id.strip().upper()
+        conn = self._get_connection()
+        tokens = {}
+        progress_map = {}
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT module_id, token_id, attainment_pct FROM module_mastery_tokens WHERE student_id = ?;", (student_clean,))
+            for r in cur.fetchall():
+                tokens[r[0]] = {"token_id": r[1], "attainment_pct": r[2]}
+            cur.execute("SELECT module_id, score, max_score, attainment_pct, status FROM student_progress WHERE student_id = ?;", (student_clean,))
+            for r in cur.fetchall():
+                progress_map[r[0]] = {"score": r[1], "max_score": r[2], "attainment_pct": r[3], "status": r[4]}
+        finally:
+            conn.close()
+
+        nodes_state = {}
+        for node, data in self.graph.items():
+            prereqs = data.get("prerequisites", [])
+            is_mastered = node in tokens
+            if is_mastered:
+                st = "MASTERED"
+                unlocked = True
+            elif not prereqs or all(p.upper().strip() in tokens for p in prereqs):
+                st = "UNLOCKED"
+                unlocked = True
+            else:
+                st = "LOCKED"
+                unlocked = False
+
+            missing = [p for p in prereqs if p.upper().strip() not in tokens]
+            nodes_state[node] = {
+                "code": node,
+                "title": data.get("title", node),
+                "tier": data.get("tier", "Core"),
+                "status": st,
+                "is_unlocked": unlocked,
+                "is_mastered": is_mastered,
+                "missing_prerequisites": missing,
+                "progress": progress_map.get(node)
+            }
+
+        unlocked_count = sum(1 for n in nodes_state.values() if n["status"] == "UNLOCKED")
+        locked_count = sum(1 for n in nodes_state.values() if n["status"] == "LOCKED")
+        mastered_count = len(tokens)
+
+        return {
+            "student_id": student_clean,
+            "total_nodes": len(nodes_state),
+            "mastered_count": mastered_count,
+            "unlocked_count": unlocked_count,
+            "locked_count": locked_count,
+            "summary": {
+                "total": len(nodes_state),
+                "mastered": mastered_count,
+                "unlocked": unlocked_count,
+                "locked": locked_count,
+                "completion_pct": round((mastered_count / len(nodes_state)) * 100.0, 1) if nodes_state else 0.0
+            },
+            "nodes": nodes_state
+        }
+
+    def grant_mastery_override(
+        self,
+        student_id: str,
+        module_id: str,
+        course_code: str,
+        actor_role: str = "Faculty",
+        notes: str = ""
+    ) -> Dict[str, Any]:
+        """Faculty/Admin override granting verified mastery status and unlocking downstream nodes."""
+        role_clean = (actor_role or "").strip()
+        if role_clean not in ("Admin", "Faculty", "Instructor", "Platform-Lead"):
+            return {
+                "status": "FORBIDDEN",
+                "error": "Mastery override requires Faculty or Admin credentials."
+            }
+        return self.record_mastery_evaluation(
+            student_id=student_id,
+            module_id=module_id,
+            course_code=course_code,
+            score=100.0,
+            max_score=100.0
+        )
+
+
+# Global singleton instances for platform-wide use
+course_config_engine = CourseConfigEngine()
+curriculum_mastery_engine = CurriculumMasteryEngine()
 

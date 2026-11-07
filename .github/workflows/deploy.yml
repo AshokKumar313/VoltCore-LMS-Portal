@@ -41,7 +41,23 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest pytest-cov dulwich reportlab
 
-      - name: Run Full Pytest Verification Suite (All 417+ Tests)
+      - name: Python Syntax & Static Integrity Check
+        run: |
+          python -m py_compile attendance_server.py lms_database.py backend/*.py
+
+      - name: Run Phase Regression Test Suite (Phases 5 through 11)
+        run: |
+          pytest tests/test_phase5_telemetry.py \
+                 tests/test_phase6_ai_tutor.py \
+                 tests/test_phase7_laboratories.py \
+                 tests/test_phase8_career_exams.py \
+                 tests/test_phase9_exam_center.py \
+                 tests/test_phase9_enterprise.py \
+                 tests/test_phase10_production.py \
+                 tests/test_phase11_dag.py \
+                 --verbose
+
+      - name: Run Full Pytest Verification Suite
         run: |
           pytest tests/ --verbose
 
@@ -56,8 +72,10 @@ jobs:
       - name: Verify Hardware Safety & Zero Leakage Invariants
         run: |
           echo "Asserting zero presence of private admin credentials..."
-          ! grep -rn "ashokkumar2008313@gmail.com" src/components/
-          ! grep -rn "9597382878" src/components/
+          RESTRICTED_EMAIL=$(echo "YXNob2trdW1hcjIwMDgzMTNAZ21haWwuY29t" | base64 -d)
+          RESTRICTED_PHONE=$(echo "OTU5NzM4Mjg3OA==" | base64 -d)
+          ! grep -rn "$RESTRICTED_EMAIL" src/components/
+          ! grep -rn "$RESTRICTED_PHONE" src/components/
           echo "All privacy and credential protection invariants verified."
 
   # ========================================================================================
@@ -152,10 +170,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-static-routes
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

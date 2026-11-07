@@ -291,6 +291,38 @@ export default function CourseNavigationSidebar({
   const [expandedTrackId, setExpandedTrackId] = useState(activeTrackId);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTabMode, setActiveTabMode] = useState("core"); // "core" | "tier3"
+  const [lockAlert, setLockAlert] = useState(null);
+
+  // Student Mastery Progression Tokens (defaults with foundational competencies)
+  const [masteredModules, setMasteredModules] = useState(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const saved = localStorage.getItem("voltcore_mastered_modules");
+        if (saved) return JSON.parse(saved);
+      }
+    } catch (e) {}
+    return { "EE23C01": 85.0, "PH23C01": 90.0, "MA23C01": 78.0, "EC8702": 82.0, "EC23C03": 88.0 };
+  });
+
+  const checkTrackUnlocked = (spec) => {
+    const prereqs = spec.prerequisites || [];
+    if (prereqs.length === 0) return { unlocked: true, missing: [] };
+    const missing = prereqs.filter(p => !masteredModules[p] || masteredModules[p] < 70.0);
+    return { unlocked: missing.length === 0, missing };
+  };
+
+  const simulateMasteryAttainment = (code) => {
+    setMasteredModules(prev => {
+      const updated = { ...prev, [code]: 85.0 };
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          localStorage.setItem("voltcore_mastered_modules", JSON.stringify(updated));
+        }
+      } catch (e) {}
+      return updated;
+    });
+    setLockAlert(null);
+  };
 
   const toggleTrack = (trackId) => {
     setExpandedTrackId(prev => prev === trackId ? null : trackId);
@@ -377,50 +409,149 @@ export default function CourseNavigationSidebar({
       <div className="flex-1 overflow-y-auto space-y-2.5 w-full pr-1">
         {activeTabMode === "tier3" && !isCollapsed && (
           <div className="space-y-2">
-            {filteredTier3Tracks.map(spec => (
-              <div
-                key={spec.id}
-                className="p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 transition-all space-y-1.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <span className="text-sm">{spec.icon}</span>
-                    <span className="font-bold text-white text-[11px] truncate">{spec.track}</span>
-                  </div>
-                  <span
-                    className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold flex-shrink-0"
-                    style={{
-                      color: spec.themeColor,
-                      backgroundColor: `${spec.themeColor}15`,
-                      border: `1px solid ${spec.themeColor}40`
-                    }}
-                  >
-                    {spec.code}
+            {/* Prerequisite Lock Alert Banner */}
+            {lockAlert && (
+              <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[11px] space-y-1.5 transition-all">
+                <div className="flex items-center justify-between text-amber-300 font-bold">
+                  <span className="flex items-center gap-1.5">
+                    <span>🔒</span>
+                    <span>Locked: {lockAlert.track} ({lockAlert.code})</span>
                   </span>
+                  <button 
+                    type="button"
+                    onClick={() => setLockAlert(null)} 
+                    className="text-amber-400 hover:text-white text-xs"
+                    aria-label="Dismiss alert"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <p className="text-[10px] text-slate-300 line-clamp-2 leading-snug">
-                  {spec.title}
+                <p className="text-slate-300 text-[10px] leading-tight">
+                  Requires ≥ 70% mastery in: <span className="font-mono text-amber-200 font-bold">{lockAlert.missing.join(', ')}</span>.
                 </p>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
-                  <span className="text-[9px] text-slate-400 truncate">
-                    {spec.duration} • {spec.difficulty}
-                  </span>
-                  <a
-                    href={spec.simRoute}
-                    className="text-[9px] px-2 py-0.5 rounded font-bold transition-all hover:scale-105 inline-flex items-center gap-1 flex-shrink-0"
-                    style={{
-                      color: spec.themeColor,
-                      border: `1px solid ${spec.themeColor}50`,
-                      backgroundColor: `${spec.themeColor}10`
-                    }}
-                    title={`Launch ${spec.simulationComponent}`}
-                  >
-                    <span>⚡</span>
-                    <span className="truncate max-w-[100px]">{spec.simulationComponent}</span>
-                  </a>
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {lockAlert.missing.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => simulateMasteryAttainment(m)}
+                      className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 font-bold text-[9px] transition-all inline-flex items-center gap-1"
+                      title={`Simulate completing ${m} to unlock downstream nodes`}
+                    >
+                      <span>⚡ Unlock:</span>
+                      <span>Pass {m} (85%)</span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {filteredTier3Tracks.map(spec => {
+              const lockStatus = checkTrackUnlocked(spec);
+              const isUnlocked = lockStatus.unlocked;
+              const isMastered = !!masteredModules[spec.code] && masteredModules[spec.code] >= 70.0;
+
+              return (
+                <div
+                  key={spec.id}
+                  className={`p-2.5 rounded-xl border transition-all space-y-1.5 ${
+                    !isUnlocked
+                      ? "border-slate-800/60 bg-slate-950/50 opacity-80 hover:border-amber-500/40"
+                      : isMastered
+                        ? "border-emerald-500/40 bg-emerald-950/10 shadow-sm"
+                        : "border-slate-800 bg-slate-900/40 hover:border-slate-700"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="text-sm">{spec.icon}</span>
+                      <span className="font-bold text-white text-[11px] truncate">{spec.track}</span>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {!isUnlocked ? (
+                        <span 
+                          className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          title={`Locked: Requires >= 70% in ${lockStatus.missing.join(', ')}`}
+                        >
+                          🔒 {spec.code}
+                        </span>
+                      ) : isMastered ? (
+                        <span 
+                          className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                          title="Competency Mastered (>= 70%)"
+                        >
+                          ⚡ {spec.code}
+                        </span>
+                      ) : (
+                        <span
+                          className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold"
+                          style={{
+                            color: spec.themeColor,
+                            backgroundColor: `${spec.themeColor}15`,
+                            border: `1px solid ${spec.themeColor}40`
+                          }}
+                        >
+                          {spec.code}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-300 line-clamp-2 leading-snug">
+                    {spec.title}
+                  </p>
+                  
+                  {/* Prerequisite Tags */}
+                  {spec.prerequisites && spec.prerequisites.length > 0 && (
+                    <div className="flex items-center gap-1 text-[9px] font-mono text-slate-400">
+                      <span>Prereq:</span>
+                      {spec.prerequisites.map(p => (
+                        <span 
+                          key={p} 
+                          className={`px-1 rounded ${
+                            masteredModules[p] && masteredModules[p] >= 70.0
+                              ? "text-emerald-400 bg-emerald-950/40"
+                              : "text-amber-400 bg-amber-950/40 font-bold"
+                          }`}
+                        >
+                          {p} {masteredModules[p] && masteredModules[p] >= 70.0 ? "✓" : "🔒"}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                    <span className="text-[9px] text-slate-400 truncate">
+                      {spec.duration} • {spec.difficulty}
+                    </span>
+                    {!isUnlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => setLockAlert({ track: spec.track, code: spec.code, missing: lockStatus.missing })}
+                        className="text-[9px] px-2 py-0.5 rounded font-bold transition-all bg-amber-500/10 text-amber-300 border border-amber-500/40 hover:bg-amber-500/20 inline-flex items-center gap-1 flex-shrink-0"
+                        title={`Locked: Requires >= 70% in ${lockStatus.missing.join(', ')}`}
+                      >
+                        <span>🔒</span>
+                        <span>Requires {lockStatus.missing[0]}</span>
+                      </button>
+                    ) : (
+                      <a
+                        href={spec.simRoute}
+                        className="text-[9px] px-2 py-0.5 rounded font-bold transition-all hover:scale-105 inline-flex items-center gap-1 flex-shrink-0"
+                        style={{
+                          color: spec.themeColor,
+                          border: `1px solid ${spec.themeColor}50`,
+                          backgroundColor: `${spec.themeColor}10`
+                        }}
+                        title={`Launch ${spec.simulationComponent}`}
+                      >
+                        <span>⚡</span>
+                        <span className="truncate max-w-[100px]">{spec.simulationComponent}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
