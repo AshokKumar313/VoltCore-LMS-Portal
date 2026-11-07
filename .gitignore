@@ -48,10 +48,14 @@ yarn-error.log*
 pnpm-debug.log*
 
 # IDE & OS
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .idea/
 .DS_Store
 Thumbs.db
 *.swp
-*.bak
+# Scratch & Test Cache
+scratch/
+.pytest_cache/
 

@@ -1,0 +1,223 @@
+---
+moduleNumber: 5
+title: 'GPIO Architecture & Hardware-Atomic Bit Manipulation (F1 CRL/CRH vs F4 MODER/BSRR)'
+shortTitle: 'GPIO Architecture & Atomic BSRR'
+tier: 'Tier 2: Core Peripherals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '04-clock-tree-rcc-pll-pwr'
+estimatedDuration: '65 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'GPIOx_MODER'
+  - 'GPIOx_OTYPER'
+  - 'GPIOx_BSRR'
+  - 'GPIOx_CRL'
+  - 'GPIOx_CRH'
+  - 'AFIO_MAPR'
+description: 'In-depth comparison of STM32 GPIO port architectures: F1 4-bit CRL/CRH paired registers vs F4 orthogonal MODER/OTYPER/PUPDR, atomic bit manipulation via BSRR, and bit-band memory aliasing.'
+keyFormulas:
+  - 'F4 MODER Bitmask: MODER[2n+1 : 2n] = Mode'
+  - 'F1 CRL Bitmask: CRL[4n+3 : 4n] = (CNF << 2) | MODE'
+  - 'Atomic Set: BSRR = (1UL << pin)'
+  - 'Atomic Reset: BSRR = (1UL << (pin + 16))'
+  - 'Bit-Band Alias = Alias_Base + (Byte_Offset * 32) + (Bit_Number * 4)'
+hardwareApparatus:
+  - 'Nucleo-F401RE (PA5 Green LED)'
+  - 'STM32F103 Blue Pill (PC13 LED)'
+  - 'Digital Oscilloscope / Logic Analyzer'
+order: 5
+xpReward: 175
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# GPIO Architecture & Hardware-Atomic Bit Manipulation (F1 CRL/CRH vs F4 MODER/BSRR)
+
+## 1. Architectural Evolution: STM32F1 vs. STM32F4 GPIO Ports
+
+General-Purpose Input/Output (GPIO) circuitry forms the primary electrical interface between the microcontroller silicon die and external electronics. The architectural shift between the legacy **STM32F1 (Cortex-M3)** and modern **STM32F4 (Cortex-M4F)** represents one of the most critical evolutions in embedded hardware design:
+
+```
++-------------------------------------------------------------------------------+
+|                       GPIO REGISTER ARCHITECTURE COMPARISON                   |
++-------------------------------------------------------------------------------+
+| Parameter            | STM32F401RE (Modern Architecture)| STM32F103 (Legacy)  |
++----------------------+----------------------------------+---------------------+
+| Configuration Scheme | Orthogonal independent registers | Combined 4-bit/pin  |
+| Primary Registers    | MODER, OTYPER, OSPEEDR, PUPDR    | CRL (0-7), CRH (8-15|
+| Mode Control Bits    | 2 bits/pin (In, Out, Alt, Analog)| 2 bits MODE + 2 CNF |
+| Output Type          | OTYPER: 1 bit per pin (PP vs OD) | Merged in CNF bits  |
+| Output Slew Rate     | OSPEEDR: Low, Med, Fast, High    | Merged in MODE bits |
+| Pull Up / Down Res.  | PUPDR: Independent (Float, PU, PD| Configured via ODR  |
+| Alternate Function   | 4-bit/pin MUX: AFR[0], AFR[1]    | Global AFIO_MAPR    |
+| Atomic Manipulation  | BSRR (32-bit: Set & Reset)       | BSRR (Set) & BRR(Rst|
++----------------------+----------------------------------+---------------------+
+```
+
+---
+
+## 2. STM32F401RE Orthogonal Register Architecture
+
+The STM32F4 decouples pin attributes into dedicated orthogonal 32-bit registers. Each pin is governed by independent bitfields:
+
+### 2.1 Mode Register (`GPIOx_MODER`)
+Controls the operating direction of all 16 port pins using 2 bits per pin (`MODER[2n+1 : 2n]`):
+- `00`: Input Mode (Reset State for most pins)
+- `01`: General Purpose Output Mode
+- `10`: Alternate Function Mode (Peripheral multiplexer active)
+- `11`: Analog Mode (Schmitt trigger disconnected, zero dynamic leakage)
+
+### 2.2 Output Type Register (`GPIOx_OTYPER`)
+Controls the output driver stage using 1 bit per pin:
+- `0`: Output Push-Pull (Actively drives `VDD` and `VSS`)
+- `1`: Output Open-Drain (N-MOS sink only; requires external pull-up resistor for I2C and shared buses)
+
+### 2.3 Output Speed Register (`GPIOx_OSPEEDR`)
+Configures output driver slew rates to mitigate RF EMI and ground bounce:
+- `00`: Low Speed (2 MHz)
+- `01`: Medium Speed (25 MHz)
+- `10`: Fast Speed (50 MHz)
+- `11`: High Speed (84 MHz)
+
+### 2.4 Pull-Up / Pull-Down Register (`GPIOx_PUPDR`)
+Enables internal weak resistors (approximately 40 kΩ):
+- `00`: Floating (No pull-up, no pull-down)
+- `01`: Pull-Up (`R_PU` connected to `VDD`)
+- `10`: Pull-Down (`R_PD` connected to `VSS`)
+- `11`: Reserved
+
+---
+
+## 3. STM32F103 Legacy Register Architecture (`CRL` & `CRH`)
+
+The legacy STM32F1 architecture groups pin configuration into two 32-bit registers:
+- **`GPIOx_CRL`:** Controls Low Pins 0 through 7 (4 bits per pin).
+- **`GPIOx_CRH`:** Controls High Pins 8 through 15 (4 bits per pin).
+
+For Pin `n`, the 4-bit nibble is divided into:
+- **`MODE[1:0]` (Bits [1:0] of nibble):**
+  - `00`: Input Mode (Speed = 0)
+  - `01`: Output Mode, Max Speed 10 MHz
+  - `10`: Output Mode, Max Speed 2 MHz
+  - `11`: Output Mode, Max Speed 50 MHz
+- **`CNF[1:0]` (Bits [3:2] of nibble):**
+  - **In Input Mode (`MODE = 00`):**
+    - `00`: Analog Mode
+    - `01`: Floating Input (Reset State)
+    - `10`: Input with Pull-Up / Pull-Down (Direction selected via `GPIOx_ODR`)
+  - **In Output Mode (`MODE > 00`):**
+    - `00`: General Purpose Output Push-Pull
+    - `01`: General Purpose Output Open-Drain
+    - `10`: Alternate Function Output Push-Pull
+    - `11`: Alternate Function Output Open-Drain
+
+```c
+/* Legacy STM32F1: Configure PC13 as 2 MHz Push-Pull Output */
+GPIOC_CRH &= ~(0xFUL << (5 * 4)); /* Clear Pin 13 nibble (13 - 8 = 5) */
+GPIOC_CRH |=  (0x2UL << (5 * 4)); /* MODE=10 (2MHz), CNF=00 (Push-Pull) */
+```
+
+---
+
+## 4. Hardware-Atomic Bit Manipulation via `BSRR` vs. `BRR`
+
+Directly modifying the Output Data Register (`ODR`) requires a three-step instruction sequence: Load (`LDR`), Modify (`ORR`/`BIC`/`EOR`), and Store (`STR`). If an interrupt fires between the `LDR` and `STR`, shared pins are corrupted (the classic Read-Modify-Write race hazard).
+
+```
+                      GPIOx_BSRR (32-bit Atomic Register)
+   31                               16 15                                0
+  +-----------------------------------+-----------------------------------+
+  | BR15 ... BR0 (Bit Reset Register) | BS15 ... BS0 (Bit Set Register)   |
+  +-----------------------------------+-----------------------------------+
+  - Writing 1 to bit n (0..15):        Pin n is driven HIGH (3.3V)
+  - Writing 1 to bit n+16 (16..31):    Pin n is driven LOW  (0.0V)
+  - Writing 0 to any bit:             NO OPERATION (Pin unchanged)
+```
+
+On STM32F103, ST provided both `BSRR` (32-bit) and a dedicated 16-bit `BRR` (Bit Reset Register). On STM32F4, `BSRR` is the universal 32-bit atomic interface.
+
+---
+
+## 5. Bit-Band Memory Aliasing Architecture
+
+Both Cortex-M3 and Cortex-M4 include optional hardware **Bit-Banding** logic. This maps a 1 MB memory region (SRAM at `0x20000000` or Peripherals at `0x40000000`) into a 32 MB alias region (`0x22000000` and `0x42000000`), where each single bit is expanded into an entire 32-bit word:
+
+```latex
+# Equation 1: Bit-Band Address Transformation
+Alias\_Address = Alias\_Base + (Byte\_Offset \times 32) + (Bit\_Number \times 4)
+```
+
+Writing `1` to the alias address executes a single hardware bus transaction that atomically sets that single bit inside the peripheral register, providing atomic bit manipulation for registers lacking a dedicated `BSRR`.
+
+---
+
+## 6. Production C Implementation: Dual-Target GPIO Driver
+
+```c
+#include <stdint.h>
+
+/* STM32F401 Register Definitions */
+#define F4_RCC_AHB1ENR   (*(volatile uint32_t *)0x40023830UL)
+#define F4_GPIOA_MODER   (*(volatile uint32_t *)0x40020000UL)
+#define F4_GPIOA_OTYPER  (*(volatile uint32_t *)0x40020004UL)
+#define F4_GPIOA_BSRR    (*(volatile uint32_t *)0x40020018UL)
+
+/* STM32F103 Register Definitions */
+#define F1_RCC_APB2ENR   (*(volatile uint32_t *)0x40021018UL)
+#define F1_GPIOC_CRH     (*(volatile uint32_t *)0x40011004UL)
+#define F1_GPIOC_BSRR    (*(volatile uint32_t *)0x40011010UL)
+
+void init_f4_nucleo_led(void) {
+    /* 1. Enable GPIOA clock */
+    F4_RCC_AHB1ENR |= (1UL << 0);
+    
+    /* 2. Configure PA5 as Output (01) */
+    F4_GPIOA_MODER &= ~(3UL << (5 * 2));
+    F4_GPIOA_MODER |=  (1UL << (5 * 2));
+    
+    /* 3. Output Push-Pull */
+    F4_GPIOA_OTYPER &= ~(1UL << 5);
+}
+
+void init_f1_bluepill_led(void) {
+    /* 1. Enable GPIOC clock on APB2 */
+    F1_RCC_APB2ENR |= (1UL << 4);
+    
+    /* 2. Configure PC13 (Pin 13: nibble index 5 in CRH) as Output Push-Pull 2 MHz */
+    F1_GPIOC_CRH &= ~(0xFUL << (5 * 4));
+    F1_GPIOC_CRH |=  (0x2UL << (5 * 4));
+}
+
+void toggle_f4_led_atomic(uint8_t state) {
+    if (state) {
+        F4_GPIOA_BSRR = (1UL << 5);         /* Set PA5 High */
+    } else {
+        F4_GPIOA_BSRR = (1UL << (5 + 16));  /* Reset PA5 Low */
+    }
+}
+
+void toggle_f1_led_atomic(uint8_t state) {
+    /* PC13 on Blue Pill is active low */
+    if (state) {
+        F1_GPIOC_BSRR = (1UL << (13 + 16)); /* Reset PC13 Low (LED ON) */
+    } else {
+        F1_GPIOC_BSRR = (1UL << 13);        /* Set PC13 High (LED OFF) */
+    }
+}
+```
+
+---
+
+## 7. Self-Assessment & Viva Voce Challenge
+
+1. **Why does STM32F4 require a 4-bit Alternate Function Register (`AFR[0]`/`AFR[1]`) per pin, whereas STM32F1 used global `AFIO_MAPR`?**
+   *Answer:* `AFIO_MAPR` on F1 enforced rigid peripheral-wide remapping (e.g. moving USART1 TX from PA9 to PB6 moved RX from PA10 to PB7 simultaneously). F4's per-pin 4-bit multiplexer allows independent routing of any peripheral signal to any supported pin without affecting neighboring pins.
+
+2. **Calculate the Bit-Band Alias Address for Bit 5 of `GPIOA_ODR` (`0x40020014`) on STM32F4.**
+   *Answer:*
+   `Byte Offset = 0x40020014 - 0x40000000 = 0x20014`.
+   `Alias Address = 0x42000000 + (0x20014 * 32) + (5 * 4) = 0x42000000 + 0x400280 + 0x14 = 0x42400294`.

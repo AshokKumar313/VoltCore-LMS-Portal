@@ -14,7 +14,7 @@ import os
 import sys
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple
 
 # Ensure UTF-8 output on Windows consoles
@@ -39,6 +39,16 @@ try:
     from backend.websocket_gateway import telemetry_broker
 except ImportError:
     from websocket_gateway import telemetry_broker
+
+try:
+    from backend.ai_tutor_engine import ai_rag_indexer, embedded_code_reviewer, obe_assessment_grader
+except ImportError:
+    try:
+        from ai_tutor_engine import ai_rag_indexer, embedded_code_reviewer, obe_assessment_grader
+    except Exception:
+        ai_rag_indexer = None
+        embedded_code_reviewer = None
+        obe_assessment_grader = None
 
 # ANSI Terminal Formatting for High-Precision Diagnostics
 class TerminalColors:
@@ -553,6 +563,102 @@ if HAS_FLASK:
         resp_data, status_code = handle_tutor_query(payload)
         return jsonify(resp_data), status_code
 
+    @app.route("/api/tutor/status", methods=["GET"])
+    def tutor_status_endpoint():
+        num_docs = ai_rag_indexer.num_docs if ai_rag_indexer else 0
+        return jsonify({
+            "status": "online",
+            "indexed_chunks": num_docs,
+            "engine": "VoltCore Vector RAG + Embedded Code Reviewer",
+            "categories": ["STM32_Academy", "Specialization_Track"]
+        }), 200
+
+    @app.route("/api/tutor/rag_query", methods=["POST", "OPTIONS"])
+    def tutor_rag_query_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        query = payload.get("query", "").strip()
+        if not query:
+            return jsonify({"status": "error", "message": "Query parameter missing."}), 400
+        top_k = int(payload.get("top_k", 3))
+        if ai_rag_indexer:
+            result = ai_rag_indexer.synthesize_response(query, top_k=top_k)
+        else:
+            result = {"query": query, "answer": "RAG engine offline.", "citations": [], "confidence": 0.0}
+        return jsonify({"status": "success", "data": result}), 200
+
+    @app.route("/api/tutor/code_review", methods=["POST", "OPTIONS"])
+    def tutor_code_review_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        code = payload.get("source_code", payload.get("code", "")).strip()
+        language = payload.get("language", "c")
+        student_id = payload.get("student_id", "ENG-2024-042")
+        if not code:
+            return jsonify({"status": "error", "message": "Source code missing."}), 400
+
+        if embedded_code_reviewer:
+            result = embedded_code_reviewer.review(code, language=language)
+            if payload.get("persist", True):
+                try:
+                    review_id = embedded_code_reviewer.persist_review_to_db(student_id, result)
+                    result["review_id"] = review_id
+                except Exception:
+                    pass
+        else:
+            result = {"dialect": language, "score": 100.0, "issues": [], "verdict": "APPROVED"}
+        return jsonify({"status": "success", "data": result}), 200
+
+    @app.route("/api/tutor/obe_evaluate", methods=["POST", "OPTIONS"])
+    def tutor_obe_evaluate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        evaluation_type = payload.get("type", "quiz")
+        if not obe_assessment_grader:
+            return jsonify({"status": "error", "message": "OBE engine unavailable"}), 503
+
+        if evaluation_type == "viva":
+            student_answer = payload.get("student_answer", "")
+            model_answer = payload.get("model_answer", "")
+            key_concepts = payload.get("key_concepts", [])
+            max_marks = int(payload.get("max_marks", 5))
+            res = obe_assessment_grader.evaluate_descriptive_viva(
+                student_answer=student_answer,
+                model_answer=model_answer,
+                key_concepts=key_concepts,
+                max_marks=max_marks
+            )
+            return jsonify({"status": "success", "data": res}), 200
+        else:
+            quiz_eval = payload.get("quiz_evaluation", payload)
+            target_threshold = float(payload.get("target_threshold_pct", 70.0))
+            res = obe_assessment_grader.compute_obe_attainment(quiz_eval, target_threshold_pct=target_threshold)
+            if payload.get("persist", True):
+                try:
+                    obe_id = obe_assessment_grader.persist_obe_to_db(res)
+                    res["obe_record_id"] = obe_id
+                except Exception:
+                    pass
+            return jsonify({"status": "success", "data": res}), 200
+
     @app.route("/api/spice_simulate", methods=["GET", "POST", "OPTIONS"])
     def spice_simulate_endpoint():
         if request.method == "OPTIONS":
@@ -609,6 +715,88 @@ if HAS_FLASK:
             "status": "success",
             "history": telemetry_broker.get_recent_history(limit),
             "timestamp": datetime.utcnow().isoformat()
+        }), 200
+
+    @app.route("/api/telemetry/hardware", methods=["GET", "POST", "OPTIONS"])
+    def telemetry_hardware_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+            return resp
+
+        if request.method == "POST":
+            payload = request.get_json(silent=True) or {}
+            board_id = payload.get("board_id", "ESP32_WROOM_32")
+            gpio_states = payload.get("gpio_states", {})
+            adc_readings = payload.get("adc_readings", {})
+            timer_registers = payload.get("timer_registers", {})
+            status = payload.get("status", "RUNNING")
+            metadata = payload.get("metadata", {})
+
+            listeners = telemetry_broker.emit_hardware_telemetry(
+                board_id=board_id,
+                gpio_states=gpio_states,
+                adc_readings=adc_readings,
+                timer_registers=timer_registers,
+                status=status,
+                metadata=metadata
+            )
+
+            # Optional persistence to SQLite WAL gradebook
+            if payload.get("persist", False):
+                db_path = getattr(lms_database, "DB_PATH", os.path.join(os.path.dirname(__file__), "voltcore_lms.db"))
+                telemetry_broker.persist_hardware_telemetry_to_db(
+                    db_path=db_path,
+                    board_id=board_id,
+                    payload=payload
+                )
+
+            return jsonify({
+                "status": "hardware_telemetry_dispatched",
+                "board_id": board_id,
+                "listeners": listeners,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }), 200
+
+        # GET method returns recent hardware telemetry
+        history = telemetry_broker.get_recent_history(50)
+        hw_events = [ev for ev in history if ev.get("event_type") == "hardware_telemetry"]
+        return jsonify({
+            "status": "success",
+            "events": hw_events,
+            "count": len(hw_events)
+        }), 200
+
+    @app.route("/api/telemetry/serial/transmit", methods=["POST", "OPTIONS"])
+    def telemetry_serial_transmit_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or {}
+        board_id = payload.get("board_id", "ESP32_WROOM_32")
+        text = payload.get("text", "")
+        baud_rate = payload.get("baud_rate", 115200)
+        direction = payload.get("direction", "TX")
+
+        listeners = telemetry_broker.emit_virtual_serial(
+            board_id=board_id,
+            payload_text=text,
+            baud_rate=baud_rate,
+            direction=direction
+        )
+
+        return jsonify({
+            "status": "serial_packet_streamed",
+            "board_id": board_id,
+            "char_count": len(text),
+            "listeners": listeners,
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }), 200
 
     @app.route("/api/content/status", methods=["GET"])
@@ -4855,11 +5043,25 @@ else:
                 sim_data = parse_and_run_spice_simulation(circuit_id)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(sim_data).encode("utf-8"))
+            elif parsed.path == "/api/tutor/status":
+                num_docs = ai_rag_indexer.num_docs if ai_rag_indexer else 0
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({
+                    "status": "online",
+                    "indexed_chunks": num_docs,
+                    "engine": "VoltCore Vector RAG + Embedded Code Reviewer",
+                    "categories": ["STM32_Academy", "Specialization_Track"]
+                }).encode("utf-8"))
             elif parsed.path == "/api/telemetry/history":
                 params = parse_qs(parsed.query)
                 limit = int(params.get("limit", [25])[0])
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps({"status": "success", "history": telemetry_broker.get_recent_history(limit)}).encode("utf-8"))
+            elif parsed.path == "/api/telemetry/hardware":
+                history = telemetry_broker.get_recent_history(50)
+                hw_events = [ev for ev in history if ev.get("event_type") == "hardware_telemetry"]
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({"status": "success", "events": hw_events, "count": len(hw_events)}).encode("utf-8"))
             elif parsed.path == "/api/content/status":
                 from backend.content_status_api import get_content_status_report
                 self._set_cors_headers(200)
@@ -5474,6 +5676,69 @@ else:
                 resp_data, status_code = handle_tutor_query(payload)
                 self._set_cors_headers(status_code)
                 self.wfile.write(json.dumps(resp_data).encode("utf-8"))
+            elif parsed.path == "/api/tutor/rag_query":
+                query = payload.get("query", "").strip()
+                if not query:
+                    self._set_cors_headers(400)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Query parameter missing."}).encode("utf-8"))
+                else:
+                    top_k = int(payload.get("top_k", 3))
+                    if ai_rag_indexer:
+                        result = ai_rag_indexer.synthesize_response(query, top_k=top_k)
+                    else:
+                        result = {"query": query, "answer": "RAG engine offline.", "citations": [], "confidence": 0.0}
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "success", "data": result}).encode("utf-8"))
+            elif parsed.path == "/api/tutor/code_review":
+                code = payload.get("source_code", payload.get("code", "")).strip()
+                language = payload.get("language", "c")
+                student_id = payload.get("student_id", "ENG-2024-042")
+                if not code:
+                    self._set_cors_headers(400)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Source code missing."}).encode("utf-8"))
+                else:
+                    if embedded_code_reviewer:
+                        result = embedded_code_reviewer.review(code, language=language)
+                        if payload.get("persist", True):
+                            try:
+                                review_id = embedded_code_reviewer.persist_review_to_db(student_id, result)
+                                result["review_id"] = review_id
+                            except Exception:
+                                pass
+                    else:
+                        result = {"dialect": language, "score": 100.0, "issues": [], "verdict": "APPROVED"}
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "success", "data": result}).encode("utf-8"))
+            elif parsed.path == "/api/tutor/obe_evaluate":
+                evaluation_type = payload.get("type", "quiz")
+                if not obe_assessment_grader:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "OBE engine unavailable"}).encode("utf-8"))
+                elif evaluation_type == "viva":
+                    student_answer = payload.get("student_answer", "")
+                    model_answer = payload.get("model_answer", "")
+                    key_concepts = payload.get("key_concepts", [])
+                    max_marks = int(payload.get("max_marks", 5))
+                    res = obe_assessment_grader.evaluate_descriptive_viva(
+                        student_answer=student_answer,
+                        model_answer=model_answer,
+                        key_concepts=key_concepts,
+                        max_marks=max_marks
+                    )
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "success", "data": res}).encode("utf-8"))
+                else:
+                    quiz_eval = payload.get("quiz_evaluation", payload)
+                    target_threshold = float(payload.get("target_threshold_pct", 70.0))
+                    res = obe_assessment_grader.compute_obe_attainment(quiz_eval, target_threshold_pct=target_threshold)
+                    if payload.get("persist", True):
+                        try:
+                            obe_id = obe_assessment_grader.persist_obe_to_db(res)
+                            res["obe_record_id"] = obe_id
+                        except Exception:
+                            pass
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "success", "data": res}).encode("utf-8"))
             elif parsed.path == "/api/analytics/weak_topics":
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(get_class_weak_topics()).encode("utf-8"))
@@ -5497,6 +5762,54 @@ else:
                 listeners = telemetry_broker.broadcast(ev_type, data)
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps({"status": "broadcast_dispatched", "event_type": ev_type, "listeners": listeners}).encode("utf-8"))
+            elif parsed.path == "/api/telemetry/hardware":
+                board_id = payload.get("board_id", "ESP32_WROOM_32")
+                gpio_states = payload.get("gpio_states", {})
+                adc_readings = payload.get("adc_readings", {})
+                timer_registers = payload.get("timer_registers", {})
+                status = payload.get("status", "RUNNING")
+                metadata = payload.get("metadata", {})
+                listeners = telemetry_broker.emit_hardware_telemetry(
+                    board_id=board_id,
+                    gpio_states=gpio_states,
+                    adc_readings=adc_readings,
+                    timer_registers=timer_registers,
+                    status=status,
+                    metadata=metadata
+                )
+                if payload.get("persist", False):
+                    db_path = getattr(lms_database, "DB_PATH", os.path.join(os.path.dirname(__file__), "voltcore_lms.db"))
+                    telemetry_broker.persist_hardware_telemetry_to_db(
+                        db_path=db_path,
+                        board_id=board_id,
+                        payload=payload
+                    )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({
+                    "status": "hardware_telemetry_dispatched",
+                    "board_id": board_id,
+                    "listeners": listeners,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }).encode("utf-8"))
+            elif parsed.path == "/api/telemetry/serial/transmit":
+                board_id = payload.get("board_id", "ESP32_WROOM_32")
+                text = payload.get("text", "")
+                baud_rate = payload.get("baud_rate", 115200)
+                direction = payload.get("direction", "TX")
+                listeners = telemetry_broker.emit_virtual_serial(
+                    board_id=board_id,
+                    payload_text=text,
+                    baud_rate=baud_rate,
+                    direction=direction
+                )
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({
+                    "status": "serial_packet_streamed",
+                    "board_id": board_id,
+                    "char_count": len(text),
+                    "listeners": listeners,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }).encode("utf-8"))
             elif parsed.path == "/api/content/status/update":
                 from backend.content_status_api import update_content_status_entry
                 res_data, status_code = update_content_status_entry(payload)

@@ -1,0 +1,79 @@
+{
+  // =========================================================================
+  // VoltCore Apex Academia - VS Code Workspace Configuration
+  // Department of Electronics Engineering, MIT Campus, Anna University
+  // Hardware Target: HP Victus (LAPTOP-3NEGBVLE) - Strict Thermal Optimization
+  // =========================================================================
+
+  // 1. Git Source Control & GitHub Remote Synchronization
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": false,
+  "git.terminalAuthentication": true,
+  "git.pruneOnFetch": true,
+  "git.openRepositoryInParentFolders": "never",
+  "git.suggestSmartCommit": false,
+  "git.showInlineNotification": false,
+
+  // 2. Hardware Thermal & CPU Protection: File Watcher Exclusions
+  // Excludes heavy build and cache directories from Chokidar file watcher
+  // Prevents CPU spikes and maintains passive cooling (<8% CPU footprint)
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.astro/**": true,
+    "**/dist/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/backend/cache/**": true,
+    "**/.vite/**": true
+  },
+
+  // 3. Search Indexing Exclusions
+  // Keeps full-text workspace searches instantaneous and eliminates disk churn
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.astro": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/backend/cache": true,
+    "**/*.lock": true
+  },
+
+  // 4. File Explorer Noise Reduction
+  "files.exclude": {
+    "**/.git": true,
+    "**/.pytest_cache": true,
+    "**/__pycache__": true
+  },
+
+  // 5. Language Server & Tooling Optimizations
+  "python.analysis.exclude": [
+    "**/node_modules",
+    "**/dist",
+    "**/.astro",
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/backend/cache"
+  ],
+  "python.analysis.indexing": true,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+
+  "tailwindCSS.includeLanguages": {
+    "astro": "html",
+    "html": "html",
+    "javascript": "javascript",
+    "javascriptreact": "javascriptreact",
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  },
+
+  // 6. Formatting & Clean Code
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

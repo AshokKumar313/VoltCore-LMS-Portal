@@ -1,18 +1,21 @@
 ---
-title: "EC8708: Advanced ARM Cortex-M DMA Architecture, Circular Buffering & FreeRTOS Zero-Copy IPC"
-code: "EC8708"
+title: "Advanced ARM Cortex-M DMA Architecture & FreeRTOS Zero-Copy IPC"
+code: "DMA8708"
 semester: 7
-regulation: "Anna University R2023"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 8
+specializationTrack: "Zero-Copy IPC"
+simulationComponent: "DmaNvicHub"
+trackSlug: "zero-copy-ipc"
 description: "High-throughput Direct Memory Access (DMA) controller architectures on ARM Cortex-M4/M7, analyzing multi-layer AHB crossbar bus matrix contention, circular ping-pong ring buffering, scatter-gather linked lists, FreeRTOS zero-copy stream buffers, and diagnosing the Uninitialized DMA Ring Buffer Pointer Overwrite engineering trap."
 difficulty: "Apex Research"
-author: "Ashok Kumar A & MIT Campus Embedded Systems Faculty"
+author: "Ashok Kumar A & VoltCore Silicon Architecture Team"
 publishDate: 2026-10-15
 prerequisites:
-  - "EC8702: Embedded Systems Architecture"
-  - "EC8706: Real-Time Operating Systems (FreeRTOS Core Internals)"
+  - "Embedded Systems Architecture"
+  - "Real-Time Operating Systems (FreeRTOS Core Internals)"
   - "ARM Cortex-M Hardware Architecture (NVIC, AHB-Lite, DMA Request Mapping)"
   - "High-Performance Embedded C (Volatile Pointers & Memory Barriers)"
 learningOutcomes:
@@ -32,7 +35,6 @@ tags:
   - "Bus Matrix Contention"
   - "Zero-Copy IPC"
   - "Scatter-Gather"
-  - "Anna University R2023"
 syllabusUnits:
   - unit: 1
     title: "Multi-Layer AHB Bus Matrix & DMA Master Crossbar Arbitration"
@@ -59,10 +61,10 @@ ieeeReference: "IEEE Transactions on Industrial Informatics, Vol. 20, No. 4, pp.
 xpReward: 550
 ---
 
-# EC8708: Advanced ARM Cortex-M DMA Architecture, Circular Buffering & FreeRTOS Zero-Copy IPC
+# Advanced ARM Cortex-M DMA Architecture & FreeRTOS Zero-Copy IPC
 
-**Madras Institute of Technology (MIT) Campus, Anna University**  
-*Department of Electronics Engineering — Regulation 2023 Specialized Capstone Specification*  
+**Core Engineering Series • Autonomous Engineering Cluster**  
+*Advanced Specialization Track — Deterministic DMA & Concurrency Specification*  
 **Platform Lead & Principal Firmware Architect:** Ashok Kumar A (`ashokkumar3132008@gmail.com`)  
 **IEEE Subject Classification:** IEEE Std 802.1X / Embedded Hardware Systems / Real-Time Operating Systems
 
@@ -108,25 +110,37 @@ When both the **CPU Core (S-Bus)** and the **DMA Controller (DMA1/DMA2)** simult
 
 ### 1.2 Mathematical Derivation: Memory Bus Contention & Latency
 
-Let $f_{\text{HCLK}}$ denote the system AHB clock frequency (e.g., $180\text{ MHz}$, period $T_{\text{clk}} = \frac{1}{f_{\text{HCLK}}} \approx 5.56\text{ ns}$). Let an ADC peripheral sample at rate $f_s$, generating $B$ bytes per transfer. The bare DMA throughput requirement $R_{\text{DMA}}$ is:
+Let `$f_{HCLK}$` denote the system AHB clock frequency (e.g., $180 MHz$, period `$T_{clk} = \frac{1}{f_{HCLK}} \approx 5.56 ns$`). Let an ADC peripheral sample at rate $f_s$, generating $B$ bytes per transfer. The bare DMA throughput requirement `$R_{DMA}$` is:
 
-$$R_{\text{DMA}} = f_s \cdot B \quad [\text{Bytes/sec}]$$
 
-For single-transfer non-burst mode, each 32-bit word transfer demands 1 address phase and 1 data phase ($T_{\text{single}} = 2 \cdot T_{\text{clk}}$). When the CPU executes code out of the same SRAM block, the probability of bus collision $P_{\text{contention}}$ is expressed as:
+```latex
+R_{DMA} = f_s \cdot B \quad [Bytes/sec]
+```
 
-$$P_{\text{contention}} = \frac{T_{\text{CPU\_access}}}{T_{\text{cycle}}} \cdot \frac{N_{\text{DMA\_transfers}}}{N_{\text{total\_cycles}}}$$
 
-Under severe contention, the effective transfer duration $T_{\text{transfer}}$ expands according to the M/M/1 queuing model:
+For single-transfer non-burst mode, each 32-bit word transfer demands 1 address phase and 1 data phase (`$T_{single} = 2 \cdot T_{clk}$`). When the CPU executes code out of the same SRAM block, the probability of bus collision `$P_{contention}$` is expressed as:
 
-$$T_{\text{transfer}} = N \cdot \left(\frac{1}{f_{\text{HCLK}}}\right) \cdot \left(1 + \frac{P_{\text{contention}}}{1 - P_{\text{contention}}}\right)$$
 
-If $P_{\text{contention}} \to 1$, the DMA peripheral FIFO overflows, asserting the Hardware Overrun Flag (`DMA_SxISR_TEIFx` or `ADC_SR_OVR`), causing irrevocable loss of real-time sensor frames.
+```latex
+P_{contention} = \frac{T_{CPU\_access}}{T_{cycle}} \cdot \frac{N_{DMA\_transfers}}{N_{total\_cycles}}
+```
+
+
+Under severe contention, the effective transfer duration `$T_{transfer}$` expands according to the M/M/1 queuing model:
+
+
+```latex
+T_{transfer} = N \cdot \left(\frac{1}{f_{HCLK}}\right) \cdot \left(1 + \frac{P_{contention}}{1 - P_{contention}}\right)
+```
+
+
+If `$P_{contention} \to 1$`, the DMA peripheral FIFO overflows, asserting the Hardware Overrun Flag (`DMA_SxISR_TEIFx` or `ADC_SR_OVR`), causing irrevocable loss of real-time sensor frames.
 
 ---
 
 ## Section II: Circular Ping-Pong Buffering Topology
 
-To sustain continuous analog streaming without dropping samples, firmware must partition the DMA destination memory into two equal halves: **Buffer A** (indices $0$ to $\frac{N}{2}-1$) and **Buffer B** (indices $\frac{N}{2}$ to $N-1$).
+To sustain continuous analog streaming without dropping samples, firmware must partition the DMA destination memory into two equal halves: **Buffer A** (indices $0$ to `$\frac{N}{2}-1$`) and **Buffer B** (indices `$\frac{N}{2}$` to $N-1$).
 
 ```
 Total DMA Memory Allocation: uint16_t g_adc_dma_buffer[N]
@@ -149,16 +163,16 @@ Start of Buffer                       Half-Transfer                           Tr
 
 ## Section III: FreeRTOS Zero-Copy Inter-Task Communication
 
-Conventional embedded architectures dispatch data from the DMA ISR to user tasks using standard `xQueueSendFromISR()`. However, FreeRTOS message queues copy every byte into queue storage, generating severe CPU thrashing at sample rates exceeding $100\text{ kSPS}$.
+Conventional embedded architectures dispatch data from the DMA ISR to user tasks using standard `xQueueSendFromISR()`. However, FreeRTOS message queues copy every byte into queue storage, generating severe CPU thrashing at sample rates exceeding $100 kSPS$.
 
 ### 3.1 Direct-to-Task Notification vs Queue Benchmark
 
 | Metric | FreeRTOS Standard Queue | FreeRTOS Stream Buffer | Direct-to-Task Notification |
 | :--- | :--- | :--- | :--- |
 | **Memory Overhead** | High (Queue Control Block + Buffers) | Medium (Stream Buffer Struct) | **Zero (Stored inside Task TCB)** |
-| **Data Copy Operations** | 2 Copies (ISR $\to$ Queue $\to$ Task) | 1 Copy (Circular RAM Buffer) | **Zero-Copy (Pointer Handoff)** |
-| **Context Switch Overhead** | $142 \text{ clock cycles}$ | $88 \text{ clock cycles}$ | **$38 \text{ clock cycles}$** |
-| **Max Tested Throughput** | $2.4 \text{ MB/sec}$ | $14.8 \text{ MB/sec}$ | **$45.2 \text{ MB/sec}$ (Bus Limited)** |
+| **Data Copy Operations** | 2 Copies (ISR `$\to$` Queue `$\to$` Task) | 1 Copy (Circular RAM Buffer) | **Zero-Copy (Pointer Handoff)** |
+| **Context Switch Overhead** | $142  clock cycles$ | $88  clock cycles$ | **$38  clock cycles$** |
+| **Max Tested Throughput** | $2.4  MB/sec$ | $14.8  MB/sec$ | **$45.2  MB/sec$ (Bus Limited)** |
 
 ### 3.2 Production DMA ISR Implementation with Zero-Copy Notification
 
@@ -166,7 +180,7 @@ Conventional embedded architectures dispatch data from the DMA ISR to user tasks
 /**
  * ====================================================================================
  * VoltCore Apex Academia - ARM Cortex-M4 DMA2 Stream 0 ISR
- * Author: Ashok Kumar A (MIT Campus, Anna University)
+ * Author: Ashok Kumar A (Autonomous Engineering Cluster)
  * Target: STM32F446RE / FreeRTOS v10.5
  * ====================================================================================
  */
@@ -229,7 +243,7 @@ void DMA2_Stream0_IRQHandler(void)
 
 > [!CAUTION]
 > **ENGINEERING TRAP: THE SILENT DATA CORRUPTION HAZARD**  
-> Under high ADC sampling rates ($f_s \ge 1\text{ MSPS}$), if firmware initializes the peripheral DMA stream before registering consumer task pointers or without executing an **Instruction Synchronization Barrier (`__ISB()`)** and **Data Memory Barrier (`__DMB()`)**, the DMA controller begins bursting data into memory while the consumer task reads stale pointer registers. This creates intermittent silent memory corruption where the consumer reads interleaved frames from two different time epochs!
+> Under high ADC sampling rates (`$f_s \ge 1 MSPS$`), if firmware initializes the peripheral DMA stream before registering consumer task pointers or without executing an **Instruction Synchronization Barrier (`__ISB()`)** and **Data Memory Barrier (`__DMB()`)**, the DMA controller begins bursting data into memory while the consumer task reads stale pointer registers. This creates intermittent silent memory corruption where the consumer reads interleaved frames from two different time epochs!
 
 ### 4.1 Anatomy of the Vulnerability
 
@@ -243,21 +257,29 @@ Cycle 4:  Consumer Task finishes tail pointer: s_rx_desc.tail = 0; (RACE CONDITI
           If an interrupt intervenes here, tail is read as an uninitialized register!
 ```
 
-### 4.2 Mathematical Probability of Overrun ($P_{\text{overflow}}$)
+### 4.2 Mathematical Probability of Overrun (`$P_{overflow}$`)
 
 The probability of an uninitialized pointer collision during system initialization or RTOS task context switching is given by:
 
-$$P_{\text{overflow}} = 1 - \exp\left( - \frac{\tau_{\text{context\_switch}} + \tau_{\text{jitter}}}{T_{\text{half\_buffer}}} \right)$$
+
+```latex
+P_{overflow} = 1 - \exp\left( - \frac{\tau_{context\_switch} + \tau_{jitter}}{T_{half\_buffer}} \right)
+```
+
 
 Where:
-* $T_{\text{half\_buffer}} = \frac{N / 2}{f_s}$ is the time budget to process half a buffer.
-* $\tau_{\text{context\_switch}}$ is the worst-case FreeRTOS context switch latency ($3.8\text{ }\mu\text{s}$ at $180\text{ MHz}$).
-* $\tau_{\text{jitter}}$ is the highest-priority ISR execution duration.
+* `$T_{half\_buffer} = \frac{N / 2}{f_s}$` is the time budget to process half a buffer.
+* `$\tau_{context\_switch}$` is the worst-case FreeRTOS context switch latency (`$3.8 \mus$` at $180 MHz$).
+* `$\tau_{jitter}$` is the highest-priority ISR execution duration.
 
-For $f_s = 2\text{ MSPS}$ and $N = 1024$ words:
-$$T_{\text{half\_buffer}} = \frac{512}{2 \times 10^6} = 256\text{ }\mu\text{s}$$
+For $f_s = 2 MSPS$ and $N = 1024$ words:
 
-If a flash write or higher-priority interrupt stalls the bus by $260\text{ }\mu\text{s}$, $P_{\text{overflow}} \to 1.00$, completely clobbering the ring buffer.
+```latex
+T_{half\_buffer} = \frac{512}{2 \times 10^6} = 256 \mus
+```
+
+
+If a flash write or higher-priority interrupt stalls the bus by `$260 \mus$`, `$P_{overflow} \to 1.00$`, completely clobbering the ring buffer.
 
 ### 4.3 The Bulletproof Bare-Metal Solution
 
@@ -314,7 +336,7 @@ The following diagram topology simulates an ARM Cortex-M / ESP32 dual-channel hi
 ```json
 {
   "version": 1,
-  "author": "Ashok Kumar A (MIT Campus)",
+  "author": "Ashok Kumar A (Autonomous Cluster)",
   "editor": "wokwi",
   "parts": [
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
@@ -341,13 +363,13 @@ The following diagram topology simulates an ARM Cortex-M / ESP32 dual-channel hi
 
 ---
 
-## Section VI: Anna University / GATE ECE Viva Voce Problem Set
+## Section VI: Advanced ECE Viva Voce Problem Set
 
 ### Question 1: AHB Bus Matrix Contention
 *State why configuring the DMA destination buffer in the same SRAM bank as the CPU stack pointer (MSP) degrades deterministic context switching time in ARM Cortex-M4.*
 
 **Model Answer:**  
-The multi-layer AHB matrix arbitrates accesses at the granularity of individual SRAM slave ports. If both the Cortex-M4 Core (attempting to push $\{R0-R3, R12, LR, PC, xPSR\}$ during an interrupt exception entry) and the DMA Controller target the same SRAM bank (e.g. SRAM1), the arbiter inserts wait-states (`HREADYOUT = 0`). This non-deterministically inflates interrupt latency from the theoretical 12 clock cycles up to 24+ cycles, causing real-time deadline misses.
+The multi-layer AHB matrix arbitrates accesses at the granularity of individual SRAM slave ports. If both the Cortex-M4 Core (attempting to push `$\{R0-R3, R12, LR, PC, xPSR\}$` during an interrupt exception entry) and the DMA Controller target the same SRAM bank (e.g. SRAM1), the arbiter inserts wait-states (`HREADYOUT = 0`). This non-deterministically inflates interrupt latency from the theoretical 12 clock cycles up to 24+ cycles, causing real-time deadline misses.
 
 ### Question 2: Memory Barrier Primitives
 *Differentiate between `__DMB()`, `__DSB()`, and `__ISB()` in Cortex-M DMA firmware.*

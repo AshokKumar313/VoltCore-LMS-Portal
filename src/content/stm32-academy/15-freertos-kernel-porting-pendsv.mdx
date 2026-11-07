@@ -1,0 +1,323 @@
+---
+moduleNumber: 15
+title: 'FreeRTOS Kernel Porting: PendSV Context Switching, MSP to PSP & Tickless Idle'
+shortTitle: 'FreeRTOS Porting & PendSV'
+tier: 'Tier 4: RTOS & Kernel Internals'
+difficulty: 'Advanced'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '01-arm-cortex-m-architecture'
+  - '14-systick-software-schedulers'
+estimatedDuration: '100 mins'
+cortexArchitecture: 'Cortex-M4F'
+registerFocus:
+  - 'SCB_ICSR'
+  - 'SCB_SHPR3'
+  - 'MSP'
+  - 'PSP'
+  - 'CONTROL'
+description: 'Internal mechanics of real-time preemption: PendSV low-priority exception handling, MSP to PSP dual-stack swapping, assembly context push/pop, Task Control Block (TCB) structures, and Tickless Idle power conservation.'
+keyFormulas:
+  - '\text{Basic Context Frame} = 8\text{ hardware words} + 8\text{ software words (R4-R11)} = 64\text{ bytes}'
+  - '\text{Extended FPU Frame} = 64\text{ bytes} + 18\text{ words (S0-S15, FPSCR, S16-S31)} = 136\text{ bytes}'
+hardwareApparatus:
+  - 'Nucleo-F401RE running FreeRTOS V10.5+'
+  - 'Logic Analyzer on PA5 & PB0 to measure context-switch latency'
+order: 15
+xpReward: 275
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# FreeRTOS Kernel Porting: PendSV Context Switching, MSP to PSP & Tickless Idle
+
+## 1. Architectural Foundations of RTOS Preemption
+
+In bare-metal embedded architecture, transitioning from a cooperative super-loop to a preemptive **Real-Time Operating System (RTOS)** demands direct manipulation of core ARM Cortex-M hardware exception handling. 
+
+At the center of RTOS preemption lies a fundamental design challenge: **How can a real-time scheduler switch CPU execution between two independent application tasks without delaying or corrupting time-critical hardware Interrupt Service Routines (ISRs)?**
+
+The ARM architectural solution is the **Pendable Service Call (PendSV)** exception.
+
+```
++-------------------------------------------------------------------------------+
+|                 CORTEX-M HARDWARE EXCEPTION & CONTEXT SWITCHING               |
++-------------------------------------------------------------------------------+
+|                                                                               |
+|  High Priority Hardware ISR:       [====== SPI/UART DMA ISR ======]           |
+|                                                                    \          |
+|  SysTick Tick Timer:         [SysTick]                              \         |
+|                                 | (Request Context Switch:           \ Tail-  |
+|                                 v  SCB->ICSR |= PENDSVSET)            \ Chain |
+|                                                                        v      |
+|  PendSV (Lowest Priority):                                          [PendSV]  |
+|                                                                        |      |
+|  Task B (New Task):                                                    v      |
+|                                                                     [Task B]  |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+## 2. The PendSV Exception Mechanism & Context Switching Sequence
+
+### 2.1 Why PendSV?
+If the OS kernel attempted to perform context switching directly inside the `SysTick_Handler` or a peripheral interrupt:
+1. **Interrupt Latency Hazard:** Any context switch takes several dozen clock cycles. If an urgent, high-priority peripheral interrupt (e.g. an ADC conversion complete or motor fault) fired while `SysTick` was switching task contexts, the hardware interrupt would be delayed.
+2. **Interrupt Nesting Complexity:** If an ISR preempted another ISR while stacks were being manipulated, the stack pointers could become corrupted.
+
+**The Solution:** The ARM architecture assigns **PendSV (Exception 14)** the **lowest possible interrupt priority** (programmed via `SCB->SHPR3`).
+- When a context switch is needed (either by SysTick or an API call like `taskYIELD()` or `xQueueSendFromISR()`), firmware sets the `PENDSVSET` bit in `SCB->ICSR`.
+- The NVIC delays PendSV until **all active higher-priority hardware ISRs have completed**.
+- Once the interrupt nesting level returns to zero, the core enters `PendSV_Handler` via **Tail-Chaining** (requiring only 6 clock cycles), guaranteeing zero delay to hardware interrupts.
+
+### 2.2 The Complete Context Switching State Machine
+When `PendSV_Handler` executes:
+
+```
+CURRENT TASK A                                                    NEW TASK B
+(Running on PSP)                                               (Suspended in TCB)
+      |                                                                |
+      +---> Hardware pushes {R0-R3, R12, LR, PC, xPSR} onto Task A stack
+      |
+      +---> PendSV_Handler pushes {R4-R11} manually onto Task A stack
+      |
+      +---> Save updated PSP into pxCurrentTCB->pxTopOfStack
+      |
+      +---> Call vTaskSwitchContext() (Scheduler selects next ready task)
+      |
+      +---> Load new pxCurrentTCB->pxTopOfStack into R0
+      |
+      +---> Pop {R4-R11} manually from Task B stack
+      |
+      +---> Load new stack pointer into PSP
+      |
+      +---> BX LR (EXC_RETURN = 0xFFFFFFFD)
+      |
+      v
+Hardware automatically pops {R0-R3, R12, LR, PC, xPSR} from Task B stack
+Task B resumes execution seamlessly!
+```
+
+---
+
+## 3. Dual Stack Architecture: MSP vs. PSP
+
+The ARM Cortex-M core provides two physical stack pointer registers, banked under register index `R13`:
+- **Main Stack Pointer (MSP):** The default reset stack pointer.
+  - Used by **Handler Mode** (all hardware exceptions and ISRs).
+  - Used by the kernel startup code before the scheduler starts.
+- **Process Stack Pointer (PSP):** Dedicated application stack pointer.
+  - Used by **Thread Mode** (all RTOS application tasks).
+
+```
+   HANDLER MODE (ISRs)                      THREAD MODE (Tasks)
++-----------------------+                +-----------------------+
+|   Main Stack (MSP)    |                |  Process Stack (PSP)  |
+|   (System ISR Memory) |                |   (Task A / Task B)   |
++-----------------------+                +-----------------------+
+```
+
+### 3.1 Memory Isolation Advantage
+By isolating application tasks onto the `PSP`:
+1. **Stack Overflow Containment:** If Task A experiences runaway recursion and overflows its stack, it corrupts only its own task heap or adjacent memory; it **cannot corrupt the kernel ISR stack frame** on `MSP`.
+2. **Deterministic ISR Sizing:** The system engineer can allocate a single, compact `MSP` stack sized for the maximum worst-case interrupt nesting depth, without needing to allocate interrupt headroom inside every single task's stack.
+
+---
+
+## 4. Stack Framing & Task Initialization
+
+When a new task is created using `xTaskCreate()`, its stack does not start blank. To allow `PendSV` to switch to a task that has never run before, the kernel calls `pxPortInitialiseStack()` to construct an **initial artificial hardware and software stack frame**:
+
+```
+HIGH MEMORY (Top of Task Stack)
+   +-------------------------------+
+   | xPSR  (Bit 24 Thumb = 1)      | <-- Initialized to 0x01000000
+   | PC    (Task Function Pointer) | <-- Entry address of the C task function
+   | LR    (Task Exit Handler)     | <-- prvTaskExitError (catches accidental return)
+   | R12   (General Register)      | <-- Initialized to 0x12121212
+   | R3    (General Register)      | <-- Initialized to 0x03030303
+   | R2    (General Register)      | <-- Initialized to 0x02020202
+   | R1    (General Register)      | <-- Initialized to 0x01010101
+   | R0    (Task Parameter)        | <-- (void *pvParameters) passed to task
+   +-------------------------------+ <-- Hardware Auto-Stack Frame (32 Bytes)
+   | R11                           | <-- Initialized to 0x11111111
+   | R10                           | <-- Initialized to 0x10101010
+   | R9                            | <-- Initialized to 0x09090909
+   | R8                            | <-- Initialized to 0x08080808
+   | R7                            | <-- Initialized to 0x07070707
+   | R6                            | <-- Initialized to 0x06060606
+   | R5                            | <-- Initialized to 0x05050505
+   | R4                            | <-- Initialized to 0x04040404
+   +-------------------------------+ <-- pxTopOfStack saved in TCB (64 Bytes Total)
+LOW MEMORY (Bottom of Task Stack)
+```
+
+- **Thumb Bit (`xPSR`):** Cortex-M executes exclusively in Thumb state. If bit 24 of `xPSR` is initialized to `0`, the core immediately faults into an `INVSTATE` (Invalid State) HardFault on the first task instruction.
+- **Task Parameter (`R0`):** According to the ARM Architecture Procedure Call Standard (AAPCS), the first function parameter is passed in `R0`. Initializing `R0` on the stack frame with `pvParameters` passes the argument cleanly into `void vTask(void *pvParameters)`.
+
+---
+
+## 5. Tickless Idle Mode (`configUSE_TICKLESS_IDLE`)
+
+In battery-powered IoT systems, running a standard 1000 Hz SysTick timer wakes the CPU every 1 millisecond even when all tasks are blocked. This frequent waking wastes battery power.
+
+**Tickless Idle** eliminates this overhead:
+1. When all application tasks block for an extended duration (e.g. 500 ms), the kernel invokes `vPortSuppressTicksAndSleep(xExpectedIdleTime)`.
+2. SysTick is stopped.
+3. A low-power timer (such as the STM32 RTC Alarm or LPTIM) is programmed to fire after `xExpectedIdleTime`.
+4. The CPU executes `WFI` (Wait For Interrupt), entering Deep Sleep mode and reducing dynamic current from **15 mA** down to **sub-15 µA**.
+5. Upon waking (either by the LPTIM timeout or an external GPIO/UART interrupt), the kernel calculates how many milliseconds elapsed and corrects the internal FreeRTOS tick count.
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 & ARM Assembly)
+
+Below is the production-grade implementation of the Cortex-M **PendSV Context Switcher** and **Task Control Block (TCB)** manager adhering to GNU ARM assembly conventions:
+
+```c
+/**
+ * @file    voltcore_pendsv_port.c
+ * @brief   Production PendSV Context Switcher & TCB Architecture for Cortex-M4F
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// Core System Control Space Registers
+#define SCS_BASE            (0xE000E000UL)
+#define SCB_ICSR            (*(volatile uint32_t *)(SCS_BASE + 0x0D04UL))
+#define SCB_SHPR3           (*(volatile uint32_t *)(SCS_BASE + 0x0D20UL))
+
+#define SCB_ICSR_PENDSVSET  (1UL << 28) // Bit 28: Trigger PendSV exception
+
+// Task Control Block (TCB) Structure
+typedef struct tskTaskControlBlock {
+    volatile uint32_t *pxTopOfStack; // Must remain first member (accessed at offset 0 in asm)
+    uint32_t xTaskID;
+    char pcTaskName[16];
+} TCB_t;
+
+// Pointers to active and candidate tasks
+TCB_t *volatile pxCurrentTCB = 0;
+TCB_t *volatile pxNextTCB = 0;
+
+/**
+ * @brief Configure PendSV to the lowest possible priority (0xFF)
+ */
+void prvSetupPendSV(void) {
+    // SHPR3 holds priority for System Exceptions 14 (PendSV) and 15 (SysTick)
+    // Bits [23:16] configure PendSV priority
+    SCB_SHPR3 |= (0xFFUL << 16); // Set PendSV to lowest priority (255)
+}
+
+/**
+ * @brief Software trigger to request a preemptive context switch
+ */
+void vPortYield(void) {
+    SCB_ICSR = SCB_ICSR_PENDSVSET; // Pend a PendSV interrupt
+    __asm__ volatile("dsb" ::: "memory");
+    __asm__ volatile("isb" ::: "memory");
+}
+
+/**
+ * @brief Scheduler context selector invoked from PendSV
+ */
+void vTaskSwitchContext(void) {
+    if (pxNextTCB != 0) {
+        pxCurrentTCB = pxNextTCB;
+    }
+}
+
+/**
+ * @brief Pre-populate an initial task stack frame
+ */
+uint32_t *pxPortInitialiseStack(uint32_t *pxTopOfStack, void (*pxCode)(void *), void *pvParameters) {
+    // Ensure 8-byte stack alignment according to AAPCS
+    pxTopOfStack = (uint32_t *)((uint32_t)pxTopOfStack & ~0x7UL);
+
+    // Hardware Auto-Stack Frame (Pushed automatically by CPU on exception entry)
+    *(--pxTopOfStack) = 0x01000000UL;              // xPSR: Set Thumb Bit (Bit 24)
+    *(--pxTopOfStack) = (uint32_t)pxCode;          // PC: Task function entry point
+    *(--pxTopOfStack) = 0xFFFFFFFDUL;              // LR: Return to Thread mode, use PSP
+    *(--pxTopOfStack) = 0x12121212UL;              // R12
+    *(--pxTopOfStack) = 0x03030303UL;              // R3
+    *(--pxTopOfStack) = 0x02020202UL;              // R2
+    *(--pxTopOfStack) = 0x01010101UL;              // R1
+    *(--pxTopOfStack) = (uint32_t)pvParameters;    // R0: First parameter to task function
+
+    // Software Context Frame (Pushed/Popped manually inside PendSV_Handler)
+    *(--pxTopOfStack) = 0x11111111UL;              // R11
+    *(--pxTopOfStack) = 0x10101010UL;              // R10
+    *(--pxTopOfStack) = 0x09090909UL;              // R9
+    *(--pxTopOfStack) = 0x08080808UL;              // R8
+    *(--pxTopOfStack) = 0x07070707UL;              // R7
+    *(--pxTopOfStack) = 0x06060606UL;              // R6
+    *(--pxTopOfStack) = 0x05050505UL;              // R5
+    *(--pxTopOfStack) = 0x04040404UL;              // R4
+
+    return pxTopOfStack; // Return updated stack top pointer
+}
+
+/**
+ * @brief PendSV Exception Handler (Written in Pure GNU Assembly)
+ */
+__attribute__((naked)) void PendSV_Handler(void) {
+    __asm__ volatile (
+        "    cpsid   i                       \n" // Disable interrupts globally (critical section)
+        "    mrs     r0, psp                 \n" // R0 = Current task PSP
+        "    isb                             \n"
+        "                                    \n"
+        "    ldr     r3, =pxCurrentTCB       \n" // R3 = &pxCurrentTCB
+        "    ldr     r2, [r3]                \n" // R2 = pxCurrentTCB
+        "                                    \n"
+        "    stmdb   r0!, {r4-r11}           \n" // Save software registers R4-R11 on task stack
+        "    str     r0, [r2]                \n" // Save new top of stack into pxCurrentTCB->pxTopOfStack
+        "                                    \n"
+        "    stmdb   sp!, {r3, lr}           \n" // Save R3 and EXC_RETURN on MSP
+        "    bl      vTaskSwitchContext      \n" // Call scheduler C function
+        "    ldmia   sp!, {r3, lr}           \n" // Restore R3 and EXC_RETURN from MSP
+        "                                    \n"
+        "    ldr     r1, [r3]                \n" // R1 = pxCurrentTCB (updated by scheduler)
+        "    ldr     r0, [r1]                \n" // R0 = pxCurrentTCB->pxTopOfStack
+        "                                    \n"
+        "    ldmia   r0!, {r4-r11}           \n" // Restore software registers R4-R11 from new task stack
+        "    msr     psp, r0                 \n" // Update PSP with new task stack pointer
+        "    isb                             \n"
+        "    cpsie   i                       \n" // Re-enable interrupts
+        "    bx      lr                      \n" // Hardware un-stacks {R0-R3, R12, LR, PC, xPSR} & resumes task
+    );
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify deterministic PendSV preemption and dual-stack execution:
+
+1. **Dual-Stack Verification via GDB/OpenOCD:**
+   - Place a breakpoint at `PendSV_Handler`.
+   - In GDB, execute `info registers`: Verify that `CONTROL.SPSEL = 1` while in task code (using `PSP`), and that the processor switches automatically to `MSP` upon entering `PendSV_Handler`.
+2. **Context-Switch Latency Measurement:**
+   - Configure a GPIO output pin (**PA5**).
+   - In Task 1, set PA5 High immediately prior to calling `vPortYield()`.
+   - In Task 2, set PA5 Low on the very first instruction after resuming.
+   - Attach a digital oscilloscope or logic analyzer: measure the elapsed pulse width of PA5.
+   - **Expected Benchmark:** Context switch latency under 84 MHz Cortex-M4 is typically **under 1.2 microseconds** (approx. 90 clock cycles including register pushes, scheduler selection, and un-stacking).
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why must `PendSV` be configured with the lowest possible exception priority (`0xFF`) in an RTOS kernel? What failure occurs if it is set to priority 0?**
+2. **Explain why Cortex-M processors provide separate `MSP` and `PSP` stack pointers and how this protects real-time safety.**
+3. **What catastrophic CPU fault occurs if bit 24 of the `xPSR` register is initialized to `0` when populating a new task stack?**
+4. **Why is `PendSV_Handler` decorated with `__attribute__((naked))` in GCC C firmware?**
+5. **How does Tickless Idle mode (`configUSE_TICKLESS_IDLE`) differ from standard SysTick sleep, and what hardware peripheral is typically used to wake the processor?**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

@@ -1,17 +1,20 @@
 ---
-title: "EC8708: Multi-Architecture Embedded Hardware Ecosystems & The Red Board Powerhouses"
-code: "EC8708"
+title: "Multi-Architecture Embedded Hardware Ecosystems & The Red Board Powerhouses"
+code: "ARCH8708"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 8
+specializationTrack: "Multi-Architecture Systems"
+simulationComponent: "ComponentInspectorHub"
+trackSlug: "multi-arch-ecosystems"
 description: "Comprehensive cross-architecture embedded systems engineering spanning Blue (Arduino/RP2040), Black (ESP32), Green (STM32 Cortex-M4), and the Red Hardware Powerhouses: SparkFun Artemis (Apollo3), TI MSP430/C2000 LaunchPad, and SparkFun RED-V (SiFive RISC-V)."
 difficulty: "Apex Research"
-author: "MIT Campus Embedded Silicon & Hardware Architecture Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-09-28
 prerequisites:
-  - "EC8702: Embedded Systems & Real-Time Operating Systems Architecture"
+  - "Embedded Systems & Real-Time Operating Systems Architecture"
   - "Computer Architecture & RISC vs CISC Microcontroller Fundamentals"
   - "I2C, SPI, and UART Bus Transmission Line Signal Integrity"
 learningOutcomes:
@@ -35,7 +38,7 @@ tags:
   - "Qwiic I2C"
   - "Apollo3"
   - "FRAM Memory"
-  - "Anna University R2021"
+  - "Multi-Arch"
 syllabusUnits:
   - unit: 1
     title: "Multi-Architecture Microcontroller Silicon Ecosystems"
@@ -63,7 +66,7 @@ ieeeReference: "IEEE Micro, Vol. 44, No. 3, pp. 48-62, Special Issue on Emerging
 xpReward: 500
 ---
 
-# EC8708: Multi-Architecture Embedded Hardware Ecosystems & The Red Board Powerhouses
+# Multi-Architecture Embedded Hardware Ecosystems & The Red Board Powerhouses
 
 <div class="ieee-abstract">
   <strong>Abstract</strong>—Embedded systems pedagogy has expanded beyond monolithic 8-bit microcontrollers into a heterogeneous multi-architecture landscape. This comprehensive module analyzes the operational trade-offs, register abstraction layers, and physical bus interfaces of four dominant hardware ecosystems: Blue (Arduino / RP2040), Black (ESP32-S3), Green (STM32 Cortex-M4), and the iconic <strong>Red Hardware Powerhouses</strong>. We examine the sub-threshold physics of the SparkFun Artemis (Ambiq Apollo3 Cortex-M4F operating at sub-6 µA/MHz), the non-volatile endurance of Texas Instruments MSP430 Ferroelectric RAM (FRAM), the real-time vector math accelerators of TI C2000, and the open-source silicon execution of the SparkFun RED-V (SiFive Freedom E310 RISC-V @ 320 MHz).
@@ -82,7 +85,7 @@ xpReward: 500
 | **Black Ecosystem** | ESP32-S3 DevKit | Dual Xtensa 32-bit LX7 | 240 MHz | 3.3V | Wi-Fi 4 + BLE 5.0, Vector Math AI Instructions |
 | **Green Ecosystem** | STM32F401 Nucleo-64 | ARM Cortex-M4 with FPU | 84 MHz | 3.3V | Deterministic CMSIS timers & Industrial ADC |
 | **Red Powerhouse (1)** | **SparkFun RedBoard Artemis** | **Ambiq Apollo3 (Cortex-M4F)** | **48 MHz (Burst 96MHz)**| **3.3V** | **Sub-threshold logic: sub-6 µA/MHz, Qwiic I2C** |
-| **Red Powerhouse (2)** | **TI MSP430FR5994 LaunchPad** | **16-bit MSP430 RISC + FRAM** | **16 MHz** | **1.8V – 3.6V** | **256KB Ferroelectric RAM, $10^{15}$ write endurance** |
+| **Red Powerhouse (2)** | **TI MSP430FR5994 LaunchPad** | **16-bit MSP430 RISC + FRAM** | **16 MHz** | **1.8V – 3.6V** | **256KB Ferroelectric RAM, `$10^{15}$` write endurance** |
 | **Red Powerhouse (3)** | **TI C2000 Piccolo (TMS320)** | **C28x 32-bit DSP + CLA** | **100 MHz** | **3.3V** | **Dual-core Control Law Accelerator for Motor PWM** |
 | **Red Powerhouse (4)** | **SparkFun RED-V Thing Plus**| **SiFive Freedom E310 RISC-V** | **320 MHz** | **3.3V** | **Pure open-source RV32IMAC core, zero royalties** |
 
@@ -91,16 +94,16 @@ xpReward: 500
 ## II. The Red Hardware Powerhouses: Architectural Breakdown
 
 ### 1. SparkFun RedBoard & Artemis (Ambiq Apollo3 Core)
-The SparkFun Artemis module is the world's first commercially available open-source hardware RF module utilizing Ambiq Micro's proprietary **Sub-Threshold Power-Optimized Technology (SPOT)**. Transistors operate at voltages below the threshold voltage ($V_{\text{th}} \approx 0.3\text{V}$), reducing dynamic power consumption ($P = C V^2 f$) by over $10\times$ compared to conventional CMOS:
+The SparkFun Artemis module is the world's first commercially available open-source hardware RF module utilizing Ambiq Micro's proprietary **Sub-Threshold Power-Optimized Technology (SPOT)**. Transistors operate at voltages below the threshold voltage (`$V_{th} \approx 0.3V$`), reducing dynamic power consumption ($P = C V^2 f$) by over `$10\times$` compared to conventional CMOS:
 - **Active Current:** Sub-6 µA per MHz running from Flash.
-- **Deep Sleep:** $1.0 \text{ µA}$ with Real-Time Clock (RTC) armed.
+- **Deep Sleep:** $1.0  µA$ with Real-Time Clock (RTC) armed.
 - **Onboard Connectivity:** SparkFun Qwiic 4-pin 1mm pitch polarized I2C connector daisy-chains sensors without soldering.
-- **Edge ML:** Runs Google TensorFlow Lite for Microcontrollers (TFLu) for voice keyword spotting on a $20\text{mm} \times 15\text{mm}$ footprint.
+- **Edge ML:** Runs Google TensorFlow Lite for Microcontrollers (TFLu) for voice keyword spotting on a `$20mm \times 15mm$` footprint.
 
 ### 2. Texas Instruments (TI) MSP430 & C2000 LaunchPad
 Dressed in signature bright red PCBs, TI LaunchPads represent industrial and automotive defense standards:
 - **TI MSP430FR5994 with FRAM (Ferroelectric RAM):**
-  Unlike Flash memory which requires high-voltage charge pumps and block erasures, FRAM polarizes lead zirconate titanate (PZT) dipoles under an electric field. Writes occur at bus speed with **$10^{15}$ write cycle endurance** (vs $10^4$ for Flash) and consume $1/100\text{th}$ the energy of EEPROM, making it ideal for energy-harvesting data loggers.
+  Unlike Flash memory which requires high-voltage charge pumps and block erasures, FRAM polarizes lead zirconate titanate (PZT) dipoles under an electric field. Writes occur at bus speed with **`$10^{15}$` write cycle endurance** (vs $10^4$ for Flash) and consume $1/100th$ the energy of EEPROM, making it ideal for energy-harvesting data loggers.
 - **TI C2000 Piccolo (TMS320F280049C):**
   Features a dedicated 32-bit floating-point **Control Law Accelerator (CLA)** operating independently of the main C28x CPU core. The CLA directly accesses high-speed ADC results and computes Park/Clarke transformations for Field-Oriented Control (FOC) of brushless DC motors without CPU intervention.
 
@@ -130,24 +133,28 @@ The SparkFun RED-V embodies the open silicon revolution:
       Each SparkFun Qwiic breakout board integrates its own onboard <strong>4.7 kΩ pull-up resistors</strong> to 3.3V on both SDA and SCL. When 6 boards are daisy-chained, these resistors become parallel:
     </p>
     <div class="text-center py-1 text-red-300">
-      $$R_{\text{pullup, effective}} = \frac{4700 \ \Omega}{6} \approx 783.3 \ \Omega$$
+      
+```latex
+R_{pullup, effective} = \frac{4700 \ \Omega}{6} \approx 783.3 \ \Omega
+```
+
     </div>
     <p>
-      To pull the bus down to logic LOW ($V_{OL} \le 0.4\text{V}$), an I2C slave must sink current $I_{\text{sink}} = \frac{3.3 - 0.4}{783.3} \approx 3.70 \text{ mA}$, exceeding the standard $3.0 \text{ mA}$ sink rating of small sensor output transistors. The slave fails to assert logic LOW, generating NACK failures!
+      To pull the bus down to logic LOW (`$V_{OL} \le 0.4V$`), an I2C slave must sink current `$I_{sink} = \frac{3.3 - 0.4}{783.3} \approx 3.70  mA$`, exceeding the standard $3.0  mA$ sink rating of small sensor output transistors. The slave fails to assert logic LOW, generating NACK failures!
     </p>
 
     <div class="text-amber-400 font-bold pt-1">2. Cumulative Cable Capacitance:</div>
     <p>
-      Each 100mm Qwiic cable contributes $\approx 15 \text{ pF}$ plus $10 \text{ pF}$ per IC input pin. With 8 daisy-chained boards and cables, bus capacitance exceeds the standard I2C limit of <strong>$400 \text{ pF}$</strong>, distorting the rise time $\tau_r = 2.2 \times R_{\text{pullup}} \times C_{\text{bus}}$ beyond the $300 \text{ ns}$ Fast-Mode specification.
+      Each 100mm Qwiic cable contributes `$\approx 15  pF$` plus $10  pF$ per IC input pin. With 8 daisy-chained boards and cables, bus capacitance exceeds the standard I2C limit of <strong>$400  pF$</strong>, distorting the rise time `$\tau_r = 2.2 \times R_{pullup} \times C_{bus}$` beyond the $300  ns$ Fast-Mode specification.
     </p>
   </div>
 
   <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
-    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <div class="text-[#00F0B5] font-bold">✓ Multi-Architecture Verification Protocol:</div>
     <ul class="list-disc list-inside space-y-1 text-slate-300">
-      <li><strong>Cut Trace Jumpers:</strong> Locate the copper solder jumper labeled "I2C PULL-UP" on 5 of the 6 boards and cut them with a precision hobby knife, leaving exactly one active $4.7 \text{ k}\Omega$ pull-up pair.</li>
+      <li><strong>Cut Trace Jumpers:</strong> Locate the copper solder jumper labeled "I2C PULL-UP" on 5 of the 6 boards and cut them with a precision hobby knife, leaving exactly one active `$4.7  k\Omega$` pull-up pair.</li>
       <li><strong>Active Bus Buffer IC:</strong> Insert an I2C bus buffer accelerator (such as the NXP PCA9617A or TI TCA9517) midway along the chain to isolate capacitance on either side of the segment.</li>
-      <li><strong>Bus Speed Throttling:</strong> Reduce I2C clock speed from $400 \text{ kHz}$ Fast-Mode down to $100 \text{ kHz}$ Standard-Mode, increasing allowable rise time from $300 \text{ ns}$ to $1,000 \text{ ns}$.</li>
+      <li><strong>Bus Speed Throttling:</strong> Reduce I2C clock speed from $400  kHz$ Fast-Mode down to $100  kHz$ Standard-Mode, increasing allowable rise time from $300  ns$ to $1,000  ns$.</li>
     </ul>
   </div>
 </div>
@@ -162,7 +169,7 @@ The following Embedded C firmware demonstrates bare-metal register manipulation 
 /**
  * VoltCore Apex Academia - Module 8: SparkFun Artemis Apollo3 Bare-Metal Driver
  * Target: Ambiq Apollo3 ARM Cortex-M4F (Sub-Threshold CMOS)
- * Standards: Anna University Department of Electronics Engineering
+ * Standards: Core Engineering Series • Autonomous Engineering Cluster
  */
 
 #include "am_mcu_apollo.h"
@@ -219,5 +226,5 @@ int main(void) {
 ## V. Laboratory Viva Voce Examination Questions
 
 1. **Ferroelectric Hysteresis:** Explain how the ferroelectric polarization loop ($P$-$E$ curve) enables TI MSP430FR5994 FRAM to retain non-volatile state without continuous power or charge trapping.
-2. **Sub-Threshold Physics:** In the Ambiq Apollo3 Cortex-M4F, derive why sub-threshold operating currents exhibit an exponential rather than quadratic relationship with gate-source voltage: $I_{DS} \propto \exp\left(\frac{V_{GS} - V_{\text{th}}}{n V_T}\right)$.
+2. **Sub-Threshold Physics:** In the Ambiq Apollo3 Cortex-M4F, derive why sub-threshold operating currents exhibit an exponential rather than quadratic relationship with gate-source voltage: `$I_{DS} \propto \exp\left(\frac{V_{GS} - V_{th}}{n V_T}\right)$`.
 

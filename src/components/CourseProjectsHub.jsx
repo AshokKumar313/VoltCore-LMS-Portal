@@ -40,8 +40,8 @@ export default function CourseProjectsHub({
 
   // Selected practical for report generation
   const [selectedPracticalId, setSelectedPracticalId] = useState(practicals[0]?.id || "");
-  const [studentName, setStudentName] = useState("ECE Undergraduate");
-  const [rollNumber, setRollNumber] = useState("2023MITEC042");
+  const [studentName, setStudentName] = useState("Engineering Scholar");
+  const [rollNumber, setRollNumber] = useState("ENGR-2026-042");
 
   // Load milestone & practical progress from localStorage
   useEffect(() => {
@@ -154,13 +154,13 @@ export default function CourseProjectsHub({
     if (!activeReportPractical) return "";
     const p = activeReportPractical;
     return `# LABORATORY RECORD OF EXPERIMENTS
-**Madras Institute of Technology (MIT Campus), Anna University**  
-**Department of Electronics Engineering — Regulation 2023**
+**Outcome-Based Engineering Education Laboratory Record**  
+**Autonomous Engineering Cluster — Core Series**
 
 ---
 
 ### Course Information
-- **Course Code & Title:** ${courseCode} (Anna University Reg 2023)
+- **Course Code & Title:** ${courseCode}
 - **Experiment No:** ${p.labNumber}
 - **Title of Experiment:** ${p.title}
 - **Academic Unit:** Unit ${p.unitRoman} Practical
@@ -231,7 +231,7 @@ ${p.calculationWorksheet.parameters.map(param => `  - ${param}`).join("\n")}
               Projects, Practicals &amp; Milestone Attainment
             </h2>
             <p className="text-xs text-slate-400 mt-0.5 font-mono">
-              Course Progress Audit • Anna University Regulation 2023
+              Course Progress Audit • Modular Engineering Series
             </p>
           </div>
 
@@ -490,7 +490,7 @@ ${p.calculationWorksheet.parameters.map(param => `  - ${param}`).join("\n")}
           <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
             <h3 className="font-bold text-base text-white flex items-center gap-2">
               <span>📋</span>
-              <span>Anna University Regulation 2023 Prescribed Practicals</span>
+              <span>Prescribed Practical Experiments</span>
             </h3>
             <p className="text-xs text-slate-400">
               Complete and verify practical experiments to fulfill Continuous Internal Evaluation (CIE) requirements.
@@ -618,7 +618,7 @@ ${p.calculationWorksheet.parameters.map(param => `  - ${param}`).join("\n")}
                 <span>👁️</span>
                 <span>Generated Markdown Report Preview</span>
               </h3>
-              <span className="text-[10px] font-mono text-slate-400">Anna University Reg 2023 Format</span>
+              <span className="text-[10px] font-mono text-slate-400">Modular Engineering Format</span>
             </div>
 
             <pre className="w-full p-4 rounded-xl bg-[#020813] border border-slate-800 text-slate-300 font-mono text-[11px] leading-relaxed overflow-x-auto max-h-[460px] overflow-y-auto whitespace-pre-wrap">

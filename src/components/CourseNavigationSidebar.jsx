@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { TIER3_SPECIALIZATION_TRACKS } from '../data/course_config_schema';
+export { TIER3_SPECIALIZATION_TRACKS };
 
 /**
  * ========================================================================================
  * VoltCore Apex Academia - Granular Course Sidebar & Navigation Island
- * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
- * Platform Lead: Ashok Kumar A (2023MITEC042)
+ * Core Engineering Series • Autonomous Engineering Cluster
+ * Platform Lead & Systems Architect: Ashok Kumar A
  * Features:
- *   - 3 Intuitive General Titles (Embedded Systems, Generative AI, Foundational Fundamentals)
- *   - 7 Granular Sections per Track (Intro, Material, Quiz, Assessments, Assignments, Mini/Major Projects)
+ *   - Core Tracks (Embedded Systems, Generative AI, Foundational Fundamentals)
+ *   - Tier 3 Advanced Specialization Tracks (10 Tracks with Simulator Bindings)
  *   - Instant track switching and reactive synchronization with the Multi-Frame Workspace
  * ========================================================================================
  */
@@ -16,7 +18,7 @@ export const COURSE_CATALOG = [
   {
     id: "embedded_systems",
     title: "Embedded Systems & Real-Time IoT",
-    regulation: "Anna University R2023 • EC8702",
+    regulation: "Core Engineering Series • Embedded & RTOS",
     badge: "Core ECE",
     icon: "⚡",
     themeColor: "#00F0B5",
@@ -104,7 +106,7 @@ export const COURSE_CATALOG = [
   {
     id: "generative_ai",
     title: "Generative AI & Edge Intelligence",
-    regulation: "ECE R2023 Advanced Elective",
+    regulation: "Advanced Engineering Series • Edge Intelligence",
     badge: "TinyML & AI",
     icon: "🧠",
     themeColor: "#D946EF",
@@ -226,7 +228,7 @@ export const COURSE_CATALOG = [
         icon: "⚡",
         duration: "15 mins",
         completed: false,
-        summary: "5 daily timed MCQs selected from Anna University semester exams and GATE ECE 2020-2026 archives.",
+        summary: "5 daily timed MCQs selected from university examinations and GATE ECE archives.",
         videoId: "found_03_quiz",
         codeSnippet: `# GATE ECE Resonance Frequency\ndef resonance_frequency(l_henry, c_farad):\n    import math\n    return 1.0 / (2 * math.pi * math.sqrt(l_henry * c_farad))`,
         circuitSim: "RLC Series Resonant Circuit"
@@ -288,10 +290,20 @@ export default function CourseNavigationSidebar({
 }) {
   const [expandedTrackId, setExpandedTrackId] = useState(activeTrackId);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTabMode, setActiveTabMode] = useState("core"); // "core" | "tier3"
 
   const toggleTrack = (trackId) => {
     setExpandedTrackId(prev => prev === trackId ? null : trackId);
   };
+
+  const filteredTier3Tracks = searchQuery
+    ? TIER3_SPECIALIZATION_TRACKS.filter(t =>
+        t.track.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.summary.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : TIER3_SPECIALIZATION_TRACKS;
 
   return (
     <aside 
@@ -320,12 +332,40 @@ export default function CourseNavigationSidebar({
         </button>
       </div>
 
+      {/* Mode Switcher Tabs */}
+      {!isCollapsed && (
+        <div className="flex rounded-lg bg-slate-900/80 p-0.5 border border-slate-800 mb-2.5 w-full">
+          <button
+            type="button"
+            onClick={() => setActiveTabMode("core")}
+            className={`flex-1 py-1 text-[10px] rounded-md transition-all font-bold ${
+              activeTabMode === "core"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Core Tracks
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTabMode("tier3")}
+            className={`flex-1 py-1 text-[10px] rounded-md transition-all font-bold ${
+              activeTabMode === "tier3"
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Specializations (10)
+          </button>
+        </div>
+      )}
+
       {/* Quick Search (when expanded) */}
       {!isCollapsed && (
         <div className="mb-3 w-full">
           <input
             type="text"
-            placeholder="Search syllabus sections..."
+            placeholder={activeTabMode === "core" ? "Search syllabus sections..." : "Search 10 specialization tracks..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200 placeholder-slate-500 text-[11px] focus:outline-none focus:border-emerald-400"
@@ -335,7 +375,56 @@ export default function CourseNavigationSidebar({
 
       {/* Course Tracks Accordion */}
       <div className="flex-1 overflow-y-auto space-y-2.5 w-full pr-1">
-        {COURSE_CATALOG.map((track) => {
+        {activeTabMode === "tier3" && !isCollapsed && (
+          <div className="space-y-2">
+            {filteredTier3Tracks.map(spec => (
+              <div
+                key={spec.id}
+                className="p-2.5 rounded-xl border border-slate-800 bg-slate-900/40 hover:border-slate-700 transition-all space-y-1.5"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span className="text-sm">{spec.icon}</span>
+                    <span className="font-bold text-white text-[11px] truncate">{spec.track}</span>
+                  </div>
+                  <span
+                    className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold flex-shrink-0"
+                    style={{
+                      color: spec.themeColor,
+                      backgroundColor: `${spec.themeColor}15`,
+                      border: `1px solid ${spec.themeColor}40`
+                    }}
+                  >
+                    {spec.code}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-300 line-clamp-2 leading-snug">
+                  {spec.title}
+                </p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                  <span className="text-[9px] text-slate-400 truncate">
+                    {spec.duration} • {spec.difficulty}
+                  </span>
+                  <a
+                    href={spec.simRoute}
+                    className="text-[9px] px-2 py-0.5 rounded font-bold transition-all hover:scale-105 inline-flex items-center gap-1 flex-shrink-0"
+                    style={{
+                      color: spec.themeColor,
+                      border: `1px solid ${spec.themeColor}50`,
+                      backgroundColor: `${spec.themeColor}10`
+                    }}
+                    title={`Launch ${spec.simulationComponent}`}
+                  >
+                    <span>⚡</span>
+                    <span className="truncate max-w-[100px]">{spec.simulationComponent}</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTabMode === "core" && COURSE_CATALOG.map((track) => {
           const isExpanded = expandedTrackId === track.id || searchQuery.length > 0;
           const isCurrentTrack = activeTrackId === track.id;
 
@@ -434,8 +523,8 @@ export default function CourseNavigationSidebar({
       {/* Sidebar Footer */}
       {!isCollapsed && (
         <div className="pt-3 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between mt-2">
-          <span>Syllabus: AU R2023 ECE</span>
-          <span className="text-emerald-400 font-bold">21 Units</span>
+          <span>Core Engineering Series</span>
+          <span className="text-emerald-400 font-bold">10 Tracks • 21 Units</span>
         </div>
       )}
     </aside>

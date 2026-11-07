@@ -1,0 +1,344 @@
+---
+moduleNumber: 8
+title: 'General-Purpose & Advanced Timers (TIM) - PWM Generation, Input Capture & Quadrature Encoders'
+shortTitle: 'Timers, PWM & Encoders'
+tier: 'Tier 2: Core Peripherals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '90 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'TIMx_CR1'
+  - 'TIMx_PSC'
+  - 'TIMx_ARR'
+  - 'TIMx_CNT'
+  - 'TIMx_CCMR1'
+  - 'TIMx_CCER'
+  - 'TIMx_CCR1'
+  - 'TIMx_SMCR'
+description: 'Hardware timer taxonomy, counter time-base arithmetic, edge-aligned vs center-aligned PWM motor control, input capture period measurement, and quadrature encoder interface modes.'
+keyFormulas:
+  - 'f_{CNT} = \frac{f_{TIM\_CLK}}{PSC + 1}'
+  - 'f_{PWM\_edge} = \frac{f_{TIM\_CLK}}{(PSC + 1) \times (ARR + 1)}'
+  - 'f_{PWM\_center} = \frac{f_{TIM\_CLK}}{2 \times (PSC + 1) \times ARR}'
+  - 'D = \frac{CCR1}{ARR + 1} \times 100\%'
+hardwareApparatus:
+  - 'Oscilloscope Probe on PA8 (TIM1_CH1) / PA5 (TIM2_CH1)'
+  - 'Rotary Quadrature Encoder on PA0 (TIM2_CH1) and PA1 (TIM2_CH2)'
+order: 8
+xpReward: 225
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# General-Purpose & Advanced Timers (TIM) - PWM Generation, Input Capture & Quadrature Encoders
+
+## 1. Architectural Overview & Hardware Foundations
+Timers are the backbone of real-time embedded systems. Unlike software delay loops that burn CPU cycles and drift with compiler optimization levels or interrupt servicing, hardware timers run autonomously on peripheral clock buses. 
+
+In STM32 silicon (Cortex-M3 `STM32F1` and Cortex-M4F `STM32F4`), timers are sophisticated multi-channel state machines capable of waveform synthesis, input signal demodulation, ADC hardware triggering, and hardware quadrature motion decoding.
+
+```
+       +-----------------------------------------------------------+
+       |               INTERNAL TIMER CLOCK (f_CK_PSC)             |
+       +-----------------------------+-----------------------------+
+                                     |
+                                     v
+                       +---------------------------+
+                       |    PRESCALER (TIMx_PSC)   |
+                       |       16-bit Divisor      |
+                       +-------------+-------------+
+                                     |
+                                     v (f_CK_CNT)
+                       +---------------------------+
+                       |     COUNTER (TIMx_CNT)    |
+                       |   16-bit or 32-bit Up/Down|
+                       +-------------+-------------+
+                                     |
+               +---------------------+---------------------+
+               |                     |                     |
+               v                     v                     v
+      +-----------------+   +-----------------+   +-----------------+
+      | AUTO-RELOAD REG |   | CAPTURE/COMPARE |   | CAPTURE/COMPARE |
+      |   (TIMx_ARR)    |   |     (CCR1)      |   |     (CCR2)      |
+      +--------+--------+   +--------+--------+   +--------+--------+
+               |                     |                     |
+               v                     v                     v
+          Update Event           PWM Output 1          PWM Output 2
+            (UEV)                   (CH1)                 (CH2)
+```
+
+### 1.1 STM32 Timer Classification & Feature Matrix
+STM32 microcontrollers segment timer silicon into three distinct tiers to balance die area, power consumption, and control capability:
+
+| Timer Category | Instances (STM32F401RE) | Counter Width | Counter Direction | PWM Channels | DMA Requests | Advanced Capabilities |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Advanced Control** | `TIM1` | 16-bit | Up, Down, Center-Aligned | 4 (Complimentary) | Yes | Dead-time generator, Break input, Repetition counter |
+| **General Purpose (Full)** | `TIM2`, `TIM5` | **32-bit** | Up, Down, Center-Aligned | 4 | Yes | Quadrature encoder, Hall sensor, Master/Slave sync |
+| **General Purpose (Std)** | `TIM3`, `TIM4` | 16-bit | Up, Down, Center-Aligned | 4 | Yes | Quadrature encoder, PWM, Input capture |
+| **General Purpose (Light)**| `TIM9`, `TIM10`, `TIM11`| 16-bit | Up only | 1 or 2 | No | Independent time-base, Single PWM channel |
+
+> **Key Distinction:** `TIM2` and `TIM5` on STM32F4 are true **32-bit timers**. With an `ARR` value up to `0xFFFFFFFF`, a 32-bit counter clocked at 84 MHz can run continuously for **51.13 seconds** without rolling over, compared to only **780 microseconds** for a 16-bit counter clocked directly.
+
+---
+
+## 2. Key Mathematical Derivations & Formulas
+
+### 2.1 Time-Base Counter Arithmetic
+The counter clock `f_CK_CNT` is obtained by dividing the input peripheral timer clock `f_TIM_CLK` by the 16-bit prescaler value plus one:
+
+```latex
+f_{CNT} = \frac{f_{TIM\_CLK}}{PSC + 1}
+```
+
+The time duration of a single counter tick is:
+
+```latex
+T_{tick} = \frac{1}{f_{CNT}} = \frac{PSC + 1}{f_{TIM\_CLK}}
+```
+
+When the counter reaches the Auto-Reload value `ARR`, an **Update Event (UEV)** is generated, the counter resets (in up-counting mode), and the reload cycle repeats. The overflow frequency is given by:
+
+```latex
+f_{overflow} = \frac{f_{TIM\_CLK}}{(PSC + 1) \times (ARR + 1)}
+```
+
+### 2.2 Edge-Aligned vs. Center-Aligned PWM Synthesis
+
+#### Edge-Aligned PWM
+In edge-aligned mode (`TIMx_CR1.CMS = 00`), the counter counts from `0` up to `ARR`, then instantly jumps back to `0`. The PWM output stays active while `CNT < CCRx`, and transitions inactive when `CNT >= CCRx` (in PWM Mode 1).
+
+```latex
+f_{PWM\_edge} = \frac{f_{TIM\_CLK}}{(PSC + 1) \times (ARR + 1)}
+```
+
+```latex
+\text{Duty Cycle} = \frac{CCR}{ARR + 1} \times 100\%
+```
+
+#### Center-Aligned PWM (Up/Down Counting)
+In center-aligned mode, the counter counts from `0` up to `ARR - 1`, generates a counter overflow, counts down from `ARR` down to `1`, generates an underflow, and repeats. Because each PWM period consists of an up-ramp and a down-ramp, the resulting PWM frequency is halved for the same `ARR`:
+
+```latex
+f_{PWM\_center} = \frac{f_{TIM\_CLK}}{2 \times (PSC + 1) \times ARR}
+```
+
+```
+Edge-Aligned PWM:
+CNT:  0 /| /| /| /|
+OUT:  ---|___|---|___|---|___ (Harmonics concentrated at edges)
+
+Center-Aligned PWM:
+CNT:  0 /\/\/\/\/\
+OUT:  __--____--____--__ (Symmetrical: Even harmonics canceled)
+```
+
+### 2.3 Electromagnetic Interference (EMI) & Motor Drive Advantage
+In 3-phase inverter bridges (BLDC/PMSM field-oriented control), edge-aligned switching creates high `di/dt` spikes because multiple bridge legs switch simultaneously at the start of each period. Center-aligned switching spreads the switching transitions symmetrically across the period, drastically reducing:
+1. Conducted and radiated electromagnetic emissions (EMI).
+2. Acoustic motor whine.
+3. DC-bus capacitor ripple currents.
+
+---
+
+## 3. Register Level Architecture & Bit Manipulation
+
+The timer peripheral is controlled through memory-mapped 32-bit registers located on the APB1 or APB2 bus.
+
+| Register Mnemonic | Base Offset | Reset Value | Hardware Function |
+| :--- | :--- | :--- | :--- |
+| **`TIMx_CR1`** | `+0x00` | `0x00000000` | Counter enable (`CEN`), Direction (`DIR`), Center-aligned mode selection (`CMS[1:0]`), Auto-reload preload enable (`ARPE`) |
+| **`TIMx_CR2`** | `+0x04` | `0x00000000` | Master mode selection (`MMS[2:0]`) for triggering downstream ADCs and DACs |
+| **`TIMx_SMCR`** | `+0x08` | `0x00000000` | Slave mode selection (`SMS[2:0]`), trigger selection (`TS[2:0]`), encoder interface modes |
+| **`TIMx_DIER`** | `+0x0C` | `0x00000000` | DMA/Interrupt enable register (`UIE`: update interrupt, `CC1IE`: capture/compare 1 interrupt) |
+| **`TIMx_SR`** | `+0x10` | `0x00000000` | Status register containing update interrupt flag (`UIF`) and capture flags (`CC1IF`) |
+| **`TIMx_EGR`** | `+0x14` | `0x00000000` | Event generation register (`UG`: software update generation to load preloaded registers) |
+| **`TIMx_CCMR1`**| `+0x18` | `0x00000000` | Capture/Compare Mode: Output PWM mode (`OC1M[2:0]`), preload enable (`OC1PE`), or Input Capture filter (`IC1F`) |
+| **`TIMx_CCER`** | `+0x20` | `0x00000000` | Capture/Compare Enable: Channel output enable (`CC1E`), polarity (`CC1P`), complementary enables |
+| **`TIMx_CNT`**  | `+0x24` | `0x00000000` | Active counter value |
+| **`TIMx_PSC`**  | `+0x28` | `0x00000000` | Clock prescaler buffer |
+| **`TIMx_ARR`**  | `+0x2C` | `0x0000FFFF` | Auto-reload shadow and preload register |
+| **`TIMx_CCR1`** | `+0x34` | `0x00000000` | Capture/Compare Value 1 (determines PWM pulse width or holds captured counter timestamp) |
+
+### 3.1 Preload Registers & The ARPE / OCxPE Mechanism
+Timers feature a dual-register architecture consisting of a **Preload register** (user accessible) and a **Shadow register** (directly read by hardware comparison logic).
+- When `TIMx_CR1.ARPE = 0`: Writes to `TIMx_ARR` take effect immediately. If the new `ARR` is lower than the current `CNT`, the counter will continue counting to `0xFFFF` before rolling over, causing an unexpected long pulse.
+- When `TIMx_CR1.ARPE = 1`: Writes to `TIMx_ARR` are buffered in preload and only transfer to the active shadow register at the next **Update Event (UEV)**, guaranteeing glitch-free PWM frequency updates.
+
+---
+
+## 4. Input Capture & Quadrature Encoder Decoding
+
+### 4.1 Input Capture Mechanism
+Input Capture channels capture the current timestamp `TIMx_CNT` into `TIMx_CCRx` upon detecting an active edge on an external pin. This enables sub-microsecond pulse-width and frequency measurement:
+
+```latex
+T_{pulse} = (CNT_{falling} - CNT_{rising}) \times T_{tick}
+```
+
+Configuration bits in `TIMx_CCMR1`:
+- `CC1S[1:0] = 01`: Channel 1 is configured as input, mapped onto `TI1`.
+- `IC1F[3:0] = 0011`: Digital filter sampling: filters out noise pulses shorter than 8 timer clock cycles.
+
+### 4.2 Hardware Quadrature Encoder Interface (X4 Mode)
+Incremental rotary encoders output two square waves (`A` and `B`, mapped to `TI1` and `TI2`) in quadrature (90-degree phase shift). The timer hardware can automatically decode both position and rotational direction without any CPU interrupt overhead:
+
+```
+TI1 (Channel A):  __|‾‾|__|‾‾|__|‾‾
+TI2 (Channel B):  ____|‾‾|__|‾‾|__
+Count Direction:     -> Clockwise (Increment)
+
+TI1 (Channel A):  ____|‾‾|__|‾‾|__
+TI2 (Channel B):  __|‾‾|__|‾‾|__|‾‾
+Count Direction:     <- Counter-Clockwise (Decrement)
+```
+
+Setting `TIMx_SMCR.SMS[2:0] = 011` enables **Encoder Mode 3 (X4 resolution)**:
+- Counter increments or decrements on every edge (rising AND falling) of both `TI1` and `TI2`.
+- A 1000-line optical encoder yields **4000 counts per revolution**.
+- Read rotational position at any instant with zero software jitter by reading `TIMx_CNT`.
+- Read current direction instantly from `TIMx_CR1.DIR` (0: Up / Forward, 1: Down / Reverse).
+
+---
+
+## 5. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver initializes **TIM2** on STM32F401RE to generate a **20 kHz Center-Aligned PWM signal** on pin **PA5** (Nucleo-F401RE Green User LED) with buffered duty cycle updates, alongside an incremental encoder on **PA0** and **PA1**.
+
+```c
+/**
+ * @file    voltcore_timer_pwm.c
+ * @brief   Bare-metal Center-Aligned PWM & Timer Driver for STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+
+// Peripheral Base Memory Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define APB1PERIPH_BASE     (PERIPH_BASE + 0x00000000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+
+// RCC Registers
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define RCC_APB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x40UL))
+
+// GPIOA Registers
+#define GPIOA_BASE          (AHB1PERIPH_BASE + 0x0000UL)
+#define GPIOA_MODER         (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_OSPEEDR       (*(volatile uint32_t *)(GPIOA_BASE + 0x08UL))
+#define GPIOA_AFRL          (*(volatile uint32_t *)(GPIOA_BASE + 0x20UL))
+
+// TIM2 Registers (32-bit General Purpose Timer on APB1)
+#define TIM2_BASE           (APB1PERIPH_BASE + 0x0000UL)
+#define TIM2_CR1            (*(volatile uint32_t *)(TIM2_BASE + 0x00UL))
+#define TIM2_CR2            (*(volatile uint32_t *)(TIM2_BASE + 0x04UL))
+#define TIM2_SMCR           (*(volatile uint32_t *)(TIM2_BASE + 0x08UL))
+#define TIM2_DIER           (*(volatile uint32_t *)(TIM2_BASE + 0x0CUL))
+#define TIM2_SR             (*(volatile uint32_t *)(TIM2_BASE + 0x10UL))
+#define TIM2_EGR            (*(volatile uint32_t *)(TIM2_BASE + 0x14UL))
+#define TIM2_CCMR1          (*(volatile uint32_t *)(TIM2_BASE + 0x18UL))
+#define TIM2_CCER           (*(volatile uint32_t *)(TIM2_BASE + 0x20UL))
+#define TIM2_CNT            (*(volatile uint32_t *)(TIM2_BASE + 0x24UL))
+#define TIM2_PSC            (*(volatile uint32_t *)(TIM2_BASE + 0x28UL))
+#define TIM2_ARR            (*(volatile uint32_t *)(TIM2_BASE + 0x2CUL))
+#define TIM2_CCR1           (*(volatile uint32_t *)(TIM2_BASE + 0x34UL))
+
+/**
+ * @brief Initialize TIM2 CH1 on PA5 for 20 kHz Center-Aligned PWM
+ * @param timer_clock_hz Peripheral bus clock feeding TIM2 (84000000 Hz)
+ */
+void tim2_pwm_center_aligned_init(uint32_t timer_clock_hz) {
+    // 1. Enable GPIOA and TIM2 peripheral clock gates
+    RCC_AHB1ENR |= (1UL << 0);    // GPIOA clock enable
+    RCC_APB1ENR |= (1UL << 0);    // TIM2 clock enable
+
+    // 2. Configure PA5 as Alternate Function mode (MODER[11:10] = 10)
+    GPIOA_MODER &= ~(3UL << (5 * 2));
+    GPIOA_MODER |=  (2UL << (5 * 2));
+
+    // High speed slew rate on PA5
+    GPIOA_OSPEEDR |= (3UL << (5 * 2));
+
+    // Configure PA5 Alternate Function to AF01 (TIM2_CH1) in AFRL
+    // AFRL5 starts at bit 20: 5 * 4 = 20
+    GPIOA_AFRL &= ~(0xFUL << (5 * 4));
+    GPIOA_AFRL |=  (0x1UL << (5 * 4)); // AF1 = TIM2_CH1
+
+    // 3. Time-base configuration for 20 kHz Center-Aligned PWM:
+    // f_PWM_center = f_TIM / (2 * (PSC + 1) * ARR)
+    // For f_TIM = 84 MHz, PSC = 0:
+    // ARR = 84000000 / (2 * 1 * 20000) = 2100
+    TIM2_PSC = 0;              // 84 MHz tick rate (11.9 ns per count)
+    TIM2_ARR = 2100;           // 20 kHz carrier frequency
+    TIM2_CCR1 = 1050;          // Initial 50% duty cycle (1050 / 2100)
+
+    // 4. Configure Capture/Compare Mode Register 1 (CCMR1) for Channel 1:
+    // Bits [6:4] OC1M = 110 (PWM Mode 1: Active while CNT < CCR1 in upcount, inactive in downcount)
+    // Bit 3      OC1PE = 1  (Output Compare 1 Preload Enable for glitch-free updates)
+    TIM2_CCMR1 &= ~(0xFFUL << 0);
+    TIM2_CCMR1 |=  (6UL << 4) | (1UL << 3);
+
+    // 5. Configure Capture/Compare Enable Register (CCER):
+    // Bit 0: CC1E = 1 (Channel 1 output enabled to pin)
+    // Bit 1: CC1P = 0 (Active High polarity)
+    TIM2_CCER |= (1UL << 0);
+
+    // 6. Configure Control Register 1 (CR1):
+    // Bits [6:5] CMS = 01 (Center-Aligned Mode 1: Interrupt flags set during downcount)
+    // Bit 7      ARPE = 1 (Auto-reload preload enable)
+    TIM2_CR1 |= (1UL << 5) | (1UL << 7);
+
+    // 7. Force hardware update event to load prescaler and ARR shadows
+    TIM2_EGR = (1UL << 0);     // UG = 1
+
+    // 8. Enable counter
+    TIM2_CR1 |= (1UL << 0);    // CEN = 1
+}
+
+/**
+ * @brief Update PWM duty cycle with hardware shadow latching
+ * @param duty_promille Duty cycle scaled from 0 (0%) to 1000 (100.0%)
+ */
+void tim2_set_duty_promille(uint16_t duty_promille) {
+    if (duty_promille > 1000) duty_promille = 1000;
+    
+    // Scale duty cycle relative to ARR
+    uint32_t compare_val = ((uint64_t)TIM2_ARR * duty_promille) / 1000UL;
+    TIM2_CCR1 = compare_val; // Latched automatically on next update event
+}
+```
+
+---
+
+## 6. Hardware-in-the-Loop Verification Protocol
+
+To verify precise PWM synthesis on your lab bench:
+
+1. **Oscilloscope Connections:**
+   - Connect Channel 1 probe to **PA5** (Header pin D13 on Arduino layout / Morpho pin CN10-11).
+   - Ground clip attached to adjacent **GND** terminal.
+2. **Signal Measurement Protocol:**
+   - Set Oscilloscope timebase to **10 µs/div** and vertical scale to **1.0 V/div**.
+   - Measure waveform period `T`: Expected `T = 50.0 µs`, verifying `f = 20.00 kHz`.
+   - Verify pulse symmetry across the center axis, confirming Center-Aligned Mode 1 operation.
+3. **Glitch-Free Preload Verification:**
+   - Modulate duty cycle dynamically from 10% to 90% in a 1 kHz loop.
+   - Inspect trigger persistence on the oscilloscope. Observe zero runt pulses or missed periods, validating the `ARPE` and `OC1PE` preload shadow registers.
+
+---
+
+## 7. Self-Assessment & Viva Voce Challenge
+
+1. **Why does center-aligned PWM halve the effective switching frequency compared to edge-aligned PWM for identical `ARR` values?**
+2. **What is the purpose of the `UG` (Update Generation) bit in `TIMx_EGR`, and what hazard occurs if you omit setting it before starting the counter?**
+3. **In Quadrature Encoder Mode 3 (X4), why does an optical encoder rated at 500 pulses per revolution yield 2000 counts per turn?**
+4. **Explain how `TIMx_CR1.ARPE` prevents catastrophic motor bridge shoot-through during dynamic frequency adjustments.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

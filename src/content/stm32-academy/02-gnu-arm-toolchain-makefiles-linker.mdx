@@ -1,0 +1,268 @@
+---
+moduleNumber: 2
+title: 'Advanced Embedded C: Memory-Mapped Registers, Volatile & Bit-Manipulation Hazards'
+shortTitle: 'Advanced Embedded C & Volatile'
+tier: 'Tier 1: Architecture & Toolchain'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '01-arm-cortex-m-architecture'
+estimatedDuration: '65 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'GPIOA_MODER'
+  - 'GPIOA_ODR'
+  - 'GPIOA_BSRR'
+  - 'RCC_AHB1ENR'
+description: 'Master memory-mapped I/O pointer casting, compiler optimization prevention via volatile, struct-based CMSIS register modeling, and atomic bit manipulation hazards.'
+keyFormulas:
+  - 'Bitmask Clear: REG &= ~(Bitmask)'
+  - 'Bitmask Set: REG |= (Bitmask)'
+  - 'Atomic BSRR Set: BSRR = (1UL << pin)'
+  - 'Atomic BSRR Reset: BSRR = (1UL << (pin + 16))'
+hardwareApparatus:
+  - 'Nucleo-F401RE (LD2 on PA5)'
+  - 'Logic Analyzer connected to PA5'
+  - 'ST-LINK GDB Debugger'
+order: 2
+xpReward: 175
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Advanced Embedded C: Memory-Mapped Registers, Volatile & Bit-Manipulation Hazards
+
+## 1. Architectural Foundations: Memory-Mapped I/O (MMIO)
+
+In the ARM Cortex-M architecture, all hardware peripherals—including GPIO ports, serial transceivers (USART/SPI/I2C), timers, and interrupt controllers—reside within a single unified 4 GB physical address space. Unlike x86 architectures that provide a separate I/O port address space accessed via specialized instructions (`in`/`out`), ARM microcontrollers interact with hardware peripherals using standard load (`LDR`) and store (`STR`) instructions targeting memory addresses above `0x40000000`.
+
+```
+  0xFFFFFFFF +---------------------------------------------------+
+             | Core Internal Peripherals (NVIC, SysTick, MPU)   | 0xE0000000
+             +---------------------------------------------------+
+             | External Peripherals / RAM                        | 0x60000000
+             +---------------------------------------------------+
+             | Peripheral Bus Mappings (AHB1, AHB2, APB1, APB2) | 0x40000000
+             +---------------------------------------------------+
+             | Embedded SRAM (96 KB on STM32F401RE)              | 0x20000000
+             +---------------------------------------------------+
+  0x00000000 | Embedded Flash Memory (512 KB)                    | 0x08000000
+             +---------------------------------------------------+
+```
+
+---
+
+## 2. Preventing Compiler Optimization Hazards: The Deep Mechanics of `volatile`
+
+The C programming language was originally standardized for general-purpose computing where variables reside in RAM and modify their state only through explicit program instructions. An optimizing C compiler (such as `arm-none-eabi-gcc -O2` or `-O3`) aggressively optimizes code by:
+1. **Caching memory values in CPU core registers (`R0-R12`):** Rather than performing redundant 32-bit bus reads across the AHB/APB bridge, the compiler loads the value once and reuses the register.
+2. **Eliminating dead code and redundant writes:** Sequential writes to the same variable without an intervening read are pruned.
+3. **Reordering instructions:** Memory operations that appear independent are rescheduled to pipeline instruction execution.
+
+### The Disaster of Missing `volatile`
+Consider polling a peripheral hardware status flag, such as waiting for the USART transmit data register to empty:
+
+```c
+/* DANGEROUS CODE: Missing volatile */
+uint32_t *usart_sr = (uint32_t *)0x40004400; // Pointer to USART2_SR
+
+while (!(*usart_sr & (1 << 7))) {
+    // Wait for TXE (Transmit Data Register Empty) flag
+}
+```
+
+When compiled with `-O2`, the compiler inspects the loop body and reasons: *"The variable `*usart_sr` is not modified inside this loop. Therefore, its value will never change."* The compiler hoists the memory read outside the loop:
+
+```assembly
+    LDR   R1, =0x40004400    ; Load register address
+    LDR   R0, [R1]           ; Read USART_SR ONCE into R0
+.L2:
+    TST   R0, #128           ; Test TXE bit in R0
+    BEQ   .L2                ; INFINITE LOOP! Hardware updates to 0x40004400 are ignored!
+```
+
+### The Solution: The `volatile` Type Qualifier
+Qualifying a pointer target as `volatile` instructs the compiler:
+- **Mandatory Hardware Access:** Every read and write in the C source must generate an actual bus transaction (`LDR` or `STR`).
+- **Zero Optimization Pruning:** Do not cache the value in a CPU register across statements.
+- **Strict Sequence Preservation:** Do not reorder accesses with respect to compiler memory barriers.
+
+```c
+/* CORRECT PRODUCTION IMPLEMENTATION */
+#define USART2_SR (*(volatile uint32_t *)(0x40004400UL))
+
+while (!(USART2_SR & (1UL << 7))) {
+    /* Generates an LDR instruction on EVERY single iteration */
+}
+```
+
+---
+
+## 3. Register Level Casting: `stm32f4xx_gpio_register_demo.c`
+
+Below is the production-grade bare-metal C implementation demonstrating direct memory-mapped register manipulation for the **STM32F401RE Nucleo-64** board (controlling the onboard green LED `LD2` on pin `PA5`):
+
+```c
+/**
+ * @file stm32f4xx_gpio_register_demo.c
+ * @brief Register-level bare-metal GPIO driver for STM32F401RE (LD2 on PA5)
+ * @author VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+
+/* Base Memory Addresses (from STM32F401 Reference Manual RM0368) */
+#define PERIPH_BASE         (0x40000000UL)
+#define AHB1PERIPH_OFFSET   (0x00020000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + AHB1PERIPH_OFFSET)
+
+/* Peripheral Base Addresses on AHB1 */
+#define GPIOA_OFFSET        (0x0000UL)
+#define GPIOA_BASE          (AHB1PERIPH_BASE + GPIOA_OFFSET)
+#define RCC_OFFSET          (0x3800UL)
+#define RCC_BASE            (AHB1PERIPH_BASE + RCC_OFFSET)
+
+/* Register Offsets */
+#define GPIO_MODER_OFFSET   (0x00UL) /* Mode Register */
+#define GPIO_OTYPER_OFFSET  (0x04UL) /* Output Type Register */
+#define GPIO_OSPEEDR_OFFSET (0x08UL) /* Output Speed Register */
+#define GPIO_ODR_OFFSET     (0x14UL) /* Output Data Register */
+#define GPIO_BSRR_OFFSET    (0x18UL) /* Bit Set/Reset Register */
+#define RCC_AHB1ENR_OFFSET  (0x30UL) /* AHB1 Peripheral Clock Enable Register */
+
+/* Pointer-based Register Definitions with volatile qualification */
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + RCC_AHB1ENR_OFFSET))
+#define GPIOA_MODER         (*(volatile uint32_t *)(GPIOA_BASE + GPIO_MODER_OFFSET))
+#define GPIOA_OTYPER        (*(volatile uint32_t *)(GPIOA_BASE + GPIO_OTYPER_OFFSET))
+#define GPIOA_OSPEEDR       (*(volatile uint32_t *)(GPIOA_BASE + GPIO_OSPEEDR_OFFSET))
+#define GPIOA_ODR           (*(volatile uint32_t *)(GPIOA_BASE + GPIO_ODR_OFFSET))
+#define GPIOA_BSRR          (*(volatile uint32_t *)(GPIOA_BASE + GPIO_BSRR_OFFSET))
+
+/**
+ * @brief Initializes GPIOA Pin 5 as Push-Pull Output
+ */
+void led_init_register_level(void) {
+    /* 1. Enable GPIOA peripheral clock gate in RCC (Bit 0 in RCC_AHB1ENR) */
+    RCC_AHB1ENR |= (1UL << 0);
+
+    /* Read-back delay to ensure peripheral clock is stabilized on AHB1 */
+    volatile uint32_t dummy = RCC_AHB1ENR;
+    (void)dummy;
+
+    /* 2. Configure PA5 Mode: MODER5[1:0] = 0b01 (General Purpose Output) */
+    GPIOA_MODER &= ~(3UL << (5 * 2)); /* Clear mode bits 11:10 */
+    GPIOA_MODER |=  (1UL << (5 * 2)); /* Set mode to 01 (Output) */
+
+    /* 3. Configure Output Type: OTYPER5 = 0 (Push-Pull) */
+    GPIOA_OTYPER &= ~(1UL << 5);
+
+    /* 4. Configure Output Speed: OSPEEDR5[1:0] = 0b10 (Fast Speed) */
+    GPIOA_OSPEEDR &= ~(3UL << (5 * 2));
+    GPIOA_OSPEEDR |=  (2UL << (5 * 2));
+}
+
+/**
+ * @brief Toggles PA5 using Output Data Register (ODR)
+ * @note Subject to Read-Modify-Write hazards in pre-emptive multitasking!
+ */
+void led_toggle_odr(void) {
+    GPIOA_ODR ^= (1UL << 5);
+}
+
+/**
+ * @brief Sets PA5 High atomically using Bit Set/Reset Register (BSRR)
+ * @note Hardware-atomic: Immune to ISR pre-emption race conditions.
+ */
+void led_set_high_atomic(void) {
+    GPIOA_BSRR = (1UL << 5); /* Writing 1 to bit 5 sets PA5 */
+}
+
+/**
+ * @brief Clears PA5 Low atomically using Bit Set/Reset Register (BSRR)
+ */
+void led_set_low_atomic(void) {
+    GPIOA_BSRR = (1UL << (5 + 16)); /* Writing 1 to bit 21 (5 + 16) resets PA5 */
+}
+```
+
+---
+
+## 4. Struct-Based Peripheral Register Modeling (The CMSIS Standard)
+
+While macro pointer arithmetic is functional, production firmware standardizes on **C structure mapping** (the ARM CMSIS approach). Because peripheral hardware registers occupy sequential 32-bit addresses in memory, defining a C struct with matching 32-bit members guarantees identical byte alignment without software overhead:
+
+```c
+typedef struct {
+    volatile uint32_t MODER;    /*!< GPIO port mode register,               Address offset: 0x00 */
+    volatile uint32_t OTYPER;   /*!< GPIO port output type register,        Address offset: 0x04 */
+    volatile uint32_t OSPEEDR;  /*!< GPIO port output speed register,       Address offset: 0x08 */
+    volatile uint32_t PUPDR;    /*!< GPIO port pull-up/pull-down register,  Address offset: 0x0C */
+    volatile uint32_t IDR;      /*!< GPIO port input data register,         Address offset: 0x10 */
+    volatile uint32_t ODR;      /*!< GPIO port output data register,        Address offset: 0x14 */
+    volatile uint32_t BSRR;     /*!< GPIO port bit set/reset register,      Address offset: 0x18 */
+    volatile uint32_t LCKR;     /*!< GPIO port configuration lock register, Address offset: 0x1C */
+    volatile uint32_t AFR[2];   /*!< GPIO alternate function registers,     Address offset: 0x20-0x24 */
+} GPIO_TypeDef;
+
+#define GPIOA ((GPIO_TypeDef *) GPIOA_BASE)
+#define GPIOB ((GPIO_TypeDef *) (AHB1PERIPH_BASE + 0x0400UL))
+```
+
+### Advantages of Struct-Based Modeling
+- **Zero Runtime Overhead:** Compiles down to base register pointer plus immediate displacement (`LDR R0, [R1, #0x14]`).
+- **Autocompletion & Type Safety:** Eliminates manual offset arithmetic errors.
+- **Strict Memory Layout:** Standard C layout rules guarantee members are sequentially placed in memory according to their alignment requirements.
+
+---
+
+## 5. Critical Bit-Manipulation Hazards & Misconceptions
+
+### 5.1 The Read-Modify-Write (RMW) Race Hazard
+Consider toggling an LED on `PA5` via `GPIOA->ODR` in your main thread while an interrupt service routine (ISR) transmits telemetry by toggling `PA6`:
+
+```
+Thread Execution (Main Loop):
+  1. LDR  R0, [GPIOA, #ODR]    ; R0 reads ODR (PA5=0, PA6=0)
+  2. ORR  R0, R0, #(1 << 5)    ; R0 prepares PA5=1
+  [INTERRUPT OCCURS HERE!]
+       ISR Execution:
+         a. LDR R1, [GPIOA, #ODR]  ; R1 reads ODR (PA5=0, PA6=0)
+         b. ORR R1, R1, #(1 << 6)  ; R1 sets PA6=1
+         c. STR R1, [GPIOA, #ODR]  ; ODR now has PA6=1 in hardware
+       [ISR RETURNS TO THREAD]
+  3. STR  R0, [GPIOA, #ODR]    ; Thread writes R0 (PA5=1, PA6=0)! PA6 IS SILENTLY CLOBBERED!
+```
+
+### The Solution: Atomic Bit Set/Reset Register (`BSRR`)
+The `BSRR` register is write-only. It has dedicated set bits `[15:0]` and dedicated clear bits `[31:16]`:
+- Writing `1` to bit `n` asserts pin `n`.
+- Writing `1` to bit `n+16` de-asserts pin `n`.
+- Writing `0` has **no effect** on any pin.
+
+Because hardware handles the update inside the silicon peripheral logic in a single clock cycle without reading `ODR`, atomic bit manipulations via `BSRR` require **no critical sections or interrupt masking**.
+
+### 5.2 Integer Promotion & Shift Overflow Traps
+In 32-bit embedded C, bitwise shifts must adhere to MISRA C guidelines:
+
+```c
+/* DANGEROUS: Signed integer overflow (Undefined Behavior in C99) */
+uint32_t mask = (1 << 31); // 1 is a signed 32-bit int; shifting into sign bit is undefined!
+
+/* CORRECT: Suffix with UL (Unsigned Long) */
+uint32_t safe_mask = (1UL << 31);
+```
+
+---
+
+## 6. Self-Assessment & Viva Voce Challenge
+
+1. **Why does writing `0` to a bit in `GPIOx_BSRR` leave the pin voltage state unchanged rather than resetting the pin to 0V?**
+   *Answer:* `BSRR` is an atomic command register. Bit positions written with `0` are treated as no-operations (NOPs), allowing firmware to modify single pins without affecting neighboring pins.
+
+2. **Under what scenario does using `volatile` fail to prevent a multi-threaded data race?**
+   *Answer:* `volatile` guarantees that reads and writes reach hardware/memory; it does **not** make multi-step operations (such as `counter++` or `REG |= MASK`) atomic. Read-modify-write sequences still require hardware atomic registers (like `BSRR`), LDREX/STREX primitives, or RTOS mutexes.
+
+3. **Why must the base address of `GPIO_TypeDef` be cast to a pointer rather than an integer value?**
+   *Answer:* The processor interprets the struct member offsets as byte displacements from a memory address pointer. Without pointer casting, the compiler cannot dereference struct members using arrow syntax (`GPIOA->MODER`).

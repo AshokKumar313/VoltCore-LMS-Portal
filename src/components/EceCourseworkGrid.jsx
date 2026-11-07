@@ -398,13 +398,13 @@ export default function EceCourseworkGrid() {
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="jewel-badge-olive">
               <span className="h-1.5 w-1.5 rounded-full bg-olive-400 animate-pulse"></span>
-              Anna University ECE R2023
+              Core Engineering Series
             </span>
             <span className="jewel-badge-mustard">
-              MIT Campus Chromepet
+              Electronics & Embedded Systems
             </span>
             <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-900 border border-slate-700 text-slate-300">
-              Department of Electronics Engineering
+              Modular Curriculum Matrix
             </span>
           </div>
 
@@ -610,7 +610,7 @@ export default function EceCourseworkGrid() {
               </div>
             </div>
             <div className="text-xs font-mono text-slate-400">
-              Student ID: <span className="text-white font-bold">2023MITEC042</span> (Ashok Kumar A)
+              Student ID: <span className="text-white font-bold">Active Peer</span>
             </div>
           </div>
 
@@ -638,7 +638,7 @@ export default function EceCourseworkGrid() {
                   onClick={() => setAssessmentCode(ASSESSMENT_PRESETS[activeAssessmentTab].defaultCode)}
                   className="text-xs font-mono text-slate-400 hover:text-white transition-colors"
                 >
-                  ↺ Reset to MIT Benchmark
+                  ↺ Reset to Reference Benchmark
                 </button>
 
                 <button

@@ -1,0 +1,349 @@
+---
+moduleNumber: 11
+title: 'Serial Peripheral Interface (SPI) - Full-Duplex Shift Registers, Display Drivers & NOR Flash'
+shortTitle: 'SPI Bus & Flash Memory'
+tier: 'Tier 3: Serial Buses & DMA'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '05-bare-metal-gpio-atomic-bit-ops'
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '80 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'SPI_CR1'
+  - 'SPI_CR2'
+  - 'SPI_SR'
+  - 'SPI_DR'
+description: 'Master full-duplex communication, CPOL/CPHA timing modes 0-3, software slave select management, W25Q64 NOR Flash commands, and DMA-accelerated display rendering.'
+keyFormulas:
+  - 'f_{SCK} = \frac{f_{PCLK}}{2^{\text{BR[2:0]} + 1}}'
+  - '\text{Throughput} = \frac{f_{SCK}}{8}\text{ bytes/sec}'
+hardwareApparatus:
+  - 'W25Q64 64M-Bit SPI NOR Flash IC'
+  - 'ST7789 240x240 Color IPS Display'
+  - 'Logic Analyzer on PA5 (SCK), PA6 (MISO), PA7 (MOSI), PA4 (CS)'
+order: 11
+xpReward: 225
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Serial Peripheral Interface (SPI) - Full-Duplex Shift Registers, Display Drivers & NOR Flash
+
+## 1. Architectural Overview & Physical Layer Physics
+
+The **Serial Peripheral Interface (SPI)**, originated by Motorola, is a synchronous, full-duplex, master-slave, high-speed serial bus capable of clock frequencies surpassing **42 MHz** on ARM Cortex-M microcontrollers. Unlike the shared open-drain bus of I2C, SPI operates with **push-pull** drivers, delivering steep transition edges, minimal capacitive delay, and substantially greater bandwidth.
+
+```
+       +--------------------+                    +--------------------+
+       |  STM32 (MASTER)    |                    |  W25Q64 / ST7789   |
+       |                    |                    |      (SLAVE)       |
+       |      [SPI_SCK] ----+------------------->| SCK                |
+       |     [SPI_MOSI] ----+------------------->| MOSI (DI)          |
+       |     [SPI_MISO] <---+--------------------+ MISO (DO)          |
+       |     [GPIO_NSS] ----+------------------->| CS (Active Low)    |
+       +--------------------+                    +--------------------+
+```
+
+### 1.1 The Shift-Register Physical Ring
+SPI is fundamentally a distributed 16-bit or 8-bit **circular shift register**:
+1. When the master writes a byte into `SPI_DR`, it is loaded into the master's internal shift register.
+2. The master's baud rate generator pulses the `SCK` line 8 times.
+3. On each clock tick, the master shifts out 1 bit on `MOSI` while simultaneously shifting in 1 bit from `MISO`.
+4. Simultaneously, the slave shifts out 1 bit on `MISO` while shifting in 1 bit from `MOSI`.
+5. After 8 clock cycles, a complete byte has been exchanged symmetrically.
+
+```
++--------------------+                       +--------------------+
+| MASTER SHIFT REG   |                       | SLAVE SHIFT REG    |
+| [7][6][5][4][3][2][1][0]                   | [7][6][5][4][3][2][1][0]
++---------+----------+                       +---------+----------+
+          |  ^                                         |  ^
+          |  |====== MOSI (Master Out Slave In) =======|  |
+          |                                               |
+          +========= MISO (Master In Slave Out) ==========+
+```
+
+> **The Fundamental Axiom of SPI:** In SPI, **transmission and reception are indivisible**. Every time you transmit a byte, you receive a byte. To read from an SPI slave, the master must transmit dummy bytes (typically `0xFF` or `0x00`) to generate clock pulses.
+
+---
+
+## 2. Clock Polarity (CPOL) and Clock Phase (CPHA) Timing Matrix
+
+The relationship between data sampling edges and clock transitions is configured using two bits in `SPI_CR1`:
+- **`CPOL` (Clock Polarity):** Defines the idle voltage level of `SCK` when no data is being transferred.
+  - `CPOL = 0`: Clock idles Low (0V).
+  - `CPOL = 1`: Clock idles High (`VDD`).
+- **`CPHA` (Clock Phase):** Defines which clock edge samples/latches the data bit.
+  - `CPHA = 0`: Data is sampled on the **first (leading)** clock transition; data changes on the second edge.
+  - `CPHA = 1`: Data changes on the first clock edge; data is sampled on the **second (trailing)** transition.
+
+### 2.1 The 4 SPI Modes Waveforms
+
+```
+Mode 0 (CPOL=0, CPHA=0): SCK idles LOW, Sample on RISING edge
+SCK:   ____/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\____
+MOSI:  ---< D7 X D6 X D5 X D4 X D3 X D2 X D1 X D0 >----------
+Sample:     ^     ^     ^     ^     ^     ^     ^     ^
+
+Mode 1 (CPOL=0, CPHA=1): SCK idles LOW, Sample on FALLING edge
+SCK:   ____/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\____
+MOSI:  -----[ D7 X D6 X D5 X D4 X D3 X D2 X D1 X D0 ]--------
+Sample:        ^     ^     ^     ^     ^     ^     ^     ^
+
+Mode 2 (CPOL=1, CPHA=0): SCK idles HIGH, Sample on FALLING edge
+SCK:   ‾‾‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾‾‾
+MOSI:  ---< D7 X D6 X D5 X D4 X D3 X D2 X D1 X D0 >----------
+Sample:     ^     ^     ^     ^     ^     ^     ^     ^
+
+Mode 3 (CPOL=1, CPHA=1): SCK idles HIGH, Sample on RISING edge
+SCK:   ‾‾‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾\__/‾‾‾‾
+MOSI:  -----[ D7 X D6 X D5 X D4 X D3 X D2 X D1 X D0 ]--------
+Sample:        ^     ^     ^     ^     ^     ^     ^     ^
+```
+
+| SPI Mode | CPOL | CPHA | Clock Idle State | Data Latch Edge | Common Target ICs |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Mode 0** | 0 | 0 | Low (0V) | Leading (Rising) | W25Q64 Flash, ST7789 TFT, SD Cards |
+| **Mode 1** | 0 | 1 | Low (0V) | Trailing (Falling) | AD7705 ADC, Motor Driver ICs |
+| **Mode 2** | 1 | 0 | High (3.3V) | Leading (Falling) | Specialized Industrial Sensors |
+| **Mode 3** | 1 | 1 | High (3.3V) | Trailing (Rising) | W25Q64 Flash, Bosch BME280 |
+
+---
+
+## 3. Baud Rate Prescaling & Bus Throughput
+
+On STM32F4, the SPI clock frequency `f_SCK` is derived from the peripheral bus clock (`PCLK2` for SPI1, `PCLK1` for SPI2/SPI3) divided by a power-of-two prescaler:
+
+```latex
+f_{SCK} = \frac{f_{PCLK}}{2^{\text{BR[2:0]} + 1}}
+```
+
+| `BR[2:0]` Bits | Prescaler Divisor | `f_SCK` with `f_PCLK2 = 84 MHz` (SPI1) | Transfer Time per Byte |
+| :--- | :--- | :--- | :--- |
+| `000` | `/2` | **42.0 MHz** | 190.5 ns |
+| `001` | `/4` | **21.0 MHz** | 381.0 ns |
+| `010` | `/8` | **10.5 MHz** | 761.9 ns |
+| `011` | `/16` | **5.25 MHz** | 1.52 µs |
+| `100` | `/32` | **2.625 MHz** | 3.05 µs |
+| `101` | `/64` | **1.3125 MHz** | 6.10 µs |
+| `110` | `/128` | **656.25 kHz** | 12.19 µs |
+| `111` | `/256` | **328.125 kHz** | 24.38 µs |
+
+---
+
+## 4. Register Architecture & The OVR (Overrun) Trap
+
+### 4.1 Master Software Slave Management (SSM & SSI)
+In hardware master mode, if the physical `NSS` pin is pulled Low by external noise or a floating pin, the Cortex-M SPI controller assumes another master has taken control of the bus. It immediately triggers a **Mode Fault (`MODF`)**, disables the transmitter, and switches the peripheral to slave mode.
+
+To prevent this hazard, master firmware must enable **Software Slave Management**:
+- Set `SPI_CR1.SSM = 1` (Software slave management enabled).
+- Set `SPI_CR1.SSI = 1` (Internal slave select held high in software).
+- Drive the physical Chip Select line (`CS`) to target slaves using a standard general-purpose GPIO pin (`BSRR`).
+
+### 4.2 The Silicon Overrun (`OVR`) Flag Lockup
+Because SPI is full-duplex, transmitting a byte automatically shifts an incoming byte into the receive buffer. If firmware transmits a sequence of bytes without reading `SPI_DR` after each transmission:
+1. The hardware receive buffer overflows.
+2. The Overrun flag `SPI_SR.OVR` is asserted.
+3. The SPI receiver hardware **locks**, rejecting all subsequent incoming data until cleared.
+
+```
+How to Clear the OVR Flag in STM32 Silicon:
+1. Read the SPI_DR data register (clears the buffer latch).
+2. Read the SPI_SR status register.
+(Both reads are required in sequence to reset the hardware OVR flag).
+```
+
+---
+
+## 5. Storage & Display Protocols: W25Q64 Flash & ST7789 TFT
+
+### 5.1 Winbond W25Q64 SPI NOR Flash Command Set
+The W25Q64 provides 64 Megabits (8 Megabytes) of non-volatile storage organized into 4 KB sectors and 256-byte pages:
+
+| Command Name | Byte Opcode | Address Bytes | Dummy Bytes | Data Bytes | Function |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Write Enable** | `0x06` | 0 | 0 | 0 | Sets WEL bit in Status Register prior to any write |
+| **Read Status Reg 1** | `0x05` | 0 | 0 | 1+ | Polled to check the Write-In-Progress (BUSY) bit 0 |
+| **Sector Erase (4KB)**| `0x20` | 3 (`A23-A0`) | 0 | 0 | Sets all bits in target 4KB sector to `1` (`0xFF`) |
+| **Page Program** | `0x02` | 3 (`A23-A0`) | 0 | 1 to 256 | Writes up to 256 bytes (only transitions `1` to `0`)|
+| **Read Data** | `0x03` | 3 (`A23-A0`) | 0 | 1+ | Reads continuous data stream at up to 50 MHz |
+| **Read JEDEC ID** | `0x9F` | 0 | 0 | 3 | Reads Manufacturer ID (`0xEF`), Memory Type, Capacity |
+
+### 5.2 ST7789 IPS Display Driver Protocol
+The ST7789 controller drives 240x240 RGB565 (16-bit color) displays. It requires an additional GPIO pin called **`D/CX` (Data/Command)**:
+- `D/CX = 0`: Byte sent over SPI is decoded as an **Instruction / Register Command** (e.g. `0x2A` Column Address Set, `0x2C` Memory Write).
+- `D/CX = 1`: Byte sent over SPI is streamed directly into the graphic RAM (**Display Framebuffer Pixel Data**).
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver initializes **SPI1** on STM32F401RE (**PA5 = SCK, PA6 = MISO, PA7 = MOSI, PA4 = Software CS**) at **21 MHz**, handles the `OVR` trap, and reads the **W25Q64 JEDEC Manufacturer ID**.
+
+```c
+/**
+ * @file    voltcore_spi_flash.c
+ * @brief   Bare-Metal SPI1 Driver & W25Q64 NOR Flash Interfacing on STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// Peripheral Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define APB2PERIPH_BASE     (PERIPH_BASE + 0x00010000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+
+// RCC Registers
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define RCC_APB2ENR         (*(volatile uint32_t *)(RCC_BASE + 0x44UL))
+
+// GPIOA Registers
+#define GPIOA_BASE          (AHB1PERIPH_BASE + 0x0000UL)
+#define GPIOA_MODER         (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_OSPEEDR       (*(volatile uint32_t *)(GPIOA_BASE + 0x08UL))
+#define GPIOA_PUPDR         (*(volatile uint32_t *)(GPIOA_BASE + 0x0CUL))
+#define GPIOA_BSRR          (*(volatile uint32_t *)(GPIOA_BASE + 0x18UL))
+#define GPIOA_AFRL          (*(volatile uint32_t *)(GPIOA_BASE + 0x20UL))
+
+// SPI1 Registers (on APB2 bus)
+#define SPI1_BASE           (APB2PERIPH_BASE + 0x3000UL)
+#define SPI1_CR1            (*(volatile uint32_t *)(SPI1_BASE + 0x00UL))
+#define SPI1_CR2            (*(volatile uint32_t *)(SPI1_BASE + 0x04UL))
+#define SPI1_SR             (*(volatile uint32_t *)(SPI1_BASE + 0x08UL))
+#define SPI1_DR             (*(volatile uint32_t *)(SPI1_BASE + 0x0CUL))
+
+#define SPI_CS_PIN          4
+#define SPI_TIMEOUT_CYCLES  50000UL
+
+static inline void spi_cs_low(void) {
+    GPIOA_BSRR = (1UL << (SPI_CS_PIN + 16)); // Reset PA4 Low
+}
+
+static inline void spi_cs_high(void) {
+    GPIOA_BSRR = (1UL << SPI_CS_PIN);        // Set PA4 High
+}
+
+/**
+ * @brief Initialize SPI1 in Master Mode 0 at 21 MHz (APB2 / 4)
+ */
+void spi1_master_init(void) {
+    // 1. Enable Clock Gates for GPIOA and SPI1
+    RCC_AHB1ENR |= (1UL << 0); // GPIOA clock
+    RCC_APB2ENR |= (1UL << 12); // SPI1 clock
+
+    // 2. Configure PA4 (CS) as Output Push-Pull, High Speed
+    GPIOA_MODER &= ~(3UL << (SPI_CS_PIN * 2));
+    GPIOA_MODER |=  (1UL << (SPI_CS_PIN * 2)); // Output mode
+    GPIOA_OSPEEDR |= (3UL << (SPI_CS_PIN * 2)); // Very high speed
+    spi_cs_high();                             // Deselect slave
+
+    // 3. Configure PA5 (SCK), PA6 (MISO), PA7 (MOSI) as Alternate Function AF5
+    GPIOA_MODER &= ~((3UL << (5 * 2)) | (3UL << (6 * 2)) | (3UL << (7 * 2)));
+    GPIOA_MODER |=  (2UL << (5 * 2)) | (2UL << (6 * 2)) | (2UL << (7 * 2));
+
+    GPIOA_OSPEEDR |= (3UL << (5 * 2)) | (3UL << (6 * 2)) | (3UL << (7 * 2));
+    GPIOA_PUPDR   &= ~((3UL << (5 * 2)) | (3UL << (6 * 2)) | (3UL << (7 * 2)));
+    GPIOA_PUPDR   |=  (2UL << (6 * 2)); // Weak pull-down on MISO
+
+    // Configure AF5 for Pins 5, 6, 7 in AFRL
+    GPIOA_AFRL &= ~((0xFUL << (5 * 4)) | (0xFUL << (6 * 4)) | (0xFUL << (7 * 4)));
+    GPIOA_AFRL |=  (5UL << (5 * 4)) | (5UL << (6 * 4)) | (5UL << (7 * 4));
+
+    // 4. Configure SPI1_CR1:
+    // - BR[2:0] = 001 (Divide PCLK2 by 4: 84 MHz / 4 = 21 MHz)
+    // - CPOL = 0, CPHA = 0 (Mode 0)
+    // - MSTR = 1 (Master configuration)
+    // - SSM = 1, SSI = 1 (Software Slave Management, internal CS high)
+    // - DFF = 0 (8-bit data frame)
+    // - LSBFIRST = 0 (MSB first)
+    SPI1_CR1 = (1UL << 3)  | // BR[2:0] = 001 (/4)
+               (1UL << 2)  | // MSTR = 1
+               (1UL << 9)  | // SSM = 1
+               (1UL << 8);   // SSI = 1
+
+    // 5. Enable SPI1
+    SPI1_CR1 |= (1UL << 6);  // SPE = 1
+}
+
+/**
+ * @brief Transmit and receive a single byte simultaneously over SPI
+ * @param tx_byte Byte to send out on MOSI
+ * @return Byte clocked in from MISO
+ */
+uint8_t spi1_transfer_byte(uint8_t tx_byte) {
+    volatile uint32_t timeout;
+
+    // Wait until Transmit Buffer is Empty (TXE = 1)
+    timeout = SPI_TIMEOUT_CYCLES;
+    while (!(SPI1_SR & (1UL << 1)) && --timeout);
+
+    // Write byte to data register (initiates 8 clock pulses)
+    SPI1_DR = tx_byte;
+
+    // Wait until Receive Buffer is Not Empty (RXNE = 1)
+    timeout = SPI_TIMEOUT_CYCLES;
+    while (!(SPI1_SR & (1UL << 0)) && --timeout);
+
+    // Return received byte (reading DR clears RXNE)
+    return (uint8_t)SPI1_DR;
+}
+
+/**
+ * @brief Read the 3-byte JEDEC Identifier from W25Q64 Flash
+ * @param manufacturer_id Pointer to store Manufacturer ID (Expected 0xEF for Winbond)
+ * @param memory_type Pointer to store Memory Type ID
+ * @param capacity Pointer to store Capacity ID (Expected 0x17 for 64M-Bit)
+ */
+void w25q64_read_jedec_id(uint8_t *manufacturer_id, uint8_t *memory_type, uint8_t *capacity) {
+    spi_cs_low(); // Select Flash
+
+    spi1_transfer_byte(0x9F); // Opcode: Read JEDEC ID
+
+    *manufacturer_id = spi1_transfer_byte(0xFF); // Clock out dummy byte to receive MFR
+    *memory_type     = spi1_transfer_byte(0xFF); // Clock out dummy byte to receive Type
+    *capacity        = spi1_transfer_byte(0xFF); // Clock out dummy byte to receive Capacity
+
+    spi_cs_high(); // Deselect Flash
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify full-duplex SPI integrity on your workbench:
+
+1. **Test Bench Hookup:**
+   - Connect **PA5** to Flash **CLK** (Pin 6).
+   - Connect **PA6** to Flash **DO / MISO** (Pin 2).
+   - Connect **PA7** to Flash **DI / MOSI** (Pin 5).
+   - Connect **PA4** to Flash **CS** (Pin 1).
+   - Provide 3.3V and GND decoupling rails with a 100 nF ceramic capacitor close to Flash Pin 8.
+2. **Logic Analyzer Waveform Inspection:**
+   - Trigger on the falling edge of **PA4 (CS)**.
+   - Inspect the first byte on MOSI: verify opcode `0x9F`.
+   - Inspect the simultaneous response on MISO: verify three returned bytes correspond to `0xEF`, `0x40`, `0x17`.
+3. **Signal Slew Rate & Ground Bounce Verification:**
+   - Probe PA5 with an active 500 MHz oscilloscope probe.
+   - Verify rise time `t_r < 4 ns` at 21 MHz without ring-back, confirming proper `OSPEEDR` impedance matching.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why must the Master transmit a dummy byte over MOSI in order to read a byte from MISO?**
+2. **Explain the consequence of omitting `SPI_CR1.SSM` and `SPI_CR1.SSI` in a master-only system when the physical `PA4` pin is toggled.**
+3. **What is the exact two-step sequence to clear an Overrun (`OVR`) condition in STM32 SPI silicon?**
+4. **Compare Mode 0 (`0,0`) and Mode 3 (`1,1`): why do most SPI Flash memories support both modes interchangeably?**
+5. **In high-speed display streaming (ST7789), what is the function of the `D/CX` line, and how does it differentiate graphic primitives from frame buffer pixel blits?**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

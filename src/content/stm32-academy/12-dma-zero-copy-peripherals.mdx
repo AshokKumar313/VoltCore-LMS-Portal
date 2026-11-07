@@ -1,0 +1,298 @@
+---
+moduleNumber: 12
+title: 'Direct Memory Access (DMA) - Zero-Copy Streams, Crossbar Channels & FIFO Buffers'
+shortTitle: 'DMA Controller & Zero-Copy'
+tier: 'Tier 3: Serial Buses & DMA'
+difficulty: 'Advanced'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '09-adc-sensor-calibration'
+  - '11-spi-full-duplex-display-flash'
+estimatedDuration: '90 mins'
+cortexArchitecture: 'Cortex-M4F'
+registerFocus:
+  - 'DMA_SxCR'
+  - 'DMA_SxNDTR'
+  - 'DMA_SxPAR'
+  - 'DMA_SxM0AR'
+  - 'DMA_SxM1AR'
+  - 'DMA_SxFCR'
+  - 'DMA_LISR'
+  - 'DMA_HISR'
+  - 'DMA_LIFCR'
+  - 'DMA_HIFCR'
+description: 'Zero-copy peripheral transfers, F1 channel vs F4 stream crossbar architecture, circular buffering for streaming ADC/DAC data, double-buffered ping-pong rendering, and FIFO threshold burst tuning.'
+keyFormulas:
+  - '\text{CPU Overhead Reduction} = \left(1 - \frac{T_{DMA\_Setup}}{T_{CPU\_ISR\_Loop}}\right) \times 100\%'
+  - '\text{Bus Bandwidth} = \frac{\text{Bytes Transferred}}{\text{Clock Cycles} \times T_{bus}}'
+hardwareApparatus:
+  - 'Nucleo-F401RE (DMA2 Stream 0 M2M Burst)'
+  - 'Logic Analyzer on USART2 TX / SPI1'
+order: 12
+xpReward: 250
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Direct Memory Access (DMA) - Zero-Copy Streams, Crossbar Channels & FIFO Buffers
+
+## 1. Architectural Overview & Hardware Foundations
+
+In high-performance embedded systems, servicing high-speed serial streams, audio codecs, ADC scanning arrays, and display framebuffers using standard CPU interrupt service routines (ISRs) causes catastrophic CPU throttling. 
+
+The **Direct Memory Access (DMA)** controller is a dedicated hardware coprocessor integrated into the AHB bus matrix. It autonomously moves data blocks between memory (Flash, SRAM) and peripheral FIFO registers with **zero CPU instruction execution**, reducing data transfer latency and freeing the Cortex-M core for computational algorithms and real-time DSP.
+
+```
+       +--------------------------------------------------------------+
+       |                  MULTI-LAYER AHB BUS MATRIX                  |
+       +-------+--------------------+--------------------+------------+
+               |                    |                    |
+               v                    v                    v
+       +---------------+    +---------------+    +---------------+
+       |   CORTEX-M4F  |    | DMA1 / DMA2   |    | PERIPHERALS   |
+       |  CORE (CPU)   |    |  CONTROLLER   |    | (SPI, ADC, ..)|
+       +-------+-------+    +-------+-------+    +-------+-------+
+               |                    |                    |
+               +--------------------+--------------------+
+                                    |
+                                    v
+                            +---------------+
+                            | INTERNAL SRAM |
+                            | (0x20000000)  |
+                            +---------------+
+```
+
+---
+
+## 2. Silicon Architecture Evolution: STM32F1 Channels vs. STM32F4 Streams
+
+A fundamental architectural divergence exists between legacy Cortex-M3 (STM32F1) and modern Cortex-M4 (STM32F4) DMA silicon:
+
+```
+STM32F103 (Fixed Channels):
+Peripheral Signal ----> [ Hardwired Channel 1..7 ] ----> Bus Arbiter
+
+STM32F401RE (8x8 Crossbar Multiplexer):
+Peripheral 0 ---\
+Peripheral 1 ----+---> [ 8-to-1 MUX (CHSEL) ] ---> Stream 0..7 ---> [ 16-byte FIFO ] ---> AHB
+Peripheral 7 ---/
+```
+
+| Architectural Attribute | STM32F103 (Legacy DMA) | STM32F401RE (Modern DMA) |
+| :--- | :--- | :--- |
+| **Organizational Units** | **Channels** (DMA1: 7 channels; DMA2: 5 channels) | **Streams** (DMA1: 8 streams; DMA2: 8 streams) |
+| **Peripheral Request Mapping**| **Fixed hardwired mapping** (e.g. SPI1_RX locked to DMA1_CH2)| **Flexible 8-channel crossbar MUX** per stream (`CHSEL[2:0]`)|
+| **FIFO Buffering** | **None** (Direct byte/word latching) | **Dedicated 4-word (16-byte) FIFO** per stream |
+| **Data Packing / Unpacking** | Restricted (Peripheral & Memory size must match) | **Autonomous hardware packing** (e.g. 8-bit peripheral to 32-bit memory) |
+| **Double Buffering** | Requires software ping-pong pointer swaps | **Hardware Double Buffer Mode (`DBM`)** with `M0AR` and `M1AR` |
+| **Memory-to-Memory (M2M)** | Supported on DMA1 and DMA2 | **Restricted to DMA2 only** (DMA1 cannot access memory-to-memory) |
+
+---
+
+## 3. Register Level Architecture & Comparison Matrix
+
+To achieve bare-metal mastery, compare the memory-mapped register sets between F1 and F4 platforms:
+
+| Register Function | STM32F1 Mnemonic | STM32F4 Mnemonic | Detailed Operational Purpose |
+| :--- | :--- | :--- | :--- |
+| **Configuration / Control** | `DMA_CCRx` | `DMA_SxCR` | Channel/Stream enable, priority, data width, increment, circular mode |
+| **Transfer Count** | `DMA_CNDTRx` | `DMA_SxNDTR` | Number of data items to transfer (decrements automatically to 0) |
+| **Peripheral Base Address** | `DMA_CPARx` | `DMA_SxPAR` | 32-bit physical address of the peripheral register (e.g. `&SPI1_DR`) |
+| **Memory Base Address 0** | `DMA_CMARx` | `DMA_SxM0AR` | 32-bit physical address of the target memory buffer in SRAM |
+| **Memory Base Address 1** | *Not available* | `DMA_SxM1AR` | Target buffer for hardware double-buffering (active when `DBM = 1`) |
+| **FIFO Control & Status** | *Not available* | `DMA_SxFCR` | FIFO threshold setting (1/4, 1/2, 3/4, full), FIFO error flags |
+| **Interrupt Status** | `DMA_ISR` | `DMA_LISR, DMA_HISR`| Low (Streams 0-3) and High (Streams 4-7) interrupt flag registers |
+| **Interrupt Clear** | `DMA_IFCR` | `DMA_LIFCR, DMA_HIFCR`| Clear flags on write-1 (`CTCIF`, `CHTIF`, `CTEIF`, `CDMEIF`, `CFEIF`) |
+
+---
+
+## 4. Hardware FIFO Buffering & Threshold Tuning
+
+Each of the 8 streams in STM32F4 contains an independent **4-word (16-byte) FIFO buffer**. The FIFO decouples peripheral timing from system bus latency, allowing the DMA controller to burst data across the AHB bus only when a specific threshold of data has accumulated:
+
+```
+            +-----------------------------------------------+
+            |            16-BYTE DEDICATED FIFO             |
+            +---------------+---------------+---------------+
+            | 1/4 Threshold | 1/2 Threshold | 3/4 Threshold | Full (4 Words)|
+            |   (4 Bytes)   |   (8 Bytes)   |   (12 Bytes)  |   (16 Bytes)  |
+            +---------------+---------------+---------------+
+```
+
+The threshold is configured via `FTH[1:0]` in `DMA_SxFCR`:
+- `00`: 1/4 FIFO threshold (4 bytes).
+- `01`: 1/2 FIFO threshold (8 bytes).
+- `10`: 3/4 FIFO threshold (12 bytes).
+- `11`: Full FIFO threshold (16 bytes).
+
+### 4.1 FIFO Packing and Unpacking Mechanics
+When transferring data from an 8-bit peripheral (such as an I2C receiver or 8-bit SPI) into 32-bit SRAM:
+1. Configure `PSIZE = 00` (8-bit) and `MSIZE = 10` (32-bit).
+2. The DMA hardware accumulates 4 incoming 8-bit bytes into the internal FIFO.
+3. Once 4 bytes are packed, the DMA engine executes a **single 32-bit write transaction** on the AHB memory bus.
+4. **Result:** Bus arbitration traffic is reduced by **75%**, leaving the SRAM bus free for CPU instruction execution.
+
+---
+
+## 5. Zero-Copy Circular & Double-Buffer (Ping-Pong) Streaming
+
+Continuous streaming data (such as high-speed ADC scanning arrays or audio DAC output) cannot be paused while the CPU processes a buffer. The DMA hardware provides two zero-copy streaming strategies:
+
+### 5.1 Circular Buffer Mode (`CIRC = 1`)
+- The DMA engine automatically reloads `DMA_SxNDTR` with its original value upon reaching zero.
+- Two hardware interrupts divide the buffer symmetrically:
+  - **Half-Transfer Complete (`HTIF`):** CPU processes the first half of the array (`0` to `N/2 - 1`).
+  - **Transfer Complete (`TCIF`):** CPU processes the second half of the array (`N/2` to `N - 1`).
+
+```
+Buffer: [===== FIRST HALF =====][===== SECOND HALF =====]
+              ^                       ^
+         HTIF Interrupt          TCIF Interrupt
+       (Process 1st Half)      (Process 2nd Half)
+```
+
+### 5.2 True Hardware Double Buffering (`DBM = 1`)
+In Double Buffer Mode, two completely distinct memory buffers are allocated:
+- Pointer A stored in `DMA_SxM0AR`.
+- Pointer B stored in `DMA_SxM1AR`.
+- When Buffer A fills, the DMA hardware automatically switches its internal memory target to Buffer B without losing a single clock cycle.
+- The `CT` bit in `DMA_SxCR` indicates the currently active buffer (0 for Buffer A, 1 for Buffer B).
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver implements a high-speed **Memory-to-Memory (M2M) 32-bit Burst DMA Engine** on **DMA2 Stream 0** of the STM32F401RE with full FIFO threshold configuration and Transfer Complete interrupt verification.
+
+```c
+/**
+ * @file    voltcore_dma_m2m.c
+ * @brief   Bare-Metal DMA2 Memory-to-Memory Burst Engine for STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+
+// RCC Registers
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+
+// DMA2 Registers
+#define DMA2_BASE           (AHB1PERIPH_BASE + 0x6400UL)
+#define DMA2_LISR           (*(volatile uint32_t *)(DMA2_BASE + 0x00UL))
+#define DMA2_HISR           (*(volatile uint32_t *)(DMA2_BASE + 0x04UL))
+#define DMA2_LIFCR          (*(volatile uint32_t *)(DMA2_BASE + 0x08UL))
+#define DMA2_HIFCR          (*(volatile uint32_t *)(DMA2_BASE + 0x0CUL))
+
+// DMA2 Stream 0 Registers
+#define DMA2_S0CR           (*(volatile uint32_t *)(DMA2_BASE + 0x10UL))
+#define DMA2_S0NDTR         (*(volatile uint32_t *)(DMA2_BASE + 0x14UL))
+#define DMA2_S0PAR          (*(volatile uint32_t *)(DMA2_BASE + 0x18UL))
+#define DMA2_S0M0AR         (*(volatile uint32_t *)(DMA2_BASE + 0x1CUL))
+#define DMA2_S0M1AR         (*(volatile uint32_t *)(DMA2_BASE + 0x20UL))
+#define DMA2_S0FCR          (*(volatile uint32_t *)(DMA2_BASE + 0x24UL))
+
+#define DMA_TIMEOUT_CYCLES  100000UL
+
+/**
+ * @brief Initialize and execute a high-speed Memory-to-Memory copy
+ * @param src Pointer to source memory block (must be 32-bit aligned)
+ * @param dst Pointer to destination memory block (must be 32-bit aligned)
+ * @param words_count Number of 32-bit words to transfer
+ * @return true on successful transfer, false on timeout or bus error
+ */
+bool dma2_m2m_burst_copy(const uint32_t *src, uint32_t *dst, uint32_t words_count) {
+    volatile uint32_t timeout;
+
+    // 1. Enable DMA2 Peripheral Clock Gate
+    RCC_AHB1ENR |= (1UL << 22); // DMA2 clock enable
+
+    // 2. Disable Stream 0 and wait until hardware confirms disable
+    DMA2_S0CR &= ~(1UL << 0); // EN = 0
+    timeout = DMA_TIMEOUT_CYCLES;
+    while ((DMA2_S0CR & (1UL << 0)) && --timeout);
+    if (!timeout) return false;
+
+    // 3. Clear all prior interrupt flags for Stream 0 in LIFCR
+    // Bits [5:0] clear FEIF0, DMEIF0, TEIF0, HTIF0, TCIF0
+    DMA2_LIFCR = (0x3DUL << 0);
+
+    // 4. Set Source Address (PAR) and Destination Address (M0AR)
+    // Note: In M2M mode, PAR acts as Source and M0AR acts as Destination
+    DMA2_S0PAR  = (uint32_t)src;
+    DMA2_S0M0AR = (uint32_t)dst;
+    DMA2_S0NDTR = words_count;
+
+    // 5. Configure FIFO Control Register (FCR):
+    // - Direct Mode Disable: DMDIS = 1 (Enable FIFO)
+    // - FIFO Threshold: FTH[1:0] = 11 (Full FIFO: 4 words / 16 bytes)
+    DMA2_S0FCR = (1UL << 2) | (3UL << 0);
+
+    // 6. Configure Stream 0 Control Register (CR):
+    // - Channel Selection: CHSEL[2:0] = 000 (Channel 0)
+    // - Memory-to-Memory Mode: DIR[1:0] = 10 (M2M)
+    // - Priority: PL[1:0] = 11 (Very High Priority)
+    // - Source Data Width: PSIZE[1:0] = 10 (32-bit Word)
+    // - Destination Data Width: MSIZE[1:0] = 10 (32-bit Word)
+    // - Source Increment: PINC = 1 (Increment source pointer)
+    // - Destination Increment: MINC = 1 (Increment destination pointer)
+    // - Transfer Complete Interrupt: TCIE = 1
+    DMA2_S0CR = (0UL << 25) | // Channel 0
+                (2UL << 6)  | // DIR = 10 (Memory-to-Memory)
+                (3UL << 16) | // PL = 11 (Very High)
+                (2UL << 13) | // MSIZE = 10 (32-bit)
+                (2UL << 11) | // PSIZE = 10 (32-bit)
+                (1UL << 10) | // MINC = 1 (Destination increment)
+                (1UL << 9)  | // PINC = 1 (Source increment)
+                (1UL << 4);   // TCIE = 1 (Transfer complete enable)
+
+    // 7. Enable Stream 0 (Starts transfer immediately in M2M mode)
+    DMA2_S0CR |= (1UL << 0); // EN = 1
+
+    // 8. Poll for Transfer Complete Flag (TCIF0) in LISR
+    timeout = DMA_TIMEOUT_CYCLES;
+    while (!(DMA2_LISR & (1UL << 5)) && --timeout);
+    if (!timeout) return false;
+
+    // 9. Clear Transfer Complete Flag
+    DMA2_LIFCR = (1UL << 5); // CTCIF0 = 1
+
+    return true;
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify zero-copy DMA performance on your test bench:
+
+1. **Throughput Benchmark Setup:**
+   - Allocate two 16 KB aligned arrays in SRAM (`src_buffer` and `dst_buffer`).
+   - Populate `src_buffer` with an incrementing pseudo-random sequence.
+2. **Execution Timing Comparison:**
+   - Benchmark standard CPU `memcpy(dst_buffer, src_buffer, 16384)` using a hardware cycle counter (DWT cycle count).
+   - Benchmark `dma2_m2m_burst_copy(src_buffer, dst_buffer, 4096)`.
+   - **Expected Result:** DMA burst mode achieves higher throughput while keeping CPU core instruction registers completely idle.
+3. **Data Integrity Audit:**
+   - Execute a CRC32 hardware check on `dst_buffer` to verify zero bit flips or FIFO underruns.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why is Memory-to-Memory (M2M) DMA supported exclusively on DMA2 and prohibited on DMA1 on STM32F4 silicon?**
+2. **Explain the physical distinction between a DMA Stream and a DMA Channel on the STM32F4 architecture.**
+3. **What is the purpose of the 4-word FIFO in STM32F4 DMA, and how does threshold tuning reduce AHB bus arbitration overhead?**
+4. **In continuous circular ADC sampling, how do the Half-Transfer (`HTIF`) and Transfer-Complete (`TCIF`) flags prevent data race conditions with the CPU?**
+5. **What happens to `DMA_SxNDTR` during a circular DMA transfer? How does it differ from a normal one-shot transfer?**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

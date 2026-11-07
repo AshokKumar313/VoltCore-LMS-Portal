@@ -119,3 +119,30 @@ def test_course_departmental_domain_mapping(engine):
 
     embedded = engine.get_course("EC8702")
     assert embedded["simulation_platform"] == "Wokwi Embedded"
+
+
+def test_institutional_metadata_is_optional():
+    """Verify that institutional and regulatory fields are optional in CourseConfigEngine."""
+    modular_course = {
+        "MOD101": {
+            "code": "MOD101",
+            "title": "Autonomous Systems & Robotics",
+            "short_title": "Robotics & Autonomy",
+            "slug": "autonomous-robotics",
+            "semester": 6,
+            "credits": 3,
+            "ltp": "3-0-0",
+            "category": "Core Engineering Series",
+            # Note: No 'regulation', 'institution', or 'campus' fields provided
+            "theme_family": "cyan",
+            "theme_color": "#06B6D4",
+            "prerequisites": [],
+            "cos_count": 5,
+            "simulation_platform": "Gazebo Web"
+        }
+    }
+    modular_engine = CourseConfigEngine(registry=modular_course)
+    validation = modular_engine.validate_course_schema("MOD101")
+    assert validation["valid"] is True
+    assert validation["code"] == "MOD101"
+    assert validation["category"] == "Core Engineering Series"

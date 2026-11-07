@@ -1,0 +1,246 @@
+---
+moduleNumber: 3
+title: 'ARM Cortex-M Architecture: Core Registers, Dual Stacks & HardFault Analysis'
+shortTitle: 'Core Registers & HardFault Analysis'
+tier: 'Tier 1: Architecture & Toolchain'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '02-gnu-arm-toolchain-makefiles-linker'
+estimatedDuration: '75 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'SCB_CFSR'
+  - 'SCB_HFSR'
+  - 'SCB_BFAR'
+  - 'CONTROL'
+  - 'xPSR'
+  - 'VTOR'
+description: 'Master the ARM Cortex-M programmer model (R0-R15), Main vs Process Stack Pointers (MSP vs PSP), hardware exception stacking, and HardFault triage via CFSR/HFSR.'
+keyFormulas:
+  - 'Thumb Bit Requirement: PC = Target\_Address | 0x01'
+  - 'MSP Stack Alignment: SP_{entry} = SP_{current} \& ~(0x07UL)'
+hardwareApparatus:
+  - 'Nucleo-F401RE Development Board'
+  - 'ST-LINK GDB Debug Console'
+  - 'Logic Analyzer'
+order: 3
+xpReward: 200
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# ARM Cortex-M Architecture: Core Registers, Dual Stacks & HardFault Analysis
+
+## 1. The ARM Cortex-M Programmer's Model
+
+The ARM Cortex-M processor core (found in both the Cortex-M3 of the STM32F103 and Cortex-M4F of the STM32F401) is a 32-bit RISC processor with a load-store architecture. It features a register bank of sixteen 32-bit core registers, multiple status registers, and specialized execution control registers:
+
+```
+  +---------------------------------------------------------------+
+  |                 ARM CORTEX-M CPU REGISTER BANK                |
+  +---------------------------------------------------------------+
+  | R0   | Argument 1 / Return Value (Caller-Saved Scratchpad)    |
+  | R1   | Argument 2 / Return Value 64-bit (Caller-Saved)        |
+  | R2   | Argument 3 (Caller-Saved Scratchpad)                   |
+  | R3   | Argument 4 (Caller-Saved Scratchpad)                   |
+  | R4   | Variable Register 1 (Callee-Saved across calls)        |
+  | R5   | Variable Register 2 (Callee-Saved across calls)        |
+  | R6   | Variable Register 3 (Callee-Saved across calls)        |
+  | R7   | Variable Register 4 / Thumb Frame Pointer              |
+  | R8   | Variable Register 5 (Callee-Saved across calls)        |
+  | R9   | Variable Register 6 (Platform Specific / Static Base)  |
+  | R10  | Variable Register 7 (Callee-Saved across calls)        |
+  | R11  | Variable Register 8 / Frame Pointer                    |
+  | R12  | Intra-Procedure Call Scratchpad (IP)                   |
+  +------+--------------------------------------------------------+
+  | R13  | SP (Stack Pointer): Banked as MSP or PSP               |
+  | R14  | LR (Link Register): Return Address / EXC_RETURN Token  |
+  | R15  | PC (Program Counter): Instruction Address + Thumb Bit  |
+  +------+--------------------------------------------------------+
+  | xPSR | Combined Program Status (APSR + IPSR + EPSR)           |
+  | PRIMASK, FAULTMASK, BASEPRI, CONTROL (Privilege & SP Select)  |
+  +---------------------------------------------------------------+
+```
+
+### 1.1 AAPCS Register Calling Convention
+Under the **ARM Architecture Procedure Call Standard (AAPCS)**:
+- **`R0 - R3`:** Used to pass the first four 32-bit arguments into a C function. Functions returning a 32-bit scalar place the result in `R0`; 64-bit return values occupy `R0` (lower 32 bits) and `R1` (upper 32 bits). Because callers expect `R0-R3` to be overwritten, they are designated **caller-saved scratchpad registers**.
+- **`R4 - R11`:** General-purpose variable registers. If a called subroutine needs to use these registers, it must push them onto the stack upon entry and pop them before returning (**callee-saved**).
+- **`R12` (Intra-Procedure Scratchpad, `IP`):** Used by linkers to generate inter-working veneers when leaping between distant memory spaces.
+
+---
+
+## 2. Dual Stack Architecture: Main (`MSP`) vs. Process (`PSP`)
+
+A hallmark of the ARM Cortex-M architecture is its hardware support for two distinct stack pointers physically banked under the `R13` mnemonic:
+
+```
+                  +--------------------------------+
+                  |  OPERATING MODES & PRIVILEGE   |
+                  +--------------------------------+
+                                 |
+         +-----------------------+-----------------------+
+         |                                               |
+  THREAD MODE (Application)                     HANDLER MODE (Interrupts)
+  - Privilege: Privileged or Unprivileged       - Privilege: ALWAYS Privileged
+  - Active SP: MSP or PSP (via CONTROL.SPSEL)   - Active SP: ALWAYS MSP
+```
+
+### 2.1 The Two Stack Pointers
+1. **Main Stack Pointer (`MSP`):**
+   - Active immediately upon hardware reset.
+   - Used by the operating system kernel and runtime initialization code.
+   - **Exclusively used** by all exception handlers and interrupt service routines (ISRs) in Handler Mode.
+2. **Process Stack Pointer (`PSP`):**
+   - Used in Thread Mode by user application tasks inside an RTOS (such as FreeRTOS).
+   - Allows complete memory isolation between individual task stacks and the kernel/interrupt stack. If a user thread exhausts its stack buffer, the resulting fault occurs on `PSP`, preserving `MSP` intact so the RTOS kernel can safely triage and recover.
+
+### 2.2 The `CONTROL` Special Register
+The `CONTROL` register governs stack pointer selection and privilege level:
+- **Bit 0 (`nPRIV`):** `0` = Privileged access (can access all peripherals and core registers); `1` = Unprivileged access (restricted MPU rules).
+- **Bit 1 (`SPSEL`):** `0` = Use `MSP` in Thread Mode; `1` = Use `PSP` in Thread Mode.
+- **Bit 2 (`FPCA`):** Floating-point context active flag (automatically set when FPU instructions execute).
+
+---
+
+## 3. Link Register (`LR`), Program Counter (`PC`) & the Thumb Bit
+
+### 3.1 The Link Register (`LR` / `R14`) & `EXC_RETURN`
+In normal function execution, `LR` holds the return address loaded by a `BL` (Branch with Link) instruction. However, when an exception occurs, the hardware automatically overwrites `LR` with a specialized 32-bit token called **`EXC_RETURN`**:
+
+```
++-------------------------------------------------------------------------------+
+|                        EXC_RETURN EXCEPTION EXIT CODES                        |
++-------------------------------------------------------------------------------+
+| Value      | Return Mode  | Target Stack | FPU State Stacking                 |
++------------+--------------+--------------+------------------------------------+
+| 0xFFFFFFF1 | Handler Mode | Return on MSP| Basic frame (8 words pushed)       |
+| 0xFFFFFFF9 | Thread Mode  | Return on MSP| Basic frame (Standard bare-metal)  |
+| 0xFFFFFFFD | Thread Mode  | Return on PSP| Basic frame (RTOS task return)     |
+| 0xFFFFFFE1 | Handler Mode | Return on MSP| Extended FPU frame (26 words)      |
+| 0xFFFFFFE9 | Thread Mode  | Return on MSP| Extended FPU frame (26 words)      |
+| 0xFFFFFFED | Thread Mode  | Return on PSP| Extended FPU frame (RTOS task)     |
++-------------------------------------------------------------------------------+
+```
+
+When an ISR executes `BX LR`, the hardware detects the `0xFFFFFFFx` prefix and triggers the **hardware unstacking sequence**, popping the saved processor context back into `R0-R3, R12, LR, PC, xPSR`.
+
+### 3.2 The Program Counter (`PC` / `R15`) and the Mandatory Thumb Bit
+Cortex-M cores exclusively execute instructions in the **Thumb-2** instruction set. The classical 32-bit ARM instruction state does not exist on Cortex-M. 
+- **The LSB Rule:** The least significant bit (Bit 0) of every function pointer, vector table entry, and jump target address must be set to `1` (indicating Thumb state in the `xPSR.T` bit).
+- **Hardware Fault:** If firmware branches to an even address where Bit 0 is `0` (e.g. `BX R0` where `R0 = 0x08000100`), the core immediately raises a `UsageFault` with the `INVSTATE` (Invalid State) bit asserted in `SCB->CFSR`.
+
+---
+
+## 4. Hardware Exception Stacking Sequence
+
+When an interrupt or exception triggers, the Cortex-M hardware automatically pushes eight 32-bit words (the **Basic Stack Frame**) onto the active stack (`MSP` or `PSP`) in exactly 12 clock cycles before the first instruction of the ISR executes:
+
+```
+  High Memory
+      |   xPSR               [SP + 28]   Execution Status Register
+      |   PC (Return Address)[SP + 24]   Address of instruction to resume
+      |   LR                 [SP + 20]   Link register before interrupt
+      |   R12                [SP + 16]   Intra-procedure scratch register
+      |   R3                 [SP + 12]   Function Argument 4
+      |   R2                 [SP + 8]    Function Argument 3
+      |   R1                 [SP + 4]    Function Argument 2
+      |   R0                 [SP + 0]    Function Argument 1  <-- SP on ISR entry
+  Low Memory
+```
+
+Because the hardware saves `R0-R3` and `R12`, C functions can serve as interrupt handlers without custom assembly wrappers.
+
+---
+
+## 5. HardFault Analysis & Root-Cause Triage
+
+A `HardFault` occurs when an error cannot be handled by another exception handler, or when a fault occurs while another fault handler is executing. 
+
+### 5.1 System Control Block Fault Registers (`SCB`)
+To diagnose why a HardFault occurred, the engineer must read three registers located in the System Control Block at `0xE000ED00`:
+1. **Configurable Fault Status Register (`SCB->CFSR`, Address `0xE000ED28`):**
+   - **`MMFSR` (Bits [7:0]) - MemManage Fault:** Accessing MPU protected memory (`DACCVIOL`) or instruction execution from non-executable memory (`IACCVIOL`).
+   - **`BFSR` (Bits [15:8]) - Bus Fault:** Reading an unmapped peripheral address, accessing a peripheral whose clock in `RCC` was never enabled (`PRECISERR`), or unaligned bus access (`UNSTKERR`).
+   - **`UFSR` (Bits [31:16]) - Usage Fault:** `UNDEFINSTR` (corrupt code/Flash), `INVSTATE` (Thumb bit lost), `INVPC` (bad return address), `UNALIGNED` (unaligned access with trapping on), `DIVBYZERO` (integer division by zero).
+2. **HardFault Status Register (`SCB->HFSR`, Address `0xE000ED2C`):**
+   - Bit 30 (`FORCED`): A configurable fault escalated to HardFault because its handler was disabled or priority was too low.
+   - Bit 1 (`VECTBL`): BusFault occurred while reading vector table entry.
+3. **Bus Fault Address Register (`SCB->BFAR`, Address `0xE000ED38`):**
+   - Holds the exact memory address that triggered a synchronous BusFault (valid if `BFSR.BFARVALID = 1`).
+
+---
+
+## 6. Production C & Assembly HardFault Handler
+
+Below is the production diagnostic handler that captures the exact CPU register state at the moment of failure:
+
+```c
+#include <stdint.h>
+
+/* SCB Register Definitions */
+#define SCB_CFSR  (*(volatile uint32_t *)0xE000ED28UL)
+#define SCB_HFSR  (*(volatile uint32_t *)0xE000ED2CUL)
+#define SCB_BFAR  (*(volatile uint32_t *)0xE000ED38UL)
+#define SCB_MMFAR (*(volatile uint32_t *)0xE000ED34UL)
+
+typedef struct {
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r12;
+    uint32_t lr;
+    uint32_t pc;
+    uint32_t psr;
+} ExceptionStackFrame_t;
+
+void HardFault_Handler_C(ExceptionStackFrame_t *frame, uint32_t exc_return) {
+    /* Capture CPU register values at point of crash */
+    volatile uint32_t crashed_pc   = frame->pc;
+    volatile uint32_t crashed_lr   = frame->lr;
+    volatile uint32_t fault_cfsr   = SCB_CFSR;
+    volatile uint32_t fault_hfsr   = SCB_HFSR;
+    volatile uint32_t fault_bfar   = SCB_BFAR;
+    
+    (void)crashed_pc;
+    (void)crashed_lr;
+    (void)fault_cfsr;
+    (void)fault_hfsr;
+    (void)fault_bfar;
+
+    /* Breakpoint instruction halts debugger at crash site */
+    __asm volatile ("bkpt #0");
+    while (1);
+}
+
+/**
+ * @brief Assembly wrapper to determine whether crash happened on MSP or PSP
+ */
+__attribute__((naked)) void HardFault_Handler(void) {
+    __asm volatile (
+        "tst lr, #4          \n" /* Check bit 2 of EXC_RETURN (0 = MSP, 1 = PSP) */
+        "ite eq              \n"
+        "mrseq r0, msp       \n" /* If equal, stack was MSP; pass as argument 1 */
+        "mrsne r0, psp       \n" /* If not equal, stack was PSP; pass as argument 1 */
+        "mov r1, lr          \n" /* Pass EXC_RETURN token as argument 2 */
+        "b HardFault_Handler_C \n"
+    );
+}
+```
+
+---
+
+## 7. Self-Assessment & Viva Voce Challenge
+
+1. **Why does Cortex-M enforce an 8-byte stack alignment rule upon exception entry?**
+   *Answer:* The 64-bit data transfer instructions (`LDRD` / `STRD`) and double-precision floating-point operations require 8-byte aligned memory addresses. The hardware automatically aligns the stack pointer to an 8-byte boundary on exception entry to prevent alignment faults during ISR execution.
+
+2. **If `SCB->CFSR` indicates a `PRECISERR` and `BFSR.BFARVALID = 1`, how do you find the line of C code that caused the crash?**
+   *Answer:* Read the stacked `PC` value from the exception stack frame. Look up that instruction address in the compiler disassembly (`.list` file or GDB `addr2line`). The target memory address in `SCB->BFAR` indicates which unclocked or invalid peripheral was accessed.
+
+3. **What is the significance of the `EXC_RETURN` value `0xFFFFFFFD`?**
+   *Answer:* It directs the processor to return to **Thread Mode** using the **Process Stack Pointer (PSP)** with a standard basic 8-word integer stack frame, which is the standard return path for RTOS application tasks.

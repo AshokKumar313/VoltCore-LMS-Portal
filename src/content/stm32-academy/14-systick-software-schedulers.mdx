@@ -1,0 +1,323 @@
+---
+moduleNumber: 14
+title: 'Cortex-M SysTick Timer & Software Cooperative Schedulers'
+shortTitle: 'SysTick & Cooperative Scheduler'
+tier: 'Tier 4: RTOS & Kernel Internals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '75 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'STK_CTRL'
+  - 'STK_LOAD'
+  - 'STK_VAL'
+  - 'STK_CALIB'
+description: 'Configuring the 24-bit ARM core SysTick timer, building microsecond delay engines, Task Control Block (TCB) data structures, and implementing a non-preemptive cooperative task scheduler in pure C.'
+keyFormulas:
+  - 'LOAD = (f_{CPU} \times T_{tick}) - 1'
+  - 'T_{tick} = \frac{LOAD + 1}{f_{CPU}}'
+hardwareApparatus:
+  - 'Nucleo-F401RE (Dual LED blinker on PB0, PA5)'
+  - 'Oscilloscope / Logic Analyzer on PA5 (Task 1 heartbeat)'
+order: 14
+xpReward: 200
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Cortex-M SysTick Timer & Software Cooperative Schedulers
+
+## 1. Architectural Overview & Hardware Foundations
+
+In embedded firmware development, real-time multitasking begins with a deterministic time-base. Rather than relying on peripheral timers that vary across microcontroller families, the ARM Cortex-M architecture incorporates a standardized, tightly integrated **24-bit System Tick (SysTick) Timer** directly within the core NVIC sub-block.
+
+The SysTick timer provides a universal time-base engine across all Cortex-M microcontrollers (from Cortex-M0 through Cortex-M7), serving as the foundational heartbeat for modern real-time operating systems (RTOS) like FreeRTOS, Zephyr, and ThreadX.
+
+```
++-------------------------------------------------------------------------------+
+|                       ARM CORTEX-M CORE SYSTEM TICK ENGINE                    |
++-------------------------------------------------------------------------------+
+|                                                                               |
+|     +------------------+         +------------------+         +------------+  |
+|     |  CORE CLOCK / 8  |----+    |   24-BIT RELOAD  |         |  COUNTFLAG |  |
+|     |    (AHB / 8)     |    |    |     REGISTER     |         |  (Bit 16)  |  |
+|     +------------------+    |    |    (STK_LOAD)    |         +-----+------+  |
+|                             |    +--------+---------+               |         |
+|                             |             | (Auto-Reload on 0)      |         |
+|                             v             v                         v         |
+|     +------------------+   +-+   +--------+---------+         +------------+  |
+|     |    CORE CLOCK    |-->|1|-->|   24-BIT CURRENT |-------->| EXCEPTION  |  |
+|     |      (AHB)       |   +-+   |  VALUE REGISTER  | (At 0)  | VECTOR #15 |  |
+|     +------------------+   MUX   |    (STK_VAL)     |         |  (SysTick) |  |
+|                             ^    +------------------+         +------------+  |
+|                             |                                                 |
+|                        CLKSOURCE                                              |
+|                     (STK_CTRL Bit 2)                                          |
++-------------------------------------------------------------------------------+
+```
+
+---
+
+## 2. Key Mathematical Derivations & Sizing Formulas
+
+### 2.1 SysTick Reload Value Derivation
+The SysTick counter is a 24-bit down-counter that decrements on every clock cycle from its programmed `STK_LOAD` value down to `0`. Upon reaching zero:
+1. The hardware asserts the `COUNTFLAG` status bit in `STK_CTRL`.
+2. An exception request (System Exception 15) is signaled to the NVIC if `TICKINT` is enabled.
+3. The counter automatically reloads the value from `STK_LOAD` on the subsequent clock edge.
+
+The relationship between system clock frequency, desired tick period, and the reload register is:
+
+```latex
+LOAD = (f_{CPU} \times T_{tick}) - 1
+```
+
+```latex
+T_{tick} = \frac{LOAD + 1}{f_{CPU}}
+```
+
+#### Worked Example: 1 Millisecond System Heartbeat on STM32F401RE
+For a core operating at maximum PLL frequency `f_CPU = 84 MHz` and a target operating tick period `T_tick = 1.0 ms`:
+
+```latex
+LOAD = (84 \times 10^6\text{ Hz} \times 0.001\text{ s}) - 1 = 84000 - 1 = 83999 = \text{0x0001481F}
+```
+
+Because `83999 < 2^{24} = 16777216`, the calculated reload value fits well within the 24-bit counter register.
+
+---
+
+## 3. Register Level Architecture & Bit Manipulation
+
+The SysTick timer is mapped to the System Control Space (SCS) beginning at address `0xE000E010`:
+
+| Register Mnemonic | Base Offset | Reset Value | Hardware Function |
+| :--- | :--- | :--- | :--- |
+| **`STK_CTRL`** | `+0x00` | `0x00000000` | Control & Status: Enable (`ENABLE`), Exception request (`TICKINT`), Clock source (`CLKSOURCE`), Wrap flag (`COUNTFLAG`) |
+| **`STK_LOAD`** | `+0x04` | `0x00000000` | 24-bit Reload value (Bits [23:0]) |
+| **`STK_VAL`**  | `+0x08` | `0x00000000` | 24-bit Current counter value. (Writing any value clears counter to 0) |
+| **`STK_CALIB`**| `+0x0C` | Implementation | Factory calibration value providing a 10 ms tick reference |
+
+### 3.1 Detailed Control Register (`STK_CTRL`) Bitfields
+- **`ENABLE` (Bit 0):** Counter enable. `1` = Counter running; `0` = Counter halted.
+- **`TICKINT` (Bit 1):** SysTick exception request enable. `1` = Generates Exception 15 when counter counts down to 0.
+- **`CLKSOURCE` (Bit 2):** Clock source selection.
+  - `0` = External reference clock (`AHB / 8`).
+  - `1` = Processor core clock (`AHB`).
+- **`COUNTFLAG` (Bit 16):** Returns `1` if the counter counted down to zero since the last read of this register. Automatically cleared to `0` upon reading `STK_CTRL`.
+
+---
+
+## 4. Software Cooperative Schedulers & Task Control Blocks (TCBs)
+
+Before transitioning to preemptive operating systems (like FreeRTOS), embedded architects must understand the structure of **Cooperative Multitasking**.
+
+```
++-------------------------------------------------------------------------------+
+|                       COOPERATIVE MULTI-TASKING TIMELINE                      |
++-------------------------------------------------------------------------------+
+| Task A:  [== Execution ==] yield()                                            |
+|                                |                                              |
+| Task B:                        +---->[== Execution ==] yield()                |
+|                                                              |                |
+| Task C:                                                      +---->[== Exec ==|
+|                                                                               |
+| SysTick: |       |       |       |       |       |       |       |       |    |
+|       1ms tick increments system uptime counter (Non-Preemptive Heartbeat)    |
++-------------------------------------------------------------------------------+
+```
+
+### 4.1 Cooperative vs. Preemptive Scheduling
+- **Cooperative Multitasking:** Each task retains control of the CPU until it explicitly yields execution (`task_yield()`) or finishes its slice. Tasks are written as state machines. Because tasks surrender the CPU voluntarily, **no race conditions occur on shared global variables**, eliminating the need for complex mutex locks. However, a single infinite loop or long delay in any one task halts the entire system.
+- **Preemptive Multitasking:** The RTOS timer interrupt preemptively snatches the CPU from a running task via hardware context switching (`PendSV`), guaranteeing deterministic response times for high-priority tasks regardless of low-priority task behavior.
+
+### 4.2 The Task Control Block (TCB)
+A Task Control Block (TCB) encapsulates all metadata required to manage and schedule an independent thread of execution:
+
+```c
+typedef enum {
+    TASK_STATE_READY = 0,
+    TASK_STATE_BLOCKED,
+    TASK_STATE_SUSPENDED
+} task_state_t;
+
+typedef struct {
+    void (*task_func)(void);  // Function pointer to task entry
+    uint32_t period_ms;       // Desired execution interval in ms
+    uint32_t elapsed_ms;      // Elapsed time since last run
+    task_state_t state;       // Task operational state
+    const char *name;         // Debug identifier string
+} task_tcb_t;
+```
+
+---
+
+## 5. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver initializes the Cortex-M **SysTick Timer** on the STM32F401RE for a **1.0 ms interrupt rate**, maintains an atomic 64-bit millisecond system uptime counter, implements a non-blocking delay utility, and executes a round-robin cooperative scheduler running two independent tasks.
+
+```c
+/**
+ * @file    voltcore_systick_scheduler.c
+ * @brief   Bare-Metal SysTick Driver & Cooperative Scheduler on STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// System Control Space (SCS) Base Address
+#define SCS_BASE            (0xE000E000UL)
+#define SYSTICK_BASE        (SCS_BASE + 0x0010UL)
+
+// SysTick Core Registers
+#define STK_CTRL            (*(volatile uint32_t *)(SYSTICK_BASE + 0x00UL))
+#define STK_LOAD            (*(volatile uint32_t *)(SYSTICK_BASE + 0x04UL))
+#define STK_VAL             (*(volatile uint32_t *)(SYSTICK_BASE + 0x08UL))
+#define STK_CALIB           (*(volatile uint32_t *)(SYSTICK_BASE + 0x0CUL))
+
+// RCC & GPIOA Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define GPIOA_BASE          (AHB1PERIPH_BASE + 0x0000UL)
+#define GPIOA_MODER         (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_BSRR          (*(volatile uint32_t *)(GPIOA_BASE + 0x18UL))
+
+// Volatile System Uptime Heartbeat
+static volatile uint64_t g_system_ticks = 0;
+
+/**
+ * @brief SysTick Exception Handler (Vector #15)
+ * Executed deterministically every 1.0 ms
+ */
+void SysTick_Handler(void) {
+    g_system_ticks++;
+}
+
+/**
+ * @brief Initialize 24-bit SysTick timer for 1 ms tick interrupts
+ * @param cpu_frequency_hz Current CPU frequency (84000000 for STM32F401RE)
+ */
+void systick_init(uint32_t cpu_frequency_hz) {
+    // 1. Calculate Reload Value for 1 ms (1000 Hz)
+    uint32_t reload_value = (cpu_frequency_hz / 1000UL) - 1UL;
+
+    // 2. Clear current value register
+    STK_VAL = 0UL;
+
+    // 3. Program reload value (24-bit maximum: 0x00FFFFFF)
+    STK_LOAD = reload_value & 0x00FFFFFFUL;
+
+    // 4. Configure Control Register:
+    // Bit 2: CLKSOURCE = 1 (Processor Clock / AHB)
+    // Bit 1: TICKINT   = 1 (Enable SysTick Exception Request)
+    // Bit 0: ENABLE    = 1 (Enable Counter)
+    STK_CTRL = (1UL << 2) | (1UL << 1) | (1UL << 0);
+}
+
+/**
+ * @brief Retrieve atomic 64-bit millisecond system uptime
+ */
+uint64_t systick_get_uptime_ms(void) {
+    uint64_t ticks;
+    // Disable interrupts briefly to ensure atomic 64-bit read on 32-bit architecture
+    __asm__ volatile("cpsid i");
+    ticks = g_system_ticks;
+    __asm__ volatile("cpsie i");
+    return ticks;
+}
+
+/**
+ * @brief Non-blocking delay comparison utility
+ */
+bool systick_has_elapsed(uint64_t start_ms, uint32_t duration_ms) {
+    return (systick_get_uptime_ms() - start_ms) >= (uint64_t)duration_ms;
+}
+
+// -----------------------------------------------------------------------------
+// Cooperative Task Scheduler Architecture
+// -----------------------------------------------------------------------------
+
+typedef struct {
+    void (*task_func)(void);
+    uint32_t interval_ms;
+    uint64_t last_run_ms;
+} cooperative_task_t;
+
+static void task_heartbeat_led(void) {
+    static bool led_state = false;
+    led_state = !led_state;
+    if (led_state) {
+        GPIOA_BSRR = (1UL << 5);         // PA5 High
+    } else {
+        GPIOA_BSRR = (1UL << (5 + 16));  // PA5 Low
+    }
+}
+
+static void task_telemetry_stub(void) {
+    // Background telemetry calculation without blocking delay
+    static uint32_t iteration_count = 0;
+    iteration_count++;
+}
+
+#define NUM_TASKS 2
+static cooperative_task_t g_task_table[NUM_TASKS] = {
+    { task_heartbeat_led,  500, 0 },  // Toggle LED every 500 ms
+    { task_telemetry_stub, 100, 0 }   // Telemetry update every 100 ms
+};
+
+/**
+ * @brief Round-robin cooperative scheduler dispatcher loop
+ */
+void scheduler_run(void) {
+    // Initialize GPIOA Pin 5 (Green LED) as output
+    RCC_AHB1ENR |= (1UL << 0);
+    GPIOA_MODER &= ~(3UL << (5 * 2));
+    GPIOA_MODER |=  (1UL << (5 * 2));
+
+    while (1) {
+        uint64_t now = systick_get_uptime_ms();
+
+        for (int i = 0; i < NUM_TASKS; i++) {
+            if ((now - g_task_table[i].last_run_ms) >= g_task_table[i].interval_ms) {
+                g_task_table[i].last_run_ms = now;
+                g_task_table[i].task_func(); // Execute cooperative task slice
+            }
+        }
+    }
+}
+```
+
+---
+
+## 6. Hardware-in-the-Loop Verification Protocol
+
+To verify precise 1.0 ms SysTick operation and task scheduling:
+
+1. **Bench Connections:**
+   - Attach Channel 1 of an oscilloscope to **PA5** (Nucleo Green LED pin).
+   - Attach Channel 2 to a designated GPIO test pin (e.g. **PB0**) toggled inside `SysTick_Handler`.
+2. **Deterministic Period Verification:**
+   - Measure the pulse frequency on **PB0**: Expected frequency is exactly **500.0 Hz** (toggling every 1 ms yields a 2 ms period), validating nominal clock prescaling.
+   - Verify jitter under varying CPU workloads: hardware NVIC deterministic exception latency guarantees zero cumulative timing drift.
+3. **Cooperative Slice Timing:**
+   - Verify that `task_heartbeat_led` toggles every 500.0 ms ± 1 ms, validating non-blocking dispatcher scheduling.
+
+---
+
+## 7. Self-Assessment & Viva Voce Challenge
+
+1. **Why did ARM integrate the SysTick timer directly into the Cortex-M processor core rather than letting silicon vendors provide their own proprietary timer peripherals?**
+2. **What occurs if `STK_VAL` is written to with any value (e.g. `STK_VAL = 0x1234`)? How does hardware respond?**
+3. **Why must 64-bit uptime variables (`g_system_ticks`) be protected with interrupt masking (`cpsid i / cpsie i`) when read on a 32-bit Cortex-M architecture?**
+4. **What is the fatal failure mode of a pure cooperative scheduler when an external sensor interface stalls or enters an infinite while-loop?**
+5. **Calculate the reload value for a 100 µs tick on an STM32F103 operating at 72 MHz.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

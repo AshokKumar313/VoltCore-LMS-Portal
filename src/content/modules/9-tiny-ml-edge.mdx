@@ -1,19 +1,22 @@
 ---
-title: "EC8709: TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection"
-code: "EC8709"
+title: "TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection"
+code: "TML8709"
 semester: 7
-regulation: "Anna University R2023"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 9
+specializationTrack: "TinyML"
+simulationComponent: "TinyMlEngineHub"
+trackSlug: "tinyml"
 description: "Edge AI TinyML neural network inference on resource-constrained microcontrollers (ESP32 / ARM Cortex-M), covering post-training INT8 asymmetric quantization, fixed-point integer arithmetic, 64-point FFT spectral energy feature extraction, CMSIS-NN SIMD vectorization, and diagnosing the Integer Arithmetic Zero-Point Overflow & Cache Line Thrashing engineering trap."
 difficulty: "Apex Research"
-author: "Ashok Kumar A & MIT Campus Embedded Systems Faculty"
+author: "Ashok Kumar A & VoltCore Silicon Architecture Team"
 publishDate: 2026-11-04
 prerequisites:
-  - "EC8702: Embedded Systems Architecture & Microcontrollers"
-  - "EC8706: Real-Time Operating Systems (FreeRTOS Dual-Core Architecture)"
-  - "EC8708: Advanced ARM Cortex-M DMA Architecture & Zero-Copy IPC"
+  - "Embedded Systems Architecture & Microcontrollers"
+  - "Real-Time Operating Systems (FreeRTOS Dual-Core Architecture)"
+  - "Advanced ARM Cortex-M DMA Architecture & Zero-Copy IPC"
   - "Digital Signal Processing (Discrete Fourier Transform & Spectral Windowing)"
   - "Fixed-Point Integer Arithmetic (Q-format, Quantization & Saturation)"
 learningOutcomes:
@@ -35,7 +38,6 @@ tags:
   - "FreeRTOS Dual-Core"
   - "CMSIS-NN"
   - "Predictive Maintenance"
-  - "Anna University R2023"
 syllabusUnits:
   - unit: 1
     title: "Post-Training Quantization & Fixed-Point Neural Arithmetic"
@@ -62,64 +64,104 @@ ieeeReference: "IEEE Transactions on Industrial Informatics, Vol. 20, No. 4: Ult
 xpReward: 600
 ---
 
-# EC8709: TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection
+# TinyML Edge AI Neural Networks & Vibration FFT Anomaly Detection
 
-**Author:** Ashok Kumar A (Platform Architect) & MIT Campus Embedded Systems Faculty  
-**Affiliation:** Department of Electronics Engineering, Madras Institute of Technology (MIT) Campus, Anna University  
+**Author:** Ashok Kumar A (Platform Architect) & VoltCore Silicon Architecture Team  
+**Affiliation:** Core Engineering Series • Autonomous Engineering Cluster  
 **Target Architecture:** ESP32-S3 / ARM Cortex-M4F / CMSIS-NN Embedded Platforms  
 
 ---
 
 ## SECTION I: MATHEMATICAL FOUNDATION OF POST-TRAINING INT8 QUANTIZATION
 
-In mission-critical industrial Internet of Things (IIoT) deployments, executing 32-bit single-precision floating-point ($FP32$) neural network forward passes consumes prohibitive memory bandwidth and dynamic power ($P_{\text{dyn}} = \alpha C V^2 f$). Microcontrollers such as the ESP32 (Xtensa LX6/LX7) and ARM Cortex-M4F possess constrained SRAM (typically 128 KB to 512 KB). Deploying Deep Neural Networks (DNNs) on bare-metal firmware requires **Post-Training Quantization (PTQ)**, transforming continuous real-valued weights and activations into compact 8-bit signed integers ($INT8 \in [-128, 127]$).
+In mission-critical industrial Internet of Things (IIoT) deployments, executing 32-bit single-precision floating-point ($FP32$) neural network forward passes consumes prohibitive memory bandwidth and dynamic power (`$P_{dyn} = \alpha C V^2 f$`). Microcontrollers such as the ESP32 (Xtensa LX6/LX7) and ARM Cortex-M4F possess constrained SRAM (typically 128 KB to 512 KB). Deploying Deep Neural Networks (DNNs) on bare-metal firmware requires **Post-Training Quantization (PTQ)**, transforming continuous real-valued weights and activations into compact 8-bit signed integers (`$INT8 \in [-128, 127]$`).
 
 ### 1.1 Asymmetric Affine Quantization Formulation
 
-Let a real continuous tensor value be denoted by $r \in [\alpha, \beta] \subset \mathbb{R}$. The affine asymmetric quantization mapping to an 8-bit integer $q \in [\mathbb{Z}_{\min}, \mathbb{Z}_{\max}]$ is defined by:
+Let a real continuous tensor value be denoted by `$r \in [\alpha, \beta] \subset \mathbb{R}$`. The affine asymmetric quantization mapping to an 8-bit integer `$q \in [\mathbb{Z}_{\min}, \mathbb{Z}_{\max}]$` is defined by:
 
-$$q = \text{clamp}\left( \left\lfloor \frac{r}{S} \right\rceil + Z, \; \mathbb{Z}_{\min}, \; \mathbb{Z}_{\max} \right)$$
+
+```latex
+q = clamp\left( \left\lfloor \frac{r}{S} \right\rceil + Z, \; \mathbb{Z}_{\min}, \; \mathbb{Z}_{\max} \right)
+```
+
 
 Where:
-- $S \in \mathbb{R}^+$ is the arbitrary positive real **Scale Factor**, representing the real-world step size corresponding to one integer unit:
-  $$S = \frac{\beta - \alpha}{q_{\max} - q_{\min}} = \frac{\beta - \alpha}{255}$$
-- $Z \in \mathbb{Z}$ is the integer **Zero-Point**, ensuring that the real number $0.0$ maps exactly to a representable integer value without rounding error:
-  $$Z = \text{round}\left( -\frac{\alpha}{S} \right) + q_{\min}$$
-- $\lfloor \cdot \rceil$ denotes the nearest integer rounding operator (Round-to-Nearest-Even).
+- `$S \in \mathbb{R}^+$` is the arbitrary positive real **Scale Factor**, representing the real-world step size corresponding to one integer unit:
+  
+```latex
+S = \frac{\beta - \alpha}{q_{\max} - q_{\min}} = \frac{\beta - \alpha}{255}
+```
+
+- `$Z \in \mathbb{Z}$` is the integer **Zero-Point**, ensuring that the real number $0.0$ maps exactly to a representable integer value without rounding error:
+  
+```latex
+Z = round\left( -\frac{\alpha}{S} \right) + q_{\min}
+```
+
+- `$\lfloor \cdot \rceil$` denotes the nearest integer rounding operator (Round-to-Nearest-Even).
 
 The inverse dequantization transformation approximating the original real tensor is:
 
-$$\hat{r} = S \cdot (q - Z)$$
+
+```latex
+\hat{r} = S \cdot (q - Z)
+```
+
 
 ### 1.2 Quantized Matrix Multiplication Derivation
 
-Consider the inner product between an input activation vector $\mathbf{x} \in \mathbb{R}^K$ and a weight filter column $\mathbf{w} \in \mathbb{R}^K$, producing an output activation $y \in \mathbb{R}$:
+Consider the inner product between an input activation vector `$\mathbf{x} \in \mathbb{R}^K$` and a weight filter column `$\mathbf{w} \in \mathbb{R}^K$`, producing an output activation `$y \in \mathbb{R}$`:
 
-$$y = \sum_{k=1}^K x_k \cdot w_k + b$$
 
-Substituting the quantized representations $\hat{x}_k = S_x (q_{x,k} - Z_x)$, $\hat{w}_k = S_w (q_{w,k} - Z_w)$, and bias $\hat{b} = S_b (q_b - Z_b)$ (where conventionally $S_b = S_x \cdot S_w$ and $Z_b = 0$):
+```latex
+y = \sum_{k=1}^K x_k \cdot w_k + b
+```
 
-$$S_y (q_{y} - Z_y) = \sum_{k=1}^K S_x (q_{x,k} - Z_x) \cdot S_w (q_{w,k} - Z_w) + S_x S_w q_b$$
+
+Substituting the quantized representations `$\hat{x}_k = S_x (q_{x,k} - Z_x)$`, `$\hat{w}_k = S_w (q_{w,k} - Z_w)$`, and bias `$\hat{b} = S_b (q_b - Z_b)$` (where conventionally `$S_b = S_x \cdot S_w$` and $Z_b = 0$):
+
+
+```latex
+S_y (q_{y} - Z_y) = \sum_{k=1}^K S_x (q_{x,k} - Z_x) \cdot S_w (q_{w,k} - Z_w) + S_x S_w q_b
+```
+
 
 Factoring out the scale products:
 
-$$S_y (q_{y} - Z_y) = S_x S_w \left[ \sum_{k=1}^K (q_{x,k} - Z_x)(q_{w,k} - Z_w) + q_b \right]$$
+
+```latex
+S_y (q_{y} - Z_y) = S_x S_w \left[ \sum_{k=1}^K (q_{x,k} - Z_x)(q_{w,k} - Z_w) + q_b \right]
+```
+
 
 Dividing both sides by $S_y$:
 
-$$q_y = Z_y + M \cdot \left[ \sum_{k=1}^K (q_{x,k} q_{w,k} - Z_w q_{x,k} - Z_x q_{w,k} + Z_x Z_w) + q_b \right]$$
+
+```latex
+q_y = Z_y + M \cdot \left[ \sum_{k=1}^K (q_{x,k} q_{w,k} - Z_w q_{x,k} - Z_x q_{w,k} + Z_x Z_w) + q_b \right]
+```
+
 
 Where $M$ is the combined real multiplier:
 
-$$M = \frac{S_x S_w}{S_y}$$
 
-### 1.3 Fixed-Point Multiplier Representation ($M_0 \cdot 2^{-n}$)
+```latex
+M = \frac{S_x S_w}{S_y}
+```
 
-Because microcontrollers without hardware floating-point units cannot execute the real multiplier $M \in (0, 1)$ without severe software emulation latency, $M$ is decomposed into a normalized 32-bit fixed-point mantissa $M_0 \in [0.5, 1.0)$ and an integer right-shift exponent $n \in \mathbb{Z}^+$:
 
-$$M = M_0 \cdot 2^{-n} = \frac{M_{\text{quantized}}}{2^{31}} \cdot 2^{-n}$$
+### 1.3 Fixed-Point Multiplier Representation (`$M_0 \cdot 2^{-n}$`)
 
-Where $M_{\text{quantized}} = \text{round}(M_0 \cdot 2^{31})$. The multiplication is executed using high-speed integer ARM SIMD instructions (`__SMMULR` or `SMULL`), completing in a single clock cycle:
+Because microcontrollers without hardware floating-point units cannot execute the real multiplier `$M \in (0, 1)$` without severe software emulation latency, $M$ is decomposed into a normalized 32-bit fixed-point mantissa `$M_0 \in [0.5, 1.0)$` and an integer right-shift exponent `$n \in \mathbb{Z}^+$`:
+
+
+```latex
+M = M_0 \cdot 2^{-n} = \frac{M_{quantized}}{2^{31}} \cdot 2^{-n}
+```
+
+
+Where `$M_{quantized} = round(M_0 \cdot 2^{31})$`. The multiplication is executed using high-speed integer ARM SIMD instructions (`__SMMULR` or `SMULL`), completing in a single clock cycle:
 
 ```c
 // High-Speed Fixed-Point Quantized Multiplication in C
@@ -140,17 +182,33 @@ Vibration acceleration signals sampled from industrial rotational machinery (suc
 
 For an $N$-point time-domain sequence $x[n]$ sampled at frequency $F_s$, the Discrete Fourier Transform (DFT) is:
 
-$$X[k] = \sum_{n=0}^{N-1} x[n] \cdot W_N^{kn}, \quad W_N = e^{-j \frac{2\pi}{N}}, \quad k = 0, 1, \dots, N-1$$
+
+```latex
+X[k] = \sum_{n=0}^{N-1} x[n] \cdot W_N^{kn}, \quad W_N = e^{-j \frac{2\pi}{N}}, \quad k = 0, 1, \dots, N-1
+```
+
 
 The frequency corresponding to spectral bin index $k$ is given by:
 
-$$f_k = k \cdot \frac{F_s}{N}$$
 
-To eliminate rectangular window spectral leakage (sidelobe spillover of $-13\text{ dB}$ into adjacent frequency bins), a Hann smoothing window $w[n]$ is applied in the time domain before FFT execution:
+```latex
+f_k = k \cdot \frac{F_s}{N}
+```
 
-$$w[n] = 0.5 \left( 1 - \cos\left( \frac{2\pi n}{N-1} \right) \right), \quad 0 \le n \le N-1$$
 
-$$x_{\text{windowed}}[n] = x[n] \cdot w[n]$$
+To eliminate rectangular window spectral leakage (sidelobe spillover of $-13 dB$ into adjacent frequency bins), a Hann smoothing window $w[n]$ is applied in the time domain before FFT execution:
+
+
+```latex
+w[n] = 0.5 \left( 1 - \cos\left( \frac{2\pi n}{N-1} \right) \right), \quad 0 \le n \le N-1
+```
+
+
+
+```latex
+x_{windowed}[n] = x[n] \cdot w[n]
+```
+
 
 ### 2.2 Industrial Ball Bearing Characteristic Defect Frequencies
 
@@ -158,12 +216,12 @@ Rotational defects generate kinetic impulse shocks at periodic intervals governe
 
 | Fault Modality | Notation | Mathematical Expression | Typical Resonance |
 | :--- | :--- | :--- | :--- |
-| **Ball Pass Frequency Inner Race** | $\text{BPFI}$ | $\frac{N_b}{2} f_r \left( 1 + \frac{d}{D} \cos \theta \right)$ | $180\text{ Hz} - 320\text{ Hz}$ |
-| **Ball Pass Frequency Outer Race** | $\text{BPFO}$ | $\frac{N_b}{2} f_r \left( 1 - \frac{d}{D} \cos \theta \right)$ | $105\text{ Hz} - 195\text{ Hz}$ |
-| **Ball Spin Frequency** | $\text{BSF}$ | $\frac{D}{2d} f_r \left( 1 - \left(\frac{d}{D}\cos \theta\right)^2 \right)$ | $60\text{ Hz} - 140\text{ Hz}$ |
-| **Fundamental Train Frequency (Cage)** | $\text{FTF}$ | $\frac{1}{2} f_r \left( 1 - \frac{d}{D} \cos \theta \right)$ | $15\text{ Hz} - 25\text{ Hz}$ |
+| **Ball Pass Frequency Inner Race** | $BPFI$ | `$\frac{N_b}{2} f_r \left( 1 + \frac{d}{D} \cos \theta \right)$` | $180 Hz - 320 Hz$ |
+| **Ball Pass Frequency Outer Race** | $BPFO$ | `$\frac{N_b}{2} f_r \left( 1 - \frac{d}{D} \cos \theta \right)$` | $105 Hz - 195 Hz$ |
+| **Ball Spin Frequency** | $BSF$ | `$\frac{D}{2d} f_r \left( 1 - \left(\frac{d}{D}\cos \theta\right)^2 \right)$` | $60 Hz - 140 Hz$ |
+| **Fundamental Train Frequency (Cage)** | $FTF$ | `$\frac{1}{2} f_r \left( 1 - \frac{d}{D} \cos \theta \right)$` | $15 Hz - 25 Hz$ |
 
-Where $f_r$ is the shaft rotational frequency, $N_b$ is the number of rolling elements, $d$ is the ball diameter, $D$ is the pitch diameter, and $\theta$ is the contact angle.
+Where $f_r$ is the shaft rotational frequency, $N_b$ is the number of rolling elements, $d$ is the ball diameter, $D$ is the pitch diameter, and `$\theta$` is the contact angle.
 
 ```
 Time-Domain Vibration Waveform (ADXL345 @ 1000 Hz)
@@ -207,26 +265,34 @@ To ensure that the 1000 Hz ADC/I2C sensor sampling deadline is never violated by
 
 > [!CAUTION]
 > **Trap Title:** Unclamped Zero-Point Accumulator Overflow & Non-32-Byte Aligned L1 Cache Line Thrashing  
-> **Root Cause:** When accumulating dot products of $INT8$ quantized vectors across $K \ge 64$ channels with non-zero zero-points ($Z_x, Z_w$), the intermediate sum can exceed $2^{15}-1$ or $2^{31}-1$. Furthermore, unaligned feature buffer memory access across FreeRTOS task boundaries triggers CPU bus stalls and pipeline flushes.
+> **Root Cause:** When accumulating dot products of $INT8$ quantized vectors across `$K \ge 64$` channels with non-zero zero-points ($Z_x, Z_w$), the intermediate sum can exceed `$2^{15}-1$` or `$2^{31}-1$`. Furthermore, unaligned feature buffer memory access across FreeRTOS task boundaries triggers CPU bus stalls and pipeline flushes.
 
 ### 4.1 Mathematical Analysis of the Overflow
 
 Consider the quantized dot product sum:
 
-$$A = \sum_{k=1}^K (q_{x,k} - Z_x)(q_{w,k} - Z_w)$$
+
+```latex
+A = \sum_{k=1}^K (q_{x,k} - Z_x)(q_{w,k} - Z_w)
+```
+
 
 In worst-case conditions:
-- $q_{x,k} = 127$, $Z_x = -128 \implies (q_{x,k} - Z_x) = 255$
-- $q_{w,k} = 127$, $Z_w = -128 \implies (q_{w,k} - Z_w) = 255$
-- Each product term: $255 \times 255 = 65,025$
+- `$q_{x,k} = 127$`, `$Z_x = -128 \implies (q_{x,k} - Z_x) = 255$`
+- `$q_{w,k} = 127$`, `$Z_w = -128 \implies (q_{w,k} - Z_w) = 255$`
+- Each product term: `$255 \times 255 = 65,025$`
 
 For a layer with $K = 64$ inputs:
 
-$$\sum_{k=1}^{64} 65,025 = 4,161,600 > 2^{21}$$
 
-If the embedded engineer inadvertently uses a 16-bit intermediate accumulator (`int16_t`, bounded at $32,767$), the register **silently overflows into negative values** after merely $\lceil 32,767 / 65,025 \rceil = 1$ multiplication! The neural network subsequently outputs catastrophic classification failures, diagnosing a violently vibrating bearing as completely healthy (`NORMAL_OPERATION`).
+```latex
+\sum_{k=1}^{64} 65,025 = 4,161,600 > 2^{21}
+```
 
-Furthermore, placing the FFT input buffer across unaligned memory boundaries causes the Xtensa/Cortex-M L1 data cache controller to issue two memory bus transactions per 32-bit word, causing **Cache Line Thrashing** and degrading DSP throughput by $41.8\%$.
+
+If the embedded engineer inadvertently uses a 16-bit intermediate accumulator (`int16_t`, bounded at $32,767$), the register **silently overflows into negative values** after merely `$\lceil 32,767 / 65,025 \rceil = 1$` multiplication! The neural network subsequently outputs catastrophic classification failures, diagnosing a violently vibrating bearing as completely healthy (`NORMAL_OPERATION`).
+
+Furthermore, placing the FFT input buffer across unaligned memory boundaries causes the Xtensa/Cortex-M L1 data cache controller to issue two memory bus transactions per 32-bit word, causing **Cache Line Thrashing** and degrading DSP throughput by `$41.8\%$`.
 
 ### 4.2 Defective vs Production-Grade Code Comparison
 
@@ -314,29 +380,45 @@ int32_t RobustQuantizedDotProduct(
 
 ## SECTION V: VIVA VOCE & GATE ECE CHALLENGE QUESTIONS
 
-### Question 1: Quantization Zero-Point & Dynamic Range (Anna University ECE Viva)
+### Question 1: Quantization Zero-Point & Dynamic Range (Advanced ECE Viva)
 **Question:** In post-training INT8 asymmetric quantization, under what circumstances can the Zero-Point $Z$ be set exactly to zero ($Z = 0$), and what are the hardware performance advantages?  
 **Model Answer:**  
-The Zero-Point $Z$ can be set to zero when the dynamic range of the tensor is strictly **symmetric around zero**, such that $\alpha = -\beta$. This converts the mapping into **Symmetric Quantization**:
-$$S = \frac{\beta}{127}, \quad Z = 0$$
-When $Z_x = 0$ and $Z_w = 0$, the expansion terms $-Z_w \sum x$, $-Z_x \sum w$, and $K Z_x Z_w$ vanish completely:
-$$\sum_{k=1}^K (q_{x,k} - 0)(q_{w,k} - 0) = \sum_{k=1}^K q_{x,k} \cdot q_{w,k}$$
+The Zero-Point $Z$ can be set to zero when the dynamic range of the tensor is strictly **symmetric around zero**, such that `$\alpha = -\beta$`. This converts the mapping into **Symmetric Quantization**:
+
+```latex
+S = \frac{\beta}{127}, \quad Z = 0
+```
+
+When $Z_x = 0$ and $Z_w = 0$, the expansion terms `$-Z_w \sum x$`, `$-Z_x \sum w$`, and $K Z_x Z_w$ vanish completely:
+
+```latex
+\sum_{k=1}^K (q_{x,k} - 0)(q_{w,k} - 0) = \sum_{k=1}^K q_{x,k} \cdot q_{w,k}
+```
+
 This reduces memory access and enables bare-metal microcontrollers to utilize ARM Dual-MAC SIMD instructions (`__SMLAD`), processing two 8-bit multiply-accumulate operations in a single clock cycle without any zero-point correction overhead.
 
 ### Question 2: FFT Frequency Resolution & Leakage (GATE ECE Advanced Problem)
-**Question:** An ADXL345 accelerometer samples motor casing vibration at $F_s = 1024\text{ Hz}$. An $N = 64$-point FFT is executed.  
-(a) Determine the frequency resolution $\Delta f$.  
-(b) A bearing exhibits an inner-race defect at $f_{\text{fault}} = 245\text{ Hz}$. Will this fault fall on an exact FFT bin, and what phenomenon occurs?  
+**Question:** An ADXL345 accelerometer samples motor casing vibration at $F_s = 1024 Hz$. An $N = 64$-point FFT is executed.  
+(a) Determine the frequency resolution `$\Delta f$`.  
+(b) A bearing exhibits an inner-race defect at `$f_{fault} = 245 Hz$`. Will this fault fall on an exact FFT bin, and what phenomenon occurs?  
 
 **Mathematical Derivation:**  
 **(a) Frequency Resolution:**
-$$\Delta f = \frac{F_s}{N} = \frac{1024\text{ Hz}}{64} = 16\text{ Hz}$$
-Each spectral bin $k$ represents frequency $f_k = k \times 16\text{ Hz}$.
+
+```latex
+\Delta f = \frac{F_s}{N} = \frac{1024 Hz}{64} = 16 Hz
+```
+
+Each spectral bin $k$ represents frequency `$f_k = k \times 16 Hz$`.
 
 **(b) Fault Frequency Mapping:**
 Dividing the fault frequency by the bin resolution:
-$$k_{\text{target}} = \frac{245\text{ Hz}}{16\text{ Hz}} = 15.3125$$
-Since $k_{\text{target}}$ is **non-integer**, the physical energy of the $245\text{ Hz}$ defect does not coincide with an exact orthogonal basis function of the DFT. This induces **Spectral Leakage**, wherein the energy smears across adjacent bins $k = 15$ ($240\text{ Hz}$) and $k = 16$ ($256\text{ Hz}$), attenuating peak amplitude by up to $3.92\text{ dB}$ unless a Hann smoothing window is applied.
+
+```latex
+k_{target} = \frac{245 Hz}{16 Hz} = 15.3125
+```
+
+Since `$k_{target}$` is **non-integer**, the physical energy of the $245 Hz$ defect does not coincide with an exact orthogonal basis function of the DFT. This induces **Spectral Leakage**, wherein the energy smears across adjacent bins $k = 15$ ($240 Hz$) and $k = 16$ ($256 Hz$), attenuating peak amplitude by up to $3.92 dB$ unless a Hann smoothing window is applied.
 
 ---
 
@@ -345,7 +427,7 @@ Since $k_{\text{target}}$ is **non-integer**, the physical energy of the $245\te
 ```json
 {
   "version": 1,
-  "author": "Ashok Kumar A (MIT Campus)",
+  "author": "Ashok Kumar A (Autonomous Cluster)",
   "editor": "wokwi",
   "parts": [
     { "type": "board-esp32-devkit-c-v4", "id": "esp32", "top": 0, "left": 0, "attrs": {} },

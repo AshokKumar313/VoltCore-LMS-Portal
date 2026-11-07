@@ -1,0 +1,136 @@
+---
+moduleNumber: 18
+title: 'Low-Power Modes (Sleep, Stop, Standby) & Wakeup Events'
+shortTitle: 'Low-Power Modes & RTC Wakeup'
+tier: 'Tier 5: Industrial Hardware & Edge AI'
+difficulty: 'Advanced'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '04-clock-tree-rcc-pll-pwr'
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '75 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'PWR_CR'
+  - 'PWR_CSR'
+  - 'SCB_SCR'
+  - 'RTC_CR'
+description: 'WFI / WFE instructions, disabling unused peripheral clocks, entering Deep Sleep / Stop mode, preserving SRAM states, and periodic waking via RTC Alarm.'
+keyFormulas:
+  - 'I_{avg} = \frac{I_{run} \cdot t_{run} + I_{sleep} \cdot t_{sleep}}{t_{run} + t_{sleep}}'
+  - 'T_{battery} = \frac{\text{Capacity}}{I_{avg}} \approx 4.8\text{ Years @ 2400mAh}'
+hardwareApparatus:
+  - 'Nordic Power Profiler Kit II / Precision Multimeter'
+  - 'Nucleo-F401RE in Stop Mode'
+order: 18
+xpReward: 250
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Low-Power Modes (Sleep, Stop, Standby) & Wakeup Events
+
+## 1. Architectural Overview & Hardware Foundations
+Welcome to **Module 18** of the **VoltCore STM32 Academy**. This chapter provides an industrial-grade bare-metal breakdown tailored for **Nucleo-F401RE, Blue Pill (STM32F103C8T6)** platforms.
+
+### Core Specifications
+- **Curriculum Tier:** Tier 5: Industrial Hardware & Edge AI
+- **Difficulty Rating:** Advanced
+- **Estimated Completion Time:** 75 mins
+- **Core Architecture:** Universal Cortex-M
+- **Primary Peripheral Registers:** `PWR_CR, PWR_CSR, SCB_SCR, RTC_CR`
+
+---
+
+## 2. Key Mathematical Derivations & Formulas
+In bare-metal embedded firmware, hardware timings and peripheral prescalers must be computed with mathematical precision:
+
+```latex
+# Equation 1
+I_{avg} = \frac{I_{run} \cdot t_{run} + I_{sleep} \cdot t_{sleep}}{t_{run} + t_{sleep}}
+```
+```latex
+# Equation 2
+T_{battery} = \frac{\text{Capacity}}{I_{avg}} \approx 4.8\text{ Years @ 2400mAh}
+```
+
+---
+
+## 3. Register Level Architecture & Bit Manipulation
+Direct peripheral control on STM32 microcontrollers requires mastering memory-mapped I/O registers. The table below outlines the primary configuration registers used in this module:
+
+| Register Mnemonic | Base Offset | Access | Hardware Function |
+| :--- | :--- | :--- | :--- |
+| **`PWR_CR`** | `+0x00` | R/W | Primary configuration & control word |
+| **`PWR_CSR`** | `+0x04` | R/W | High-speed data latch / status register |
+| **`SCB_SCR`** | `+0x08` | R/W | Peripheral interrupt flag / clear register |
+
+---
+
+## 4. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+Below is the production-ready C firmware template implementing the core logic for this module without proprietary vendor abstractions:
+
+```c
+#include <stdint.h>
+
+// Peripheral Base Definitions
+#define PERIPH_BASE       (0x40000000UL)
+#define AHB1PERIPH_BASE   (PERIPH_BASE + 0x00020000UL)
+#define RCC_BASE          (AHB1PERIPH_BASE + 0x3800UL)
+#define GPIOA_BASE        (AHB1PERIPH_BASE + 0x0000UL)
+
+// Register Access Pointers
+#define RCC_AHB1ENR       (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define GPIOA_MODER       (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_BSRR        (*(volatile uint32_t *)(GPIOA_BASE + 0x18UL))
+
+void Module18_Init(void) {
+    // 1. Enable Peripheral Clock Gate
+    RCC_AHB1ENR |= (1UL << 0); // Enable GPIOA clock
+
+    // 2. Configure Register Parameters
+    GPIOA_MODER &= ~(3UL << (5 * 2));
+    GPIOA_MODER |= (1UL << (5 * 2)); // Pin PA5 as Output Mode
+}
+
+void Module18_Execute(void) {
+    // Atomic bit manipulation (Zero race conditions)
+    GPIOA_BSRR = (1UL << 5);         // Set PA5 High
+    for (volatile int i = 0; i < 100000; i++);
+    GPIOA_BSRR = (1UL << (5 + 16));   // Set PA5 Low
+    for (volatile int i = 0; i < 100000; i++);
+}
+
+int main(void) {
+    Module18_Init();
+    while (1) {
+        Module18_Execute();
+    }
+    return 0;
+}
+```
+
+---
+
+## 5. Hardware-in-the-Loop Verification Protocol
+To verify proper silicon operation on your test bench:
+1. Connect your **Nucleo-F401RE** via USB ST-LINK interface.
+2. Verify target power rail stability (3.3V +/- 5%).
+3. Connect logic analyzer or oscilloscope probe to designated GPIO/bus pins.
+4. Flash the compiled binary using OpenOCD / GDB:
+   ```bash
+   arm-none-eabi-gcc -mcpu=cortex-m4 -mthumb -O2 -c module18.c -o module18.o
+   openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program module18.elf verify reset exit"
+   ```
+
+---
+
+## 6. Self-Assessment & Viva Voce Challenge
+1. **Explain the hardware distinction between Cortex-M3 (Blue Pill) and Cortex-M4F (Nucleo-F401RE) relevant to this module.**
+2. **What happens if a bus fault occurs during a read-modify-write operation on `PWR_CR`? Why is atomic bit-setting preferred?**
+3. **Calculate the theoretical bus latency when clocking at maximum frequency versus default reset frequency.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

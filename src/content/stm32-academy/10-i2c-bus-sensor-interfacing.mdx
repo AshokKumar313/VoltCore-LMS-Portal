@@ -1,0 +1,484 @@
+---
+moduleNumber: 10
+title: 'Inter-Integrated Circuit (I2C) Bus - Open-Drain Physics, Clock Stretching & Sensor Interfacing'
+shortTitle: 'I2C Protocol & Sensor Interfacing'
+tier: 'Tier 3: Serial Buses & DMA'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '05-bare-metal-gpio-atomic-bit-ops'
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '90 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'I2C_CR1'
+  - 'I2C_CR2'
+  - 'I2C_CCR'
+  - 'I2C_TRISE'
+  - 'I2C_SR1'
+  - 'I2C_SR2'
+  - 'I2C_DR'
+description: 'Master mode open-drain signaling, pull-up resistor calculations, START/STOP generation, ACK/NACK verification, clock stretching handling, 9-clock bus lockup recovery, and MPU-6050 sensor interfacing.'
+keyFormulas:
+  - 'R_{pullup\_min} = \frac{V_{DD} - V_{OL}}{I_{OL}}'
+  - 'R_{pullup\_max} = \frac{t_r}{0.8473 \times C_b}'
+  - 'T_{high} = CCR \times T_{PCLK1}'
+  - 'TRISE = \frac{t_{r(max)}}{T_{PCLK1}} + 1'
+hardwareApparatus:
+  - 'MPU-6050 6-Axis Motion Sensor (I2C Address 0x68)'
+  - 'Digital Oscilloscope / Logic Analyzer on PB8 (SCL) and PB9 (SDA)'
+order: 10
+xpReward: 225
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Inter-Integrated Circuit (I2C) Bus - Open-Drain Physics, Clock Stretching & Sensor Interfacing
+
+## 1. Architectural Overview & Physical Layer Physics
+
+The **Inter-Integrated Circuit (I2C)** bus, developed by Philips (NXP), is a synchronous, multi-master, multi-slave, packet-switched 2-wire serial bus. Unlike push-pull interfaces (e.g. push-pull SPI or UART TX), the I2C physical layer relies entirely on **Open-Drain / Open-Collector** transistor drivers with passive external pull-up resistors.
+
+```
+                         VDD (+3.3V)
+                             |
+                      +------+------+
+                      |             |
+                     [Rp]          [Rp] (External Pull-Up Resistors)
+                      |             |
+        SCL LINE -----+-------------+-------------------
+                      |             |
+        SDA LINE -----|-------------+-------+-----------
+                      |                     |
+              +-------+-------+     +-------+-------+
+              | STM32 (Master)|     | MPU-6050 Slave|
+              | Open-Drain    |     | Open-Drain    |
+              |   N-MOS       |     |   N-MOS       |
+              +---------------+     +---------------+
+```
+
+### 1.1 The Open-Drain Wired-AND Behavior
+Each device on the I2C bus can only actively pull the line to **Logic 0 (GND)** by turning on an internal N-channel MOSFET. To transmit a **Logic 1**, the device turns off its transistor, allowing the external pull-up resistor `R_p` to restore the line voltage to `VDD`.
+
+This architecture creates a **Wired-AND** connection:
+- If all connected devices turn off their transistors, the line floats up to `VDD` (Logic 1).
+- If any single device pulls the line Low, the entire line drops to `0V` (Logic 0).
+- **Zero Bus Contention:** Two masters attempting to drive opposite logic levels simultaneously do not create dead shorts or burn silicon; instead, the device driving Low wins arbitration harmlessly.
+
+---
+
+## 2. Key Mathematical Derivations & Sizing Formulas
+
+### 2.1 Pull-Up Resistor Boundary Sizing
+
+The pull-up resistor `R_p` is bounded by two physical constraints: minimum resistance (preventing excessive current draw) and maximum resistance (satisfying rise-time requirements).
+
+```latex
+R_{p(min)} = \frac{V_{DD} - V_{OL(max)}}{I_{OL}}
+```
+
+```latex
+R_{p(max)} = \frac{t_r}{0.8473 \times C_b}
+```
+
+Where:
+- `V_DD`: Bus supply rail (typically 3.3V).
+- `V_OL(max)`: Maximum allowed low-level output voltage (0.4V at 3 mA).
+- `I_OL`: Open-drain sink current (3 mA for Standard and Fast modes).
+- `t_r`: Maximum allowable signal rise time according to the NXP I2C specification (1000 ns for 100 kHz Standard Mode; 300 ns for 400 kHz Fast Mode).
+- `C_b`: Total capacitive load of the bus PCB traces, pin capacitance, and attached ICs (typically 50 pF to 400 pF).
+
+#### Worked Example: 400 kHz Fast-Mode Sizing
+For `V_DD = 3.3V`, `C_b = 150 pF`, and `t_r = 300 ns`:
+
+```latex
+R_{p(min)} = \frac{3.3\text{ V} - 0.4\text{ V}}{0.003\text{ A}} = 966.7\,\Omega
+```
+
+```latex
+R_{p(max)} = \frac{300 \times 10^{-9}\text{ s}}{0.8473 \times 150 \times 10^{-12}\text{ F}} \approx 2360\,\Omega
+```
+
+An optimal commercial standard resistor choice is **1.8 kΩ** or **2.2 kΩ**.
+
+### 2.2 Clock Control Register (`CCR`) Calculation
+
+In bare-metal STM32 firmware, the I2C peripheral clock is derived from `PCLK1` (APB1 bus).
+In Standard Mode (`F/S = 0`), each clock period is split equally into `T_high = T_low`:
+
+```latex
+T_{high} = CCR \times T_{PCLK1} \implies CCR = \frac{f_{PCLK1}}{2 \times f_{SCL}}
+```
+
+In Fast Mode (`F/S = 1`, `DUTY = 0` for 1:1 duty ratio):
+
+```latex
+CCR = \frac{f_{PCLK1}}{3 \times f_{SCL}}
+```
+
+### 2.3 Maximum Rise Time Register (`TRISE`)
+
+The `TRISE` register programs the hardware filter delay matching the maximum rise time:
+
+```latex
+TRISE = \frac{t_{r(max)}}{T_{PCLK1}} + 1 = (t_{r(max)} \times f_{PCLK1}) + 1
+```
+
+For `f_PCLK1 = 42 MHz` and Standard Mode (`t_r(max) = 1000 ns`):
+
+```latex
+TRISE = (1000 \times 10^{-9} \times 42 \times 10^6) + 1 = 42 + 1 = 43
+```
+
+---
+
+## 3. Protocol Framing & Timing Diagrams
+
+### 3.1 I2C Packet Framing
+A standard I2C transmission comprises START, 7-bit Address, Read/Write direction, ACK/NACK, 8-bit Data payload, and STOP.
+
+```
+SDA: ----\   /---\ /---\ /---\ /---\ /---\ /---\ /---\ /---\ /----\   /----
+          \_/ A6  X A5  X A4  X A3  X A2  X A1  X A0  X R/W X ACK \_/
+SCL: -----    _     _     _     _     _     _     _     _     _      ----
+          \__/ 1 \_/ 2 \_/ 3 \_/ 4 \_/ 5 \_/ 6 \_/ 7 \_/ 8 \_/ 9 \___/
+        START                                                SLAVE
+        COND                                                 ACK
+```
+
+- **START Condition:** A High-to-Low transition on `SDA` while `SCL` is High.
+- **STOP Condition:** A Low-to-High transition on `SDA` while `SCL` is High.
+- **Data Validity Rule:** `SDA` must remain completely stable during the High period of `SCL`. `SDA` may only change state when `SCL` is Low.
+- **Acknowledge (ACK / NACK):** Following each 8-bit byte, the master releases `SDA`. The receiving slave actively pulls `SDA` Low during the 9th clock pulse (ACK). If `SDA` stays High, a NACK has occurred.
+
+### 3.2 Clock Stretching
+If a slave microcontroller requires additional time to process received data or prepare the next byte for transmission, it pulls `SCL` Low hardware-wise. The master detects this condition and automatically pauses its clock generator until the slave releases `SCL`.
+
+```
+MASTER SCL:  ---___---___------................-----___---___
+SLAVE SCL:   ---___---________(HELD LOW BY SLAVE)---___---___
+ACTUAL SCL:  ---___---________..................---___---___
+                           ^ Clock Stretched ^
+```
+
+---
+
+## 4. Silicon Deadlock: The 9-Clock Bus Lockup & Recovery Protocol
+
+### 4.1 The I2C Bus Hang Hazard
+A catastrophic condition frequently encountered in embedded production occurs when a master MCU resets (due to a watchdog timeout, software reboot, or brownout) **in the middle of reading a byte from an I2C slave**.
+
+If the slave happens to be transmitting a `0` data bit at the instant of the master reset:
+1. The slave holds `SDA` Low waiting for the next `SCL` clock pulse.
+2. The master reboots and attempts to initialize the I2C peripheral.
+3. The I2C hardware senses `SDA` is Low and treats the bus as "Busy" (`I2C_SR2.BUSY = 1`), preventing the master from generating a START or STOP condition.
+4. The system is deadlocked indefinitely.
+
+### 4.2 The 9-Clock Software Recovery Sequence
+To guarantee self-healing reliability, production firmware must execute a GPIO bit-banged recovery sequence before handing pins over to the hardware I2C controller:
+
+```
+Step 1: Configure SCL as GPIO Output Open-Drain, SDA as GPIO Input Floating.
+Step 2: Check if SDA is Low. If SDA is High, bus is free.
+Step 3: If SDA is Low, toggle SCL up to 9 times (clocking out the remaining slave bits).
+Step 4: After each clock, check if the slave has released SDA (SDA goes High).
+Step 5: Generate an explicit STOP condition (SCL Low -> SDA Low -> SCL High -> SDA High).
+Step 6: Hand pins over to the hardware I2C peripheral.
+```
+
+---
+
+## 5. Register Level Architecture & Bit Manipulation
+
+The STM32 I2C peripheral is governed by memory-mapped registers on the APB1 bus:
+
+| Register Mnemonic | Base Offset | Reset Value | Hardware Function |
+| :--- | :--- | :--- | :--- |
+| **`I2C_CR1`** | `+0x00` | `0x00000000` | Peripheral enable (`PE`), START generation (`START`), STOP generation (`STOP`), ACK control (`ACK`), Software reset (`SWRST`) |
+| **`I2C_CR2`** | `+0x04` | `0x00000000` | APB1 clock frequency in MHz (`FREQ[5:0]`), Buffer interrupt enable (`ITBUFEN`), Event interrupt enable (`ITEVTEN`) |
+| **`I2C_OAR1`** | `+0x08` | `0x00000000` | Own address register 1 (7-bit or 10-bit slave address) |
+| **`I2C_DR`**   | `+0x10` | `0x00000000` | Data register (transmit buffer and receive data shift latch) |
+| **`I2C_SR1`**  | `+0x14` | `0x00000000` | Status register 1: Start generated (`SB`), Address sent (`ADDR`), Byte transfer finished (`BTF`), RX not empty (`RXNE`), TX empty (`TXE`), ACK failure (`AF`) |
+| **`I2C_SR2`**  | `+0x18` | `0x00000000` | Status register 2: Bus busy (`BUSY`), Master mode (`MSL`), Transmitter/Receiver (`TRA`) |
+| **`I2C_CCR`**  | `+0x1C` | `0x00000000` | Clock control register: Fast/Standard mode (`F/S`), Duty cycle (`DUTY`), Clock divider (`CCR[11:0]`) |
+| **`I2C_TRISE`**| `+0x20` | `0x00000002` | Maximum rise time configuration register |
+
+> **Critical Silicon Trap (Clearing the ADDR Flag):** In the STM32 I2C state machine, when a slave address matches or is transmitted successfully, the `ADDR` bit in `I2C_SR1` sets. It **cannot** be cleared by writing a `0`. The hardware sequence requires reading `I2C_SR1` followed immediately by reading `I2C_SR2`. If this sequence is omitted, the hardware halts clocking on SCL.
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver initializes `I2C1` on STM32F401RE (**PB8 = SCL, PB9 = SDA**) for **400 kHz Fast-Mode**, executes the 9-clock bus unlock routine, and communicates with an **MPU-6050 IMU**.
+
+```c
+/**
+ * @file    voltcore_i2c_driver.c
+ * @brief   Bare-Metal I2C Driver with 9-Clock Bus Recovery on STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// Memory Mapped Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define APB1PERIPH_BASE     (PERIPH_BASE + 0x00000000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+
+// RCC Registers
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define RCC_APB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x40UL))
+
+// GPIOB Registers
+#define GPIOB_BASE          (AHB1PERIPH_BASE + 0x0400UL)
+#define GPIOB_MODER         (*(volatile uint32_t *)(GPIOB_BASE + 0x00UL))
+#define GPIOB_OTYPER        (*(volatile uint32_t *)(GPIOB_BASE + 0x04UL))
+#define GPIOB_OSPEEDR       (*(volatile uint32_t *)(GPIOB_BASE + 0x08UL))
+#define GPIOB_PUPDR         (*(volatile uint32_t *)(GPIOB_BASE + 0x0CUL))
+#define GPIOB_IDR           (*(volatile uint32_t *)(GPIOB_BASE + 0x10UL))
+#define GPIOB_ODR           (*(volatile uint32_t *)(GPIOB_BASE + 0x14UL))
+#define GPIOB_BSRR          (*(volatile uint32_t *)(GPIOB_BASE + 0x18UL))
+#define GPIOB_AFRH          (*(volatile uint32_t *)(GPIOB_BASE + 0x24UL))
+
+// I2C1 Registers
+#define I2C1_BASE           (APB1PERIPH_BASE + 0x5400UL)
+#define I2C1_CR1            (*(volatile uint32_t *)(I2C1_BASE + 0x00UL))
+#define I2C1_CR2            (*(volatile uint32_t *)(I2C1_BASE + 0x04UL))
+#define I2C1_OAR1           (*(volatile uint32_t *)(I2C1_BASE + 0x08UL))
+#define I2C1_DR             (*(volatile uint32_t *)(I2C1_BASE + 0x10UL))
+#define I2C1_SR1            (*(volatile uint32_t *)(I2C1_BASE + 0x14UL))
+#define I2C1_SR2            (*(volatile uint32_t *)(I2C1_BASE + 0x18UL))
+#define I2C1_CCR            (*(volatile uint32_t *)(I2C1_BASE + 0x1CUL))
+#define I2C1_TRISE          (*(volatile uint32_t *)(I2C1_BASE + 0x20UL))
+
+#define I2C_TIMEOUT_CYCLES  100000UL
+
+static void micro_delay(volatile uint32_t count) {
+    while (count--) { __asm__ volatile("nop"); }
+}
+
+/**
+ * @brief Software bit-bang 9-clock bus unlock recovery sequence
+ */
+void i2c1_bus_recovery_sequence(void) {
+    RCC_AHB1ENR |= (1UL << 1); // Enable GPIOB clock
+
+    // Configure PB8 (SCL) as GPIO Output Open-Drain, PB9 (SDA) as GPIO Input
+    GPIOB_MODER &= ~((3UL << (8 * 2)) | (3UL << (9 * 2)));
+    GPIOB_MODER |=  (1UL << (8 * 2)); // PB8 output mode
+    GPIOB_OTYPER |= (1UL << 8);        // Open-Drain
+    GPIOB_PUPDR  &= ~((3UL << (8 * 2)) | (3UL << (9 * 2)));
+    GPIOB_PUPDR  |=  (1UL << (8 * 2)) | (1UL << (9 * 2)); // Pull-ups
+
+    // Release SCL high
+    GPIOB_BSRR = (1UL << 8);
+    micro_delay(100);
+
+    // If SDA is held Low by slave, pulse SCL up to 9 times
+    for (int i = 0; i < 9; i++) {
+        if (GPIOB_IDR & (1UL << 9)) {
+            break; // Slave released SDA
+        }
+        // Drive SCL Low
+        GPIOB_BSRR = (1UL << (8 + 16));
+        micro_delay(50);
+        // Release SCL High
+        GPIOB_BSRR = (1UL << 8);
+        micro_delay(50);
+    }
+
+    // Generate STOP Condition in software
+    GPIOB_MODER |= (1UL << (9 * 2)); // PB9 output mode
+    GPIOB_OTYPER |= (1UL << 9);
+    // SDA Low
+    GPIOB_BSRR = (1UL << (9 + 16));
+    micro_delay(50);
+    // SCL High
+    GPIOB_BSRR = (1UL << 8);
+    micro_delay(50);
+    // SDA High (STOP)
+    GPIOB_BSRR = (1UL << 9);
+    micro_delay(50);
+}
+
+/**
+ * @brief Initialize I2C1 in 400 kHz Fast-Mode on PB8 (SCL) and PB9 (SDA)
+ * @param pclk1_hz APB1 peripheral clock in Hz (typically 42000000)
+ */
+void i2c1_init_fast_mode(uint32_t pclk1_hz) {
+    // 1. Recover bus if hung from previous incomplete transaction
+    i2c1_bus_recovery_sequence();
+
+    // 2. Enable Peripheral Clocks
+    RCC_AHB1ENR |= (1UL << 1); // GPIOB
+    RCC_APB1ENR |= (1UL << 21); // I2C1
+
+    // 3. Configure PB8, PB9 for Alternate Function AF4 (I2C1)
+    GPIOB_MODER &= ~((3UL << (8 * 2)) | (3UL << (9 * 2)));
+    GPIOB_MODER |=  (2UL << (8 * 2)) | (2UL << (9 * 2)); // AF mode
+
+    GPIOB_OTYPER |= (1UL << 8) | (1UL << 9);              // Open-drain
+    GPIOB_OSPEEDR |= (3UL << (8 * 2)) | (3UL << (9 * 2)); // High speed
+    GPIOB_PUPDR |= (1UL << (8 * 2)) | (1UL << (9 * 2));   // Weak pull-up
+
+    // AFRH: PB8 = AF4 (bits [3:0]), PB9 = AF4 (bits [7:4])
+    GPIOB_AFRH &= ~((0xFUL << 0) | (0xFUL << 4));
+    GPIOB_AFRH |=  (4UL << 0) | (4UL << 4);
+
+    // 4. Reset I2C1 peripheral state machine
+    I2C1_CR1 |= (1UL << 15); // SWRST = 1
+    micro_delay(10);
+    I2C1_CR1 &= ~(1UL << 15); // SWRST = 0
+
+    // 5. Configure Peripheral Clock Frequency in CR2: FREQ[5:0] = PCLK1 / 1 MHz
+    uint32_t pclk1_mhz = pclk1_hz / 1000000UL;
+    I2C1_CR2 = pclk1_mhz & 0x3FUL;
+
+    // 6. Configure Clock Control Register (CCR) for 400 kHz Fast Mode
+    // CCR = PCLK1 / (3 * 400000) with DUTY = 0
+    uint32_t ccr_val = pclk1_hz / (3UL * 400000UL);
+    if (ccr_val < 1) ccr_val = 1;
+    I2C1_CCR = (1UL << 15) | (ccr_val & 0xFFFUL); // F/S = 1 (Fast mode)
+
+    // 7. Configure Rise Time Register: TRISE = (300ns * PCLK1_MHz) + 1
+    I2C1_TRISE = ((pclk1_mhz * 300UL) / 1000UL) + 1UL;
+
+    // 8. Enable I2C1
+    I2C1_CR1 |= (1UL << 0); // PE = 1
+}
+
+/**
+ * @brief Write a single byte to an I2C slave register
+ * @param dev_addr 7-bit slave address
+ * @param reg_addr Internal register address
+ * @param data Data byte to write
+ * @return true on success, false on NACK or timeout
+ */
+bool i2c1_write_register(uint8_t dev_addr, uint8_t reg_addr, uint8_t data) {
+    volatile uint32_t timeout;
+
+    // Wait until bus is not busy
+    timeout = I2C_TIMEOUT_CYCLES;
+    while ((I2C1_SR2 & (1UL << 1)) && --timeout);
+    if (!timeout) return false;
+
+    // Generate START
+    I2C1_CR1 |= (1UL << 8); // START = 1
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 0)) && --timeout); // Wait for SB flag
+    if (!timeout) return false;
+
+    // Transmit Device Address + Write (bit 0 = 0)
+    I2C1_DR = (uint8_t)(dev_addr << 1);
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 1)) && --timeout); // Wait for ADDR flag
+    if (!timeout) return false;
+    (void)I2C1_SR1; (void)I2C1_SR2; // Clear ADDR flag by reading SR1 followed by SR2
+
+    // Transmit Register Address
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 7)) && --timeout); // Wait for TXE
+    if (!timeout) return false;
+    I2C1_DR = reg_addr;
+
+    // Transmit Data Byte
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 7)) && --timeout); // Wait for TXE
+    if (!timeout) return false;
+    I2C1_DR = data;
+
+    // Wait for BTF (Byte Transfer Finished)
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 2)) && --timeout);
+    if (!timeout) return false;
+
+    // Generate STOP
+    I2C1_CR1 |= (1UL << 9); // STOP = 1
+    return true;
+}
+
+/**
+ * @brief Read a single byte from an I2C slave register
+ */
+bool i2c1_read_register(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data) {
+    volatile uint32_t timeout;
+
+    // 1. Write target register address
+    I2C1_CR1 |= (1UL << 8); // START
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 0)) && --timeout);
+    if (!timeout) return false;
+
+    I2C1_DR = (uint8_t)(dev_addr << 1);
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 1)) && --timeout);
+    if (!timeout) return false;
+    (void)I2C1_SR1; (void)I2C1_SR2;
+
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 7)) && --timeout);
+    I2C1_DR = reg_addr;
+
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 2)) && --timeout); // Wait for BTF
+
+    // 2. Generate Repeated START for reading
+    I2C1_CR1 |= (1UL << 8); // Repeated START
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 0)) && --timeout);
+    if (!timeout) return false;
+
+    I2C1_DR = (uint8_t)((dev_addr << 1) | 0x01); // Read direction
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 1)) && --timeout);
+    if (!timeout) return false;
+
+    // For single byte read: Disable ACK and set STOP before clearing ADDR
+    I2C1_CR1 &= ~(1UL << 10); // ACK = 0 (NACK next byte)
+    (void)I2C1_SR1; (void)I2C1_SR2; // Clear ADDR
+    I2C1_CR1 |= (1UL << 9);   // STOP = 1
+
+    // Wait for RXNE
+    timeout = I2C_TIMEOUT_CYCLES;
+    while (!(I2C1_SR1 & (1UL << 6)) && --timeout);
+    if (!timeout) return false;
+
+    *data = (uint8_t)I2C1_DR;
+    return true;
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify robust I2C communications and recovery on the test bench:
+
+1. **Physical Apparatus Wiring:**
+   - Connect **PB8** (Nucleo pin D15) to MPU-6050 **SCL**.
+   - Connect **PB9** (Nucleo pin D14) to MPU-6050 **SDA**.
+   - Ensure external 2.2 kΩ pull-up resistors are installed between SCL/SDA and the 3.3V rail.
+2. **Protocol Sniffing:**
+   - Attach a digital logic analyzer with protocol decoder to PB8 and PB9.
+   - Run the firmware and verify the read from address `0x68` at register `0x75` (`WHO_AM_I`). The returned data byte must be exactly `0x68`.
+3. **Deadlock Recovery Test:**
+   - Temporarily jumper SDA directly to GND with a test probe while reading continuously, inducing a bus stall.
+   - Remove the GND jumper and trigger a master soft reset.
+   - Observe the oscilloscope trace: the microcontroller pulses SCL up to 9 times, generates a clean STOP condition, restores normal communications, and logs zero unrecovered faults.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why is it electrically impossible for two I2C devices to damage one another during bus collision, unlike push-pull UART or SPI?**
+2. **What occurs if `I2C_TRISE` is programmed with a value lower than the actual PCB physical rise time?**
+3. **Explain the precise register sequence required to clear the `ADDR` bit in STM32 hardware and why writing a zero fails.**
+4. **Why must the Master disable `ACK` and assert `STOP` *before* clearing `ADDR` when reading a single byte from a slave?**
+5. **Describe the physical mechanism of the 9-clock bus unlock sequence and why 9 pulses specifically are guaranteed to free the slave.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

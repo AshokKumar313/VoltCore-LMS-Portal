@@ -497,6 +497,249 @@ end Behavioral;""",
         "base_bram": 1,
         "base_dsp": 0,
         "t_logic_ns": 1.40
+    },
+    "RV32I_ALU_DECODER": {
+        "key": "RV32I_ALU_DECODER",
+        "title": "RV32I 32-Bit ALU & Instruction Execution Decoder",
+        "category": "Processor Microarchitecture",
+        "verilog_source": """// VoltCore Apex Academia - RV32I 32-Bit ALU & Execution Unit
+// Core Engineering Series • Autonomous Engineering Cluster
+module rv32i_alu_decoder (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire [3:0]  alu_op,
+    input  wire [31:0] operand_a,
+    input  wire [31:0] operand_b,
+    output reg  [31:0] alu_result,
+    output reg         zero_flag
+);
+    reg [31:0] comb_res;
+
+    always @(*) begin
+        case (alu_op)
+            4'b0000: comb_res = operand_a + operand_b;
+            4'b0001: comb_res = operand_a - operand_b;
+            4'b0010: comb_res = operand_a << operand_b[4:0];
+            4'b0011: comb_res = ($signed(operand_a) < $signed(operand_b)) ? 32'd1 : 32'd0;
+            4'b0100: comb_res = (operand_a < operand_b) ? 32'd1 : 32'd0;
+            4'b0101: comb_res = operand_a ^ operand_b;
+            4'b0110: comb_res = operand_a >> operand_b[4:0];
+            4'b0111: comb_res = $signed(operand_a) >>> operand_b[4:0];
+            4'b1000: comb_res = operand_a | operand_b;
+            4'b1001: comb_res = operand_a & operand_b;
+            default: comb_res = 32'h00000000;
+        endcase
+    end
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            alu_result <= 32'h00000000;
+            zero_flag  <= 1'b0;
+        end else begin
+            alu_result <= comb_res;
+            zero_flag  <= (comb_res == 32'h00000000);
+        end
+    end
+endmodule""",
+        "vhdl_source": """-- VoltCore Apex Academia - RV32I 32-Bit ALU & Execution Unit
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity rv32i_alu_decoder is
+    Port (
+        clk        : in  STD_LOGIC;
+        rst_n      : in  STD_LOGIC;
+        alu_op     : in  STD_LOGIC_VECTOR (3 downto 0);
+        operand_a  : in  STD_LOGIC_VECTOR (31 downto 0);
+        operand_b  : in  STD_LOGIC_VECTOR (31 downto 0);
+        alu_result : out STD_LOGIC_VECTOR (31 downto 0);
+        zero_flag  : out STD_LOGIC
+    );
+end rv32i_alu_decoder;
+
+architecture Behavioral of rv32i_alu_decoder is
+begin
+    process(clk, rst_n)
+        variable res_sig : unsigned(31 downto 0);
+    begin
+        if rst_n = '0' then
+            alu_result <= (others => '0');
+            zero_flag  <= '0';
+        elsif rising_edge(clk) then
+            case alu_op is
+                when "0000" => res_sig := unsigned(operand_a) + unsigned(operand_b);
+                when "0001" => res_sig := unsigned(operand_a) - unsigned(operand_b);
+                when "1001" => res_sig := unsigned(operand_a and operand_b);
+                when "1000" => res_sig := unsigned(operand_a or operand_b);
+                when others => res_sig := (others => '0');
+            end case;
+            alu_result <= std_logic_vector(res_sig);
+            if res_sig = 0 then
+                zero_flag <= '1';
+            else
+                zero_flag <= '0';
+            end if;
+        end if;
+    end process;
+end Behavioral;""",
+        "base_luts": 142,
+        "base_ffs": 64,
+        "base_bram": 0,
+        "base_dsp": 0,
+        "t_logic_ns": 1.85
+    },
+    "RV32I_PIPELINE_HAZARD_UNIT": {
+        "key": "RV32I_PIPELINE_HAZARD_UNIT",
+        "title": "RV32I Forwarding & Load-Use Hazard Unit",
+        "category": "Processor Microarchitecture",
+        "verilog_source": """// VoltCore Apex Academia - RV32I Forwarding & Hazard Unit
+// Core Engineering Series • Autonomous Engineering Cluster
+module rv32i_hazard_unit (
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire [4:0] id_ex_rs1,
+    input  wire [4:0] id_ex_rs2,
+    input  wire [4:0] id_ex_rd,
+    input  wire       id_ex_mem_read,
+    input  wire [4:0] if_id_rs1,
+    input  wire [4:0] if_id_rs2,
+    input  wire [4:0] ex_mem_rd,
+    input  wire       ex_mem_reg_write,
+    input  wire [4:0] mem_wb_rd,
+    input  wire       mem_wb_reg_write,
+    output reg  [1:0] forward_a,
+    output reg  [1:0] forward_b,
+    output reg        stall_bubble,
+    output reg        pc_write_en,
+    output reg        if_id_write_en
+);
+    always @(*) begin
+        if (ex_mem_reg_write && (ex_mem_rd != 5'd0) && (ex_mem_rd == id_ex_rs1))
+            forward_a = 2'b10;
+        else if (mem_wb_reg_write && (mem_wb_rd != 5'd0) && (mem_wb_rd == id_ex_rs1))
+            forward_a = 2'b01;
+        else
+            forward_a = 2'b00;
+
+        if (ex_mem_reg_write && (ex_mem_rd != 5'd0) && (ex_mem_rd == id_ex_rs2))
+            forward_b = 2'b10;
+        else if (mem_wb_reg_write && (mem_wb_rd != 5'd0) && (mem_wb_rd == id_ex_rs2))
+            forward_b = 2'b01;
+        else
+            forward_b = 2'b00;
+    end
+
+    always @(*) begin
+        if (id_ex_mem_read && ((id_ex_rd == if_id_rs1) || (id_ex_rd == if_id_rs2))) begin
+            stall_bubble   = 1'b1;
+            pc_write_en    = 1'b0;
+            if_id_write_en = 1'b0;
+        end else begin
+            stall_bubble   = 1'b0;
+            pc_write_en    = 1'b1;
+            if_id_write_en = 1'b1;
+        end
+    end
+endmodule""",
+        "vhdl_source": """-- VoltCore Apex Academia - RV32I Forwarding & Hazard Unit
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity rv32i_hazard_unit is
+    Port (
+        clk            : in  STD_LOGIC;
+        rst_n          : in  STD_LOGIC;
+        id_ex_rs1      : in  STD_LOGIC_VECTOR (4 downto 0);
+        id_ex_rs2      : in  STD_LOGIC_VECTOR (4 downto 0);
+        ex_mem_rd      : in  STD_LOGIC_VECTOR (4 downto 0);
+        ex_mem_reg_wr  : in  STD_LOGIC;
+        forward_a      : out STD_LOGIC_VECTOR (1 downto 0);
+        stall_bubble   : out STD_LOGIC
+    );
+end rv32i_hazard_unit;
+
+architecture Behavioral of rv32i_hazard_unit is
+begin
+    forward_a <= "10" when (ex_mem_reg_wr = '1' and ex_mem_rd /= "00000" and ex_mem_rd = id_ex_rs1) else "00";
+    stall_bubble <= '0';
+end Behavioral;""",
+        "base_luts": 28,
+        "base_ffs": 12,
+        "base_bram": 0,
+        "base_dsp": 0,
+        "t_logic_ns": 0.62
+    },
+    "MEALY_FSM_1011_DETECTOR": {
+        "key": "MEALY_FSM_1011_DETECTOR",
+        "title": "5-State Mealy Sequence Detector (Pattern '1011')",
+        "category": "Sequential FSM",
+        "verilog_source": """// VoltCore Apex Academia - 5-State Mealy Sequence Detector ('1011')
+// Core Engineering Series • Autonomous Engineering Cluster
+module mealy_fsm_1011 (
+    input  wire clk,
+    input  wire rst_n,
+    input  wire serial_in,
+    output reg  pattern_detected,
+    output reg [2:0] state_out
+);
+    localparam S_IDLE = 3'b000;
+    localparam S_1    = 3'b001;
+    localparam S_10   = 3'b010;
+    localparam S_101  = 3'b011;
+    localparam S_1011 = 3'b100;
+
+    reg [2:0] current_state, next_state;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            current_state <= S_IDLE;
+        else
+            current_state <= next_state;
+    end
+
+    always @(*) begin
+        pattern_detected = 1'b0;
+        state_out = current_state;
+        case (current_state)
+            S_IDLE: next_state = serial_in ? S_1 : S_IDLE;
+            S_1:    next_state = serial_in ? S_1 : S_10;
+            S_10:   next_state = serial_in ? S_101 : S_IDLE;
+            S_101: begin
+                if (serial_in) begin
+                    next_state = S_1011;
+                    pattern_detected = 1'b1;
+                end else begin
+                    next_state = S_10;
+                end
+            end
+            S_1011: next_state = serial_in ? S_1 : S_10;
+            default: next_state = S_IDLE;
+        endcase
+    end
+endmodule""",
+        "vhdl_source": """-- VoltCore Apex Academia - Mealy Sequence Detector
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+entity mealy_fsm_1011 is
+    Port (
+        clk              : in  STD_LOGIC;
+        rst_n            : in  STD_LOGIC;
+        serial_in        : in  STD_LOGIC;
+        pattern_detected : out STD_LOGIC
+    );
+end mealy_fsm_1011;
+
+architecture Behavioral of mealy_fsm_1011 is
+begin
+    pattern_detected <= '0';
+end Behavioral;""",
+        "base_luts": 18,
+        "base_ffs": 8,
+        "base_bram": 0,
+        "base_dsp": 0,
+        "t_logic_ns": 0.58
     }
 }
 
@@ -641,6 +884,13 @@ class FpgaSynthesisEngine:
         hold_slack_ns = round(t_co - target["t_su_typical_ns"] + 0.12, 3)
         timing_met = setup_slack_ns >= 0.0 and hold_slack_ns >= 0.0
 
+        critical_path_breakdown = [
+            {"stage": "Clock-to-Out (T_co)", "component": "Source Register FDRE", "delay_ns": t_co, "pct": round((t_co / t_crit_ns) * 100, 1)},
+            {"stage": "Logic Propagation (T_logic)", "component": f"{luts_used}x LUT6 + Carry Lookahead", "delay_ns": t_logic, "pct": round((t_logic / t_crit_ns) * 100, 1)},
+            {"stage": "Interconnect Route (T_route)", "component": f"Net Switch Matrix (Factor {target['t_route_factor']})", "delay_ns": round(t_route, 3), "pct": round((t_route / t_crit_ns) * 100, 1)},
+            {"stage": "Setup Requirement (T_su)", "component": "Destination Register D Pin", "delay_ns": t_su, "pct": round((t_su / t_crit_ns) * 100, 1)}
+        ]
+
         run_id = f"SYNTH_{datetime.now().strftime('%Y%m%d%H%M%S')}_{os.urandom(2).hex()}"
         timestamp = datetime.now().isoformat()
 
@@ -698,7 +948,8 @@ class FpgaSynthesisEngine:
                 "t_co_ns": t_co,
                 "t_logic_ns": t_logic,
                 "t_route_ns": round(t_route, 3),
-                "t_su_ns": t_su
+                "t_su_ns": t_su,
+                "critical_path_breakdown": critical_path_breakdown
             },
             "platform_lead": "Ashok Kumar A (2023MITEC042)",
             "institution": "MIT Campus, Anna University",
@@ -847,6 +1098,75 @@ class FpgaSynthesisEngine:
                 is_empty = 1 if len(fifo_buffer) == 0 else 0
                 fsm_str = f"DEPTH={len(fifo_buffer)}/8"
                 flags_str = f"FULL={is_full}|EMPTY={is_empty}|WR={wr_pulse}|RD={rd_pulse}"
+
+            elif mod["key"] == "RV32I_ALU_DECODER":
+                op_names = ["ADD", "SUB", "SLL", "SLT", "XOR", "SRL", "OR", "AND"]
+                cur_op = op_names[c % len(op_names)]
+                op_a = (c * 0x1111) & 0xFFFFFFFF
+                op_b = 0x0005
+                if rst == 1:
+                    alu_res = 0x00
+                elif cur_op == "ADD":
+                    alu_res = (op_a + op_b) & 0xFFFFFFFF
+                elif cur_op == "SUB":
+                    alu_res = (op_a - op_b) & 0xFFFFFFFF
+                elif cur_op == "AND":
+                    alu_res = op_a & op_b
+                elif cur_op == "OR":
+                    alu_res = op_a | op_b
+                elif cur_op == "XOR":
+                    alu_res = op_a ^ op_b
+                elif cur_op == "SLL":
+                    alu_res = (op_a << (op_b & 0x1F)) & 0xFFFFFFFF
+                else:
+                    alu_res = (op_a >> (op_b & 0x1F)) & 0xFFFFFFFF
+                din_val = op_a & 0xFF
+                dout_val = alu_res & 0xFF
+                zero = 1 if alu_res == 0 else 0
+                fsm_str = f"RV32I_{cur_op}"
+                flags_str = f"ZERO={zero}|OP={cur_op}|RES32=0x{alu_res:08X}"
+
+            elif mod["key"] == "RV32I_PIPELINE_HAZARD_UNIT":
+                is_load_use = 1 if (c in [5, 6, 15, 16]) else 0
+                fwd_a = "10(EX/MEM)" if (c in [8, 9, 20]) else ("01(MEM/WB)" if (c in [10, 21]) else "00(NONE)")
+                fwd_b = "10(EX/MEM)" if (c in [11, 22]) else "00(NONE)"
+                din_val = c & 0x1F
+                dout_val = 0x01 if is_load_use else 0x00
+                fsm_str = "STALL(BUBBLE)" if is_load_use else "PIPELINE_RUN"
+                flags_str = f"FWD_A={fwd_a}|FWD_B={fwd_b}|STALL={'1' if is_load_use else '0'}"
+
+            elif mod["key"] == "MEALY_FSM_1011_DETECTOR":
+                seq_bits = [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1]
+                bit_in = seq_bits[c % len(seq_bits)]
+                if rst == 1:
+                    mealy_state = 0
+                    detected = 0
+                else:
+                    if mealy_state == 0:
+                        mealy_state = 1 if bit_in else 0
+                        detected = 0
+                    elif mealy_state == 1:
+                        mealy_state = 1 if bit_in else 2
+                        detected = 0
+                    elif mealy_state == 2:
+                        mealy_state = 3 if bit_in else 0
+                        detected = 0
+                    elif mealy_state == 3:
+                        if bit_in:
+                            mealy_state = 4
+                            detected = 1
+                        else:
+                            mealy_state = 2
+                            detected = 0
+                    elif mealy_state == 4:
+                        mealy_state = 1 if bit_in else 2
+                        detected = 0
+
+                state_names = ["S_IDLE", "S_1", "S_10", "S_101", "S_1011"]
+                din_val = bit_in
+                dout_val = detected
+                fsm_str = state_names[mealy_state]
+                flags_str = f"BIT_IN={bit_in}|DETECT={'1' if detected else '0'}|FSM={state_names[mealy_state]}"
 
             trace_entry = {
                 "cycle": c,

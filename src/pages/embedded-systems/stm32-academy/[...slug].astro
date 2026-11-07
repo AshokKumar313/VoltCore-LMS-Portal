@@ -1,0 +1,308 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const allModules = await getCollection('stm32-academy');
+  const sorted = allModules.sort((a, b) => a.data.order - b.data.order);
+
+  return sorted.map((entry, index) => {
+    const prevModule = index > 0 ? sorted[index - 1] : null;
+    const nextModule = index < sorted.length - 1 ? sorted[index + 1] : null;
+    return {
+      params: { slug: entry.slug },
+      props: { entry, prevModule, nextModule, totalModules: sorted.length },
+    };
+  });
+}
+
+const { entry, prevModule, nextModule, totalModules } = Astro.props;
+const { Content } = await entry.render();
+const data = entry.data;
+
+const pageTitle = `Module ${String(data.moduleNumber).padStart(2, '0')}: ${data.shortTitle} | VoltCore STM32 Academy`;
+---
+
+<MainLayout title={pageTitle} description={data.description} activeNav="embedded-systems">
+  <div class="space-y-6 font-sans">
+    
+    <!-- Breadcrumb Bar -->
+    <nav class="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 py-2 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <a href="/" class="hover:text-cyan-400 transition-colors">Home</a>
+        <span>/</span>
+        <a href="/embedded-systems" class="hover:text-cyan-400 transition-colors">Embedded Systems</a>
+        <span>/</span>
+        <a href="/embedded-systems/stm32-academy" class="hover:text-cyan-400 transition-colors">STM32 Academy</a>
+        <span>/</span>
+        <span class="text-cyan-300 font-semibold">Module {String(data.moduleNumber).padStart(2, '0')}</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        {prevModule && (
+          <a
+            href={`/embedded-systems/stm32-academy/${prevModule.slug}`}
+            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1"
+          >
+            ← Prev
+          </a>
+        )}
+        <span class="text-slate-500 font-mono">
+          {data.moduleNumber} / {totalModules}
+        </span>
+        {nextModule && (
+          <a
+            href={`/embedded-systems/stm32-academy/${nextModule.slug}`}
+            class="px-2.5 py-1 rounded-lg bg-indigo-600/40 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 transition-colors flex items-center gap-1"
+          >
+            Next →
+          </a>
+        )}
+      </div>
+    </nav>
+
+    <!-- Chapter Header Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950/60 to-slate-950 border border-indigo-500/30 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="space-y-3 max-w-4xl">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+              MODULE {String(data.moduleNumber).padStart(2, '0')}
+            </span>
+            <span class="px-3 py-1 rounded-full text-xs font-mono bg-slate-800 text-slate-300 border border-slate-700">
+              {data.tier}
+            </span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+              {data.difficulty}
+            </span>
+          </div>
+
+          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+            {data.title}
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed">
+            {data.description}
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2 text-xs font-mono">
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300">
+              <span class="text-slate-500">Architecture:</span>
+              <span class="text-cyan-400 font-bold">{data.cortexArchitecture}</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300">
+              <span class="text-slate-500">Duration:</span>
+              <span class="text-amber-400 font-bold">⏱️ {data.estimatedDuration}</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-300">
+              <span class="text-slate-500">Reward:</span>
+              <span class="text-emerald-400 font-bold">⚡ +{data.xpReward} XP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Completion Toggle Island -->
+        <div id="module-completion-card" class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 min-w-[220px]">
+          <div class="text-xs text-slate-400 font-mono uppercase tracking-wider">Module Status</div>
+          <button
+            id="toggle-complete-btn"
+            data-module={data.moduleNumber}
+            class="w-full py-2.5 px-4 rounded-xl font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+          >
+            <span id="btn-icon">○</span>
+            <span id="btn-text">Mark Module Complete</span>
+          </button>
+          <div id="completion-status-hint" class="text-[11px] text-slate-500 text-center font-mono">
+            Recorded in local memory
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Layout (Grid: Sidebar Quick Info + MDX Body) -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      
+      <!-- Left/Top Quick Meta Drawer -->
+      <div class="lg:col-span-1 space-y-6">
+        
+        {/* Target Microcontrollers */}
+        <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+            <span>🎯</span> Target Boards
+          </h3>
+          <div class="space-y-2">
+            {data.boardTargets.map((board) => (
+              <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-xs">
+                <div class="text-white font-bold">{board}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">
+                  {board.includes('Nucleo') ? 'Cortex-M4F @ 84MHz (512K Flash / 96K SRAM)' : 'Cortex-M3 @ 72MHz (64K Flash / 20K SRAM)'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Primary Peripheral Registers */}
+        {data.registerFocus && data.registerFocus.length > 0 && (
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+              <span>🔬</span> Register Focus
+            </h3>
+            <div class="flex flex-wrap gap-1.5">
+              {data.registerFocus.map((reg) => (
+                <span class="px-2.5 py-1 rounded-lg bg-slate-950 border border-indigo-500/30 text-xs font-mono text-indigo-300">
+                  {reg}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Key Hardware Equations */}
+        {data.keyFormulas && data.keyFormulas.length > 0 && (
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+              <span>📐</span> Timing & Prescaler Equations
+            </h3>
+            <div class="space-y-2">
+              {data.keyFormulas.map((f, idx) => (
+                <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] text-emerald-300">
+                  <code>{f}</code>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bench Hardware Apparatus */}
+        {data.hardwareApparatus && data.hardwareApparatus.length > 0 && (
+          <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 font-mono">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <span>🧰</span> Test Bench Apparatus
+            </h3>
+            <ul class="space-y-1.5 text-xs text-slate-300">
+              {data.hardwareApparatus.map((app) => (
+                <li class="flex items-start gap-1.5">
+                  <span class="text-amber-400">•</span>
+                  <span>{app}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Back to Academy Navigation */}
+        <div class="pt-2">
+          <a
+            href="/embedded-systems/stm32-academy"
+            class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-mono flex items-center justify-center gap-2 transition-colors block text-center"
+          >
+            ← Back to All 21 Modules
+          </a>
+        </div>
+
+      </div>
+
+      {/* Main Chapter Content Body */}
+      <div class="lg:col-span-3 space-y-8">
+        <article class="p-6 sm:p-10 rounded-3xl bg-slate-900/60 border border-slate-800/80 shadow-2xl backdrop-blur-md prose prose-invert max-w-none prose-headings:font-bold prose-headings:text-slate-100 prose-headings:tracking-tight prose-h1:text-2xl sm:prose-h1:text-3xl prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:border-b prose-h2:border-slate-800 prose-h2:pb-3 prose-h3:text-lg prose-p:text-slate-300 prose-p:leading-relaxed prose-code:text-cyan-300 prose-code:font-mono prose-pre:bg-slate-950 prose-pre:border prose-pre:border-slate-800 prose-pre:rounded-2xl prose-table:border prose-table:border-slate-800 prose-th:bg-slate-950 prose-th:text-cyan-300 prose-td:border-b prose-td:border-slate-800">
+          <Content />
+        </article>
+
+        {/* Bottom Navigation Strip */}
+        <div class="flex items-center justify-between p-6 rounded-2xl bg-slate-900/80 border border-slate-800 font-mono text-xs">
+          <div>
+            {prevModule ? (
+              <a
+                href={`/embedded-systems/stm32-academy/${prevModule.slug}`}
+                class="flex items-center gap-2 text-slate-300 hover:text-cyan-400 transition-colors"
+              >
+                <span>←</span>
+                <div>
+                  <div class="text-[10px] text-slate-500 uppercase">Previous Module</div>
+                  <div class="font-bold text-white line-clamp-1">{prevModule.data.shortTitle}</div>
+                </div>
+              </a>
+            ) : (
+              <span class="text-slate-600">First Module of Curriculum</span>
+            )}
+          </div>
+
+          <div>
+            {nextModule ? (
+              <a
+                href={`/embedded-systems/stm32-academy/${nextModule.slug}`}
+                class="flex items-center gap-2 text-right text-slate-300 hover:text-cyan-400 transition-colors"
+              >
+                <div>
+                  <div class="text-[10px] text-slate-500 uppercase">Next Module</div>
+                  <div class="font-bold text-white line-clamp-1">{nextModule.data.shortTitle}</div>
+                </div>
+                <span>→</span>
+              </a>
+            ) : (
+              <span class="text-emerald-400 font-bold">Curriculum Capstone Achieved! 🎉</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* Client-Side Module Completion Script */}
+  <script is:inline>
+    (function() {
+      const btn = document.getElementById('toggle-complete-btn');
+      const icon = document.getElementById('btn-icon');
+      const text = document.getElementById('btn-text');
+      const hint = document.getElementById('completion-status-hint');
+
+      if (!btn) return;
+
+      const modNum = parseInt(btn.getAttribute('data-module'), 10);
+      const storageKey = 'voltcore_stm32_completed';
+
+      function getCompletedList() {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          return raw ? JSON.parse(raw) : [];
+        } catch(e) {
+          return [];
+        }
+      }
+
+      function updateUI() {
+        const list = getCompletedList();
+        const isDone = list.includes(modNum);
+        if (isDone) {
+          btn.className = "w-full py-2.5 px-4 rounded-xl font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+          icon.textContent = "✓";
+          text.textContent = "Module Completed";
+          hint.textContent = "⚡ +XP Awarded to Profile";
+          hint.className = "text-[11px] text-emerald-400 text-center font-mono font-semibold";
+        } else {
+          btn.className = "w-full py-2.5 px-4 rounded-xl font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700";
+          icon.textContent = "○";
+          text.textContent = "Mark Module Complete";
+          hint.textContent = "Recorded in local memory";
+          hint.className = "text-[11px] text-slate-500 text-center font-mono";
+        }
+      }
+
+      btn.addEventListener('click', function() {
+        let list = getCompletedList();
+        if (list.includes(modNum)) {
+          list = list.filter(n => n !== modNum);
+        } else {
+          list.push(modNum);
+        }
+        localStorage.setItem(storageKey, JSON.stringify(list));
+        updateUI();
+      });
+
+      updateUI();
+    })();
+  </script>
+</MainLayout>

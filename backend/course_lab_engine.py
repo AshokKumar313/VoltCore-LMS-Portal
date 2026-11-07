@@ -131,13 +131,19 @@ class CourseLabEngine:
         self.db_path = db_path or DEFAULT_DB_PATH
         self._ensure_database_schema()
 
+    def _get_connection(self) -> sqlite3.Connection:
+        """Create and return a configured SQLite connection with WAL enabled."""
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        return conn
+
     def _ensure_database_schema(self) -> None:
         """Create lab observation telemetry table in SQLite WAL mode."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self._get_connection()
             try:
-                conn.execute("PRAGMA journal_mode=WAL;")
-                conn.execute("PRAGMA synchronous=NORMAL;")
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS course_lab_observations (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -209,6 +215,54 @@ class CourseLabEngine:
             "mag_at_cutoff": round(mag_at_cutoff, 4),
             "db_at_cutoff": round(db_at_cutoff, 2),
             "roll_off_db_per_decade": roll_off_rate,
+            "test_points": test_points
+        }
+
+    @staticmethod
+    def simulate_dsp_chebyshev(
+        fc: float,
+        fs: float,
+        order: int,
+        ripple_db: float = 1.0,
+        gain: float = 1.0
+    ) -> Dict[str, Any]:
+        """
+        Calculates Chebyshev Type I filter magnitude response |H(f)| with passband equiripple.
+        """
+        if fs <= 0 or fc <= 0 or order < 1 or ripple_db <= 0:
+            raise ValueError("Invalid parameters: fs, fc, order >= 1 and ripple_db > 0")
+
+        nyquist_freq = fs / 2.0
+        is_nyquist_valid = fs >= (2.0 * fc)
+        epsilon = math.sqrt(math.pow(10.0, ripple_db / 10.0) - 1.0)
+
+        test_ratios = [0.1, 0.5, 1.0, 2.0, 4.0]
+        test_points = []
+        for r in test_ratios:
+            freq = r * fc
+            if freq <= nyquist_freq:
+                if r <= 1.0:
+                    cn = math.cos(order * math.acos(r))
+                else:
+                    cn = math.cosh(order * math.acosh(r))
+                denom = math.sqrt(1.0 + (epsilon * cn) ** 2)
+                g = gain / denom
+                db = 20.0 * math.log10(max(g, 1e-4))
+                test_points.append({
+                    "frequency": round(freq, 1),
+                    "ratio": r,
+                    "gain_linear": round(g, 4),
+                    "gain_db": round(db, 2)
+                })
+
+        return {
+            "fc": fc,
+            "fs": fs,
+            "order": order,
+            "ripple_db": ripple_db,
+            "epsilon": round(epsilon, 4),
+            "nyquist_freq": nyquist_freq,
+            "is_nyquist_valid": is_nyquist_valid,
             "test_points": test_points
         }
 
@@ -308,6 +362,37 @@ class CourseLabEngine:
         }
 
     @staticmethod
+    def simulate_fabry_perot_etalon(
+        cavity_length: float,
+        reflectance: float = 0.95,
+        wavelength_nm: float = 632.8
+    ) -> Dict[str, Any]:
+        """
+        Calculates Fabry-Perot cavity Finesse, Free Spectral Range (FSR), and linewidth.
+        """
+        if cavity_length <= 0 or not (0 < reflectance < 1.0):
+            raise ValueError("Cavity length must be > 0 and 0 < reflectance < 1.0")
+
+        # Finesse: F = pi * sqrt(R) / (1 - R)
+        finesse = (math.pi * math.sqrt(reflectance)) / (1.0 - reflectance)
+
+        # Free Spectral Range: FSR_freq = c / (2 * L)
+        fsr_hz = SPEED_OF_LIGHT / (2.0 * cavity_length)
+        fsr_mhz = fsr_hz / 1e6
+
+        # Resonance linewidth: delta_nu = FSR / Finesse
+        linewidth_mhz = fsr_mhz / finesse
+
+        return {
+            "cavity_length_m": cavity_length,
+            "reflectance": reflectance,
+            "wavelength_nm": wavelength_nm,
+            "finesse": round(finesse, 2),
+            "fsr_mhz": round(fsr_mhz, 2),
+            "linewidth_mhz": round(linewidth_mhz, 3)
+        }
+
+    @staticmethod
     def simulate_rtos_schedulability(
         tasks: List[Dict[str, float]],
         core_clock_mhz: float = 84.0
@@ -403,7 +488,7 @@ class CourseLabEngine:
         now = datetime.datetime.now().isoformat()
 
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self._get_connection()
             try:
                 conn.execute("""
                     INSERT INTO course_lab_observations

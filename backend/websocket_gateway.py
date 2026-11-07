@@ -1,15 +1,15 @@
 """
 ========================================================================================
 VoltCore Apex Academia - Real-Time Server-Sent Events (SSE) Telemetry Gateway
-Anna University / MIT Campus Standards (Department of Electronics Engineering)
+Core Engineering Series • Autonomous Engineering Cluster Standards
 ----------------------------------------------------------------------------------------
 Module: backend/websocket_gateway.py
 Platform Lead / Architect: Ashok Kumar A
 Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
-Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
+Series: Core Engineering Series • Autonomous Engineering Cluster
 Architecture:
   - Thread-Safe In-Memory Server-Sent Events (SSE) & WebSocket Telemetry Broker
-  - Real-Time Dispatches: Attendance Scans, XP Multipliers, Fleet Heartbeats, TinyML Alerts
+  - Real-Time Dispatches: Hardware GPIO/ADC/Timer Telemetry, Virtual Serial, Attendance, TinyML
   - Zero-Latency Sub-Millisecond Queue Fan-Out for Connected React Clients
 ========================================================================================
 """
@@ -19,6 +19,7 @@ import sys
 import time
 import json
 import queue
+import sqlite3
 import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Generator
@@ -115,8 +116,95 @@ class TelemetryBroadcaster:
             "rfid_uid": rfid_uid,
             "status": status,
             "rssi": rssi,
-            "campus": "MIT Campus, Anna University"
+            "campus": "Autonomous Engineering Cluster"
         })
+
+    def emit_hardware_telemetry(
+        self,
+        board_id: str,
+        gpio_states: Dict[str, Any],
+        adc_readings: Dict[str, Any],
+        timer_registers: Dict[str, Any],
+        status: str = "RUNNING",
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> int:
+        """
+        Broadcast live simulated hardware telemetry (GPIO pin levels, ADC voltages, timer registers).
+        Used by virtual hardware boards (ESP32-WROOM-32, STM32F401, STM32F103) and Wokwi Bridges.
+        """
+        return self.broadcast("hardware_telemetry", {
+            "board_id": board_id,
+            "gpio_states": gpio_states,
+            "adc_readings": adc_readings,
+            "timer_registers": timer_registers,
+            "status": status,
+            "metadata": metadata or {}
+        })
+
+    def emit_virtual_serial(
+        self,
+        board_id: str,
+        payload_text: str,
+        baud_rate: int = 115200,
+        direction: str = "TX"
+    ) -> int:
+        """
+        Broadcast bidirectional virtual serial UART packets between simulator, lesson reader, and client.
+        """
+        return self.broadcast("virtual_serial", {
+            "board_id": board_id,
+            "payload_text": payload_text,
+            "baud_rate": baud_rate,
+            "direction": direction,
+            "char_count": len(payload_text)
+        })
+
+    def persist_hardware_telemetry_to_db(
+        self,
+        db_path: str,
+        board_id: str,
+        payload: Dict[str, Any],
+        student_id: str = "ENG-2024-042",
+        course_code: str = "EC8702"
+    ) -> Dict[str, Any]:
+        """
+        Thread-safe persistence of live hardware telemetry into SQLite WAL gradebook.
+        Uses busy_timeout = 5000 to prevent database lock contention under multi-write bursts.
+        """
+        obs_id = f"OBS-HIL-{board_id}-{datetime.now().strftime('%Y%m%d%H%M%S%f')[:17]}"
+        now = datetime.now().isoformat()
+
+        conn = sqlite3.connect(db_path, timeout=5.0)
+        try:
+            conn.execute("PRAGMA journal_mode = WAL;")
+            conn.execute("PRAGMA busy_timeout = 5000;")
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS course_lab_observations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    observation_id TEXT UNIQUE NOT NULL,
+                    course_code TEXT NOT NULL,
+                    lab_id TEXT NOT NULL,
+                    student_id TEXT NOT NULL,
+                    telemetry_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+            """)
+            conn.execute("""
+                INSERT INTO course_lab_observations
+                (observation_id, course_code, lab_id, student_id, telemetry_json, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                obs_id,
+                course_code,
+                f"HIL_{board_id}",
+                student_id,
+                json.dumps(payload),
+                now
+            ))
+            conn.commit()
+            return {"status": "success", "observation_id": obs_id, "persisted_at": now}
+        finally:
+            conn.close()
 
     def emit_xp_gain(
         self,
@@ -181,7 +269,7 @@ class TelemetryBroadcaster:
             connect_msg = {
                 "event_type": "connected",
                 "message": "VoltCore Live SSE Telemetry Connected",
-                "platform": "VoltCore Apex Academia (MIT Campus Anna University)"
+                "platform": "VoltCore Apex Academia (Core Engineering Series)"
             }
             yield f"event: connect\ndata: {json.dumps(connect_msg)}\n\n"
 
@@ -242,6 +330,31 @@ if __name__ == "__main__":
     assert received2["event_type"] == "tinyml_anomaly"
     assert received2["data"]["confidence_pct"] == 92.0
     print(f"[2] TinyML Anomaly Event Dispatched: [PASSED] -> {received2['data']['anomaly_type']} (92% Confidence)")
+
+    # Test Hardware Telemetry Event
+    count3 = telemetry_broker.emit_hardware_telemetry(
+        board_id="ESP32_VOLTCORE_IOT_01",
+        gpio_states={"GPIO0": 1, "GPIO2": 0, "GPIO4": 1, "GPIO34": 2048},
+        adc_readings={"ADC1_CH6_V": 1.65},
+        timer_registers={"TIM2_CNT": 4820, "TIM2_ARR": 10000}
+    )
+    assert count3 == 1
+    received3 = test_q.get_nowait()
+    assert received3["event_type"] == "hardware_telemetry"
+    assert received3["data"]["board_id"] == "ESP32_VOLTCORE_IOT_01"
+    assert received3["data"]["adc_readings"]["ADC1_CH6_V"] == 1.65
+    print(f"[3] Hardware Telemetry Dispatched: [PASSED] -> {received3['data']['board_id']}")
+
+    # Test Virtual Serial Event
+    count4 = telemetry_broker.emit_virtual_serial(
+        board_id="ESP32_VOLTCORE_IOT_01",
+        payload_text="AT+STATUS\r\n"
+    )
+    assert count4 == 1
+    received4 = test_q.get_nowait()
+    assert received4["event_type"] == "virtual_serial"
+    assert received4["data"]["payload_text"] == "AT+STATUS\r\n"
+    print(f"[4] Virtual Serial Dispatched: [PASSED] -> {received4['data']['payload_text'].strip()}")
 
     telemetry_broker.unsubscribe(test_q)
     print("\n" + "=" * 80)

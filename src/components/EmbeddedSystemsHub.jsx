@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 /**
  * ========================================================================================
@@ -358,6 +358,21 @@ export default function EmbeddedSystemsHub() {
   const [bilingual, setBilingual] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
 
+  // VoltCore STM32 Academy Progress State (Phase 1 Expansion)
+  const [stm32CompletedCount, setStm32CompletedCount] = useState(0);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('voltcore_stm32_completed');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setStm32CompletedCount(parsed.length);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
   // Tab 1: MCU Pinout State
   const [selectedMcu, setSelectedMcu] = useState("STM32F401CCU6");
   const [pinFilter, setPinFilter] = useState("ALL");
@@ -675,7 +690,7 @@ export default function EmbeddedSystemsHub() {
                 Phase F • Features 261–270
               </span>
               <span className="text-xs text-slate-400 font-mono">
-                Regulation 2023 | MIT Campus, Anna University
+                Core Series • Autonomous Engineering Cluster
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white mt-2 tracking-tight">
@@ -726,6 +741,88 @@ export default function EmbeddedSystemsHub() {
               {tab.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* VoltCore STM32 Academy Expansion Card (Hardware Accelerated Theme Tokens) */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-cyan-950/40 to-slate-900 border border-cyan-500/30 p-5 sm:p-6 shadow-xl backdrop-blur-xl">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2.5 max-w-3xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold font-mono border border-cyan-500/40 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                NEW EXPANSION: STM32 ACADEMY
+              </span>
+              <span className="text-xs text-slate-400 font-mono">
+                21 Curriculum Modules • 5 Architectural Tiers
+              </span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <span>⚡</span> VoltCore STM32 Bare-Metal Academy
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Dive deep into register-level firmware development on ARM Cortex-M3 (STM32F103 Blue Pill) and Cortex-M4F (Nucleo-F401RE). Master reset sequences, vector tables, PLL clock math, atomic bit manipulation (BSRR), DMA streams, and FreeRTOS without vendor abstraction bloat.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-cyan-300">
+                Nucleo-F401RE (84MHz FPU)
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-blue-300">
+                Blue Pill STM32F103 (72MHz)
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-slate-950/80 border border-slate-800 text-[11px] font-mono text-emerald-300">
+                Pure C99 & CMSIS Registers
+              </span>
+            </div>
+          </div>
+
+          {/* Interactive Mini Progress Ring & CTA */}
+          <div className="flex items-center gap-4 bg-slate-950/70 p-4 rounded-xl border border-cyan-500/20 flex-shrink-0 self-start md:self-auto">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="26"
+                  stroke="currentColor"
+                  strokeWidth="5"
+                  className="text-slate-800"
+                  fill="transparent"
+                />
+                <circle
+                  cx="32"
+                  cy="32"
+                  r="26"
+                  stroke="currentColor"
+                  strokeWidth="5"
+                  strokeDasharray={2 * Math.PI * 26}
+                  strokeDashoffset={(2 * Math.PI * 26) - (Math.round((stm32CompletedCount / 21) * 100) / 100) * (2 * Math.PI * 26)}
+                  strokeLinecap="round"
+                  className="text-cyan-400 transition-all duration-500"
+                  fill="transparent"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-xs font-black text-white font-mono">{Math.round((stm32CompletedCount / 21) * 100)}%</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 font-mono">
+              <div className="text-[11px] text-slate-400">{stm32CompletedCount} / 21 Modules</div>
+              <a
+                href="/embedded-systems/stm32-academy"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/20 border border-cyan-400/40 transition-all"
+              >
+                <span>Launch Academy</span>
+                <span>→</span>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 

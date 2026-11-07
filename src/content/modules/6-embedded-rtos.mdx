@@ -1,17 +1,20 @@
 ---
-title: "EC8706: Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling"
-code: "EC8706"
+title: "Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling"
+code: "RTOS8706"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 6
+specializationTrack: "FreeRTOS Scheduling"
+simulationComponent: "RtosSchedulerHub"
+trackSlug: "freertos-scheduling"
 description: "Master FreeRTOS kernel internals on ARM Cortex-M and dual-core Xtensa ESP32, analyzing priority inversion inheritance, semaphore signaling matrices, Rate Monotonic vs EDF scheduling bounds, and PendSV context switching."
 difficulty: "Apex Research"
-author: "MIT Campus Embedded Systems & RTOS Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-09-20
 prerequisites:
-  - "EC8702: Embedded Systems Architecture"
+  - "Embedded Systems Architecture"
   - "ARM Cortex-M Hardware Architecture (NVIC, SysTick, PendSV)"
   - "Data Structures in Embedded C (Circular Queues & Doubly-Linked Lists)"
 learningOutcomes:
@@ -30,7 +33,7 @@ tags:
   - "Priority Inversion"
   - "PendSV"
   - "Rate Monotonic Scheduling"
-  - "Anna University R2021"
+  - "FreeRTOS Scheduling"
 syllabusUnits:
   - unit: 1
     title: "Kernel Architecture & ARM Cortex-M Low-Level Context Switching"
@@ -57,7 +60,7 @@ ieeeReference: "IEEE Transactions on Computers, Vol. 73, No. 5, pp. 1240-1254"
 xpReward: 500
 ---
 
-# EC8706: Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling
+# Real-Time Operating Systems (FreeRTOS) & Deterministic Multi-Core Scheduling
 
 <div class="ieee-abstract">
   <strong>Abstract</strong>—Embedded mission-critical applications require bounded response times, deterministic interrupt servicing, and strict concurrency isolation. This module explores the internal microarchitectural mechanics of the FreeRTOS real-time kernel operating on ARM Cortex-M4 and dual-core Xtensa microcontrollers. We rigorously evaluate task preemption pipelines, quantify schedulability using the Liu & Layland utilization bound for Rate Monotonic Scheduling (RMS), and examine low-level context switching orchestrated via the ARM Cortex-M <code>PendSV</code> exception. Furthermore, we expose the catastrophic failure modes of priority inversion and analyze how priority inheritance mitigates unbounded task starvation.
@@ -70,22 +73,38 @@ xpReward: 500
 
 ## I. Schedulability Theory: Rate Monotonic (RMS) vs Earliest Deadline First (EDF)
 
-In periodic real-time task sets where each task $\tau_i$ is defined by a computation time $C_i$ and a period $T_i$, total processor utilization is defined as:
+In periodic real-time task sets where each task `$\tau_i$` is defined by a computation time $C_i$ and a period $T_i$, total processor utilization is defined as:
 
-$$U = \sum_{i=1}^{n} \frac{C_i}{T_i}$$
+
+```latex
+U = \sum_{i=1}^{n} \frac{C_i}{T_i}
+```
+
 
 ### 1. Liu & Layland Schedulability Theorem for RMS
 Under static-priority Rate Monotonic Scheduling (shorter period = higher priority), a set of $n$ independent periodic tasks is guaranteed to be schedulable if:
 
-$$U \le n \left( 2^{1/n} - 1 \right)$$
 
-As $n \to \infty$, the asymptotic bound converges to:
+```latex
+U \le n \left( 2^{1/n} - 1 \right)
+```
 
-$$\lim_{n \to \infty} n \left( 2^{1/n} - 1 \right) = \ln(2) \approx 0.69315 \quad (69.3\%)$$
+
+As `$n \to \infty$`, the asymptotic bound converges to:
+
+
+```latex
+\lim_{n \to \infty} n \left( 2^{1/n} - 1 \right) = \ln(2) \approx 0.69315 \quad (69.3\%)
+```
+
 
 For dynamic-priority Earliest Deadline First (EDF), the schedulability condition expands to the full utilization envelope:
 
-$$U_{\text{EDF}} \le 1.0 \quad (100\%)$$
+
+```latex
+U_{EDF} \le 1.0 \quad (100\%)
+```
+
 
 ---
 
@@ -123,7 +142,7 @@ FreeRTOS on ARM Cortex-M leverages two distinct hardware stack pointers:
   </div>
 
   <p class="text-xs text-slate-200 leading-relaxed font-sans">
-    During the execution of high-speed SPI sensor logging in Anna University Embedded Lab trials, student firmware intermittently freezes in a silent permanent hard-fault or infinite loop within <code>vPortValidateInterruptPriority()</code>.
+    During the execution of high-speed SPI sensor logging in embedded lab trials, student firmware intermittently freezes in a silent permanent hard-fault or infinite loop within <code>vPortValidateInterruptPriority()</code>.
   </p>
 
   <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-2">
@@ -140,15 +159,15 @@ FreeRTOS on ARM Cortex-M leverages two distinct hardware stack pointers:
 
     <div class="text-amber-400 font-bold pt-1">2. Nested Mutex Deadlock:</div>
     <div>
-      Task $\tau_{\text{High}}$ demands Mutex A then Mutex B. Concurrently, Task $\tau_{\text{Low}}$ acquires Mutex B and attempts to take Mutex A. If a context switch occurs between acquisitions, circular wait condition $W = \{\tau_{\text{High}} \to B \to \tau_{\text{Low}} \to A \to \tau_{\text{High}}\}$ triggers an unrecoverable deadlock.
+      Task `$\tau_{High}$` demands Mutex A then Mutex B. Concurrently, Task `$\tau_{Low}$` acquires Mutex B and attempts to take Mutex A. If a context switch occurs between acquisitions, circular wait condition `$W = \{\tau_{High} \to B \to \tau_{Low} \to A \to \tau_{High}\}$` triggers an unrecoverable deadlock.
     </div>
   </div>
 
   <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
-    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <div class="text-[#00F0B5] font-bold">✓ Real-Time Concurrency Mitigation Protocol:</div>
     <ul class="list-disc list-inside space-y-1 text-slate-300">
       <li><strong>Never Mutex in ISR:</strong> Mutexes are strictly prohibited inside ISRs. Use Binary Semaphores or Direct-to-Task Notifications with <code>xTaskNotifyFromISR()</code> and <code>portYIELD_FROM_ISR()</code>.</li>
-      <li><strong>Nested Mutex Ordering:</strong> Enforce strict hierarchical acquisition ordering: Mutexes must always be claimed in index order ($M_1 \prec M_2 \prec M_3$).</li>
+      <li><strong>Nested Mutex Ordering:</strong> Enforce strict hierarchical acquisition ordering: Mutexes must always be claimed in index order (`$M_1 \prec M_2 \prec M_3$`).</li>
       <li><strong>Recursive Mutexes:</strong> For re-entrant calls within the same task thread, exclusively employ <code>xSemaphoreCreateRecursiveMutex()</code> and <code>xSemaphoreTakeRecursive()</code>.</li>
     </ul>
   </div>
@@ -164,7 +183,7 @@ The following complete FreeRTOS driver implements deterministic multi-task sched
 /**
  * VoltCore Apex Academia - Module 6: FreeRTOS Real-Time Kernel Driver
  * Target: ARM Cortex-M4 (STM32F4) / Dual-Core ESP32
- * Standards: Anna University Department of Electronics Engineering
+ * Standards: Core Engineering Series • Real-Time Systems Track
  */
 
 #include "FreeRTOS.h"

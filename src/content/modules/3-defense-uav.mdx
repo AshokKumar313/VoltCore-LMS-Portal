@@ -1,17 +1,20 @@
 ---
-title: "EC8703: Defense UAV Telemetry & Frequency-Hopping Spread Spectrum (FHSS) Architecture"
-code: "EC8703"
+title: "Defense UAV Telemetry & Frequency-Hopping Spread Spectrum (FHSS)"
+code: "UAV8703"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 3
+specializationTrack: "Defense UAV"
+simulationComponent: "IotTelemetryHub"
+trackSlug: "defense-uav"
 description: "Design anti-jamming, electronic counter-countermeasure (ECCM) UAV telemetry links using Semtech SX1280 2.4 GHz and SX1262 915 MHz transceivers, pseudorandom frequency hopping, and FreeRTOS deterministic SPI DMA pipelines."
 difficulty: "Apex Research"
-author: "MIT Campus Embedded Systems Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-09-01
 prerequisites:
-  - "EC8702: Embedded Systems & Real-Time Operating Systems Architecture"
+  - "Embedded Systems & Real-Time Operating Systems Architecture"
   - "RF Circuit Design & Electromagnetic Transmission Lines"
   - "Signals & Systems (Discrete Fourier Transform & Chirp Modulation)"
 learningOutcomes:
@@ -31,7 +34,7 @@ tags:
   - "LoRa SX1280"
   - "Electronic Counter-Countermeasures"
   - "Doppler Shift"
-  - "Anna University R2021"
+  - "Defense UAV"
 syllabusUnits:
   - unit: 1
     title: "RF Propagation & Chirp Spread Spectrum Fundamentals"
@@ -58,7 +61,7 @@ ieeeReference: "IEEE Transactions on Aerospace and Electronic Systems, Vol. 60, 
 xpReward: 500
 ---
 
-# EC8703: Defense UAV Telemetry & Frequency-Hopping Spread Spectrum (FHSS) Architecture
+# Defense UAV Telemetry & Frequency-Hopping Spread Spectrum (FHSS)
 
 <div class="ieee-abstract">
   <strong>Abstract</strong>—In hostile electronic warfare scenarios and dense urban environments, unmanned aerial vehicle (UAV) command and non-payload telemetry (CNPC) links are subject to severe adversary jamming, extreme multipath propagation, and vehicle velocity-induced Doppler shifts. This module explores the architecture of an anti-jamming communication node utilizing dual-band Semtech SX1280 (2.4 GHz) and SX1262 (915 MHz) transceivers coupled to an ESP32-S3 embedded controller. By executing pseudo-random frequency hopping (FHSS) at up to 200 hops/second with deterministic FreeRTOS SPI DMA transactions, the link ensures continuous telemetry survival under aggressive wideband and swept-tone interference.
@@ -75,12 +78,16 @@ The telemetry payload is digitized and packetized into encrypted frames (AES-256
 
 The pseudo-random channel hopper selects carrier frequencies based on an authenticated seed shared during the initial pre-flight cryptographical handshake:
 
-$$f_k = f_{\text{base}} + \left[ \text{LFSR}_{32}(k) \pmod N_{\text{channels}} \right] \cdot \Delta f_{\text{channel}}$$
+
+```latex
+f_k = f_{base} + \left[ LFSR_{32}(k) \pmod N_{channels} \right] \cdot \Delta f_{channel}
+```
+
 
 Where:
-- $f_{\text{base}} = 2.402 \text{ GHz}$
-- $N_{\text{channels}} = 80$ channels spaced at $\Delta f_{\text{channel}} = 1.0 \text{ MHz}$
-- Dwell time per hop $\tau_{\text{dwell}} = 10 \text{ ms}$ (yielding 100 hops per second)
+- `$f_{base} = 2.402  GHz$`
+- `$N_{channels} = 80$` channels spaced at `$\Delta f_{channel} = 1.0  MHz$`
+- Dwell time per hop `$\tau_{dwell} = 10  ms$` (yielding 100 hops per second)
 
 ```text
 +-----------------------+       SPI DMA (32 MHz)       +-----------------------+
@@ -102,38 +109,46 @@ Where:
   </div>
 
   <p class="text-xs text-slate-200 leading-relaxed font-sans">
-    During low-altitude UAV maneuvers between urban concrete structures (such as Anna University MIT Campus quadrangle buildings), students often encounter an abrupt, unexplained link drop exceeding <strong>98% packet loss</strong> even when transmitter RSSI is measured at a robust <strong>-68 dBm</strong>.
+    During low-altitude UAV maneuvers between urban concrete structures (such as dense high-rise urban structures), students often encounter an abrupt, unexplained link drop exceeding <strong>98% packet loss</strong> even when transmitter RSSI is measured at a robust <strong>-68 dBm</strong>.
   </p>
 
   <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-1.5">
     <div class="text-amber-400 font-bold">1. Root Failure Mechanism:</div>
     <div>
-      When a UAV travels at velocity $v = 108 \text{ km/h}$ ($30 \text{ m/s}$) at 2.4 GHz ($\lambda = 0.125 \text{ m}$), the direct line-of-sight Doppler shift is:
+      When a UAV travels at velocity $v = 108  km/h$ ($30  m/s$) at 2.4 GHz (`$\lambda = 0.125  m$`), the direct line-of-sight Doppler shift is:
     </div>
     <div class="text-center py-1 text-[#00F0B5]">
-      $$\Delta f_D = \frac{v}{\lambda} \cos(\theta) = \frac{30}{0.125} \cdot 1.0 = \pm 240 \text{ Hz}$$
+      
+```latex
+\Delta f_D = \frac{v}{\lambda} \cos(\theta) = \frac{30}{0.125} \cdot 1.0 = \pm 240  Hz
+```
+
     </div>
     <div>
-      Simultaneously, reflections from opposing building facades arrive with reverse Doppler velocity ($\cos(\theta) \approx -1$), generating a destructive Doppler spread $B_D \approx 480 \text{ Hz}$.
+      Simultaneously, reflections from opposing building facades arrive with reverse Doppler velocity (`$\cos(\theta) \approx -1$`), generating a destructive Doppler spread `$B_D \approx 480  Hz$`.
     </div>
     <div class="text-amber-400 font-bold pt-1">2. LoRa Demodulator Collapse:</div>
     <div>
       In LoRa Chirp Spread Spectrum (CSS), symbols are demodulated by multiplying the received signal by a conjugate unmodulated base down-chirp. If the carrier frequency offset exceeds <strong>25% of the chirp bin width</strong>:
     </div>
     <div class="text-center py-1 text-red-300">
-      $$\Delta f_{\text{threshold}} = \frac{\text{Bandwidth}}{2^{\text{Spreading Factor} + 2}}$$
+      
+```latex
+\Delta f_{threshold} = \frac{Bandwidth}{2^{Spreading Factor + 2}}
+```
+
     </div>
     <div>
-      For $SF = 10$ and $BW = 203 \text{ kHz}$, $\Delta f_{\text{threshold}} \approx 49.5 \text{ Hz}$. A $240 \text{ Hz}$ Doppler shift shifts the FFT peak across <strong>5 discrete bin addresses</strong>, resulting in catastrophic cyclic parity check (CRC) corruption.
+      For $SF = 10$ and $BW = 203  kHz$, `$\Delta f_{threshold} \approx 49.5  Hz$`. A $240  Hz$ Doppler shift shifts the FFT peak across <strong>5 discrete bin addresses</strong>, resulting in catastrophic cyclic parity check (CRC) corruption.
     </div>
   </div>
 
   <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
-    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <div class="text-[#00F0B5] font-bold">✓ Defense UAV Telemetry Mitigation Protocol:</div>
     <ul class="list-disc list-inside space-y-1 text-slate-300">
-      <li><strong>TCXO Hardware Mandate:</strong> Discard standard 10 PPM passive crystals; employ a 32 MHz TCXO with $\le 0.5 \text{ PPM}$ drift across $-40^\circ\text{C}$ to $+85^\circ\text{C}$.</li>
+      <li><strong>TCXO Hardware Mandate:</strong> Discard standard 10 PPM passive crystals; employ a 32 MHz TCXO with `$\le 0.5  PPM$` drift across `$-40^\circC$` to `$+85^\circC$`.</li>
       <li><strong>Automatic Frequency Correction (AFC):</strong> Configure the SX1280 <code>SetLoRaSymbNumTimeout()</code> and enable continuous carrier frequency tracking registers <code>REG_LR_ESTIMATED_FREQ_ERROR</code> to offset the local NCO prior to payload demodulation.</li>
-      <li><strong>Adaptive Spreading Factor:</strong> Step down to $SF = 7$ ($BW = 812 \text{ kHz}$) during high-velocity ingress to expand the bin tolerance window to $\approx 396 \text{ Hz}$.</li>
+      <li><strong>Adaptive Spreading Factor:</strong> Step down to $SF = 7$ ($BW = 812  kHz$) during high-velocity ingress to expand the bin tolerance window to `$\approx 396  Hz$`.</li>
     </ul>
   </div>
 </div>
@@ -148,7 +163,7 @@ The following Arduino C++ / FreeRTOS sketch operates the SX1280 transceiver stat
 /**
  * VoltCore Apex Academia - Module 3: Defense UAV FHSS Telemetry Node
  * Hardware: ESP32-S3 + Semtech SX1280 (2.4 GHz)
- * Target: MIT Campus Embedded ECE Lab
+ * Target: Autonomous UAV Avionics Test Bench
  */
 
 #include <SPI.h>
@@ -216,6 +231,6 @@ void loop() {
 
 ## IV. Laboratory Exercise & Examination Questions
 
-1. **Calculate Hopping Dwell Time:** For an adversary scanning 10 MHz spectrum slices with a 500 µs sweep rate, prove why a hop dwell time $\le 10 \text{ ms}$ reduces detection probability by $82\%$.
-2. **Doppler Threshold Calculation:** Calculate the maximum allowable vehicle velocity for a 915 MHz SX1262 link operating at $SF=9, BW=125 \text{ kHz}$ before AFC compensation is strictly required.
+1. **Calculate Hopping Dwell Time:** For an adversary scanning 10 MHz spectrum slices with a 500 µs sweep rate, prove why a hop dwell time `$\le 10  ms$` reduces detection probability by `$82\%$`.
+2. **Doppler Threshold Calculation:** Calculate the maximum allowable vehicle velocity for a 915 MHz SX1262 link operating at $SF=9, BW=125  kHz$ before AFC compensation is strictly required.
 

@@ -4,17 +4,17 @@ import { triggerToast } from './ToastNotifications.jsx';
 /**
  * ========================================================================================
  * VoltCore Apex Academia - WebUSB / WebSerial Hardware Firmware Flashing Panel
- * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * Core Engineering Series • Autonomous Test Bench Standards
  * ----------------------------------------------------------------------------------------
  * Component: src/components/WebUsbFlashingPanel.jsx
- * Platform Lead / Architect: Ashok Kumar A (2023MITEC042)
+ * Platform Lead / Architect: Ashok Kumar A
  * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
- * Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
+ * Series: Core Engineering Series • Autonomous Engineering Cluster
  * 
  * Features:
  *   - Direct browser WebSerial flashing to ESP32 / STM32 / RP2040 microcontrollers
  *   - Automatic Bootloader synchronization via DTR / RTS pin toggling (EN / IO0 pulse)
- *   - Pre-compiled Anna University R2023 lab binaries & custom .bin file drag-and-drop
+ *   - Pre-compiled engineering laboratory binaries & custom .bin file drag-and-drop
  *   - Dynamic Flash Partition offset mapping (Bootloader, Partition Table, Application, LittleFS)
  *   - Real-time Serial Monitor with bi-directional streaming, baud selector, and ANSI logs
  * ========================================================================================
@@ -29,7 +29,7 @@ const TARGET_BOARDS = [
     flashBaud: 460800,
     bootOffset: '0x1000',
     appOffset: '0x10000',
-    badge: 'Anna Univ R2023 Standard'
+    badge: 'Core Microcontroller Standard'
   },
   {
     id: 'esp32_s3',
@@ -52,6 +52,26 @@ const TARGET_BOARDS = [
     badge: 'Bare-Metal Driver Lab'
   },
   {
+    id: 'stm32_nucleo_f401',
+    name: 'STM32 Nucleo-F401RE (ST-LINK V2-1)',
+    arch: 'ARM Cortex-M4F @ 84MHz (ST-Link Virtual COM)',
+    romBaud: 115200,
+    flashBaud: 115200,
+    bootOffset: '0x08000000',
+    appOffset: '0x08000000',
+    badge: 'Nucleo Standard'
+  },
+  {
+    id: 'stm32_bluepill_f103',
+    name: 'STM32F103C8T6 Blue Pill (USART1 / USB Boot)',
+    arch: 'ARM Cortex-M3 @ 72MHz',
+    romBaud: 115200,
+    flashBaud: 115200,
+    bootOffset: '0x08000000',
+    appOffset: '0x08000000',
+    badge: 'Blue Pill Standard'
+  },
+  {
     id: 'rp2040_pico',
     name: 'Raspberry Pi Pico (Dual Cortex-M0+)',
     arch: 'Dual ARM Cortex-M0+ with PIO @ 133MHz',
@@ -67,7 +87,7 @@ const PRECOMPILED_BINARIES = [
   {
     id: 'esp32_rfid_spool',
     title: 'ESP32 RFID Attendance & LittleFS Merkle Node',
-    module: 'EC8701 / EC8706',
+    module: 'IOT8701 / RTOS8706',
     target: 'esp32_wroom',
     sizeBytes: 819200,
     defaultOffset: '0x10000',
@@ -76,7 +96,7 @@ const PRECOMPILED_BINARIES = [
   {
     id: 'tiny_ml_vibration',
     title: 'TinyML INT8 Vibration Anomaly Edge Detector',
-    module: 'EC8709 (Edge AI)',
+    module: 'TML8709 (Edge AI)',
     target: 'esp32_s3',
     sizeBytes: 655360,
     defaultOffset: '0x10000',
@@ -85,7 +105,7 @@ const PRECOMPILED_BINARIES = [
   {
     id: 'stm32_dma_pingpong',
     title: 'STM32 Cortex-M4 DMA Zero-Copy Circular Buffer',
-    module: 'EC8708 (Advanced RTOS)',
+    module: 'DMA8708 (Advanced RTOS)',
     target: 'stm32_cortex_m4',
     sizeBytes: 262144,
     defaultOffset: '0x08008000',
@@ -94,7 +114,7 @@ const PRECOMPILED_BINARIES = [
   {
     id: 'uav_fhss_telemetry',
     title: 'Defense UAV FHSS 2.4GHz Telemetry Firmware',
-    module: 'EC8703 (Defense Edge)',
+    module: 'UAV8703 (Defense Edge)',
     target: 'esp32_wroom',
     sizeBytes: 786432,
     defaultOffset: '0x10000',
@@ -153,30 +173,64 @@ export default function WebUsbFlashingPanel() {
     setSerialLogs(prev => [...prev, `[${timestamp}] ${msg}`]);
   };
 
-  // Connect to Serial Port
+  // Connect to Serial Port with robust physical hardware detection & permission handling
   const handleConnectPort = async () => {
     if (!('serial' in navigator)) {
-      triggerToast('WebSerial API not supported in this browser', 'error');
+      triggerToast('WebSerial API not supported in this browser. Use Chrome, Edge, or Opera.', 'error');
+      addLog('[ERROR] WebSerial API is unavailable. Please open in Google Chrome or Microsoft Edge.');
       return;
     }
 
     try {
-      addLog('Requesting user USB Serial port selection...');
+      addLog('[SERIAL PROMPT] Requesting user hardware port selection dialog...');
       const port = await navigator.serial.requestPort();
       await port.open({ baudRate: 115200 }); // Open initially at 115200 for bootloader handshake
       serialPortRef.current = port;
 
       const info = port.getInfo ? port.getInfo() : {};
-      const usbVendor = info.usbVendorId ? `0x${info.usbVendorId.toString(16).toUpperCase()}` : '0x10C4 (CP2102/CH340)';
-      const usbProduct = info.usbProductId ? `0x${info.usbProductId.toString(16).toUpperCase()}` : '0xEA60';
+      const vidNum = info.usbVendorId || 0;
+      const pidNum = info.usbProductId || 0;
+      const usbVendor = vidNum ? `0x${vidNum.toString(16).toUpperCase()}` : '0x10C4';
+      const usbProduct = pidNum ? `0x${pidNum.toString(16).toUpperCase()}` : '0xEA60';
 
-      setPortInfo({ vendor: usbVendor, product: usbProduct });
+      // Intelligent hardware board identification
+      let detectedBoardName = 'USB Serial Device';
+      if (vidNum === 0x0483) {
+        detectedBoardName = 'STM32 Nucleo / Discovery (ST-Link V2/V3 Virtual COM Port)';
+        setSelectedBoardId('stm32_nucleo_f401');
+      } else if (vidNum === 0x1A86) {
+        detectedBoardName = 'CH340 USB-UART (STM32 Blue Pill / Arduino)';
+        setSelectedBoardId('stm32_bluepill_f103');
+      } else if (vidNum === 0x10C4) {
+        detectedBoardName = 'Silicon Labs CP210x (ESP32-WROOM-32 / Blue Pill)';
+      } else if (vidNum === 0x0403) {
+        detectedBoardName = 'FTDI FT232R USB-Serial Bridge';
+      } else if (vidNum === 0x2E8A) {
+        detectedBoardName = 'Raspberry Pi Pico (RP2040 USB CDC)';
+        setSelectedBoardId('rp2040_pico');
+      }
+
+      setPortInfo({ vendor: usbVendor, product: usbProduct, name: detectedBoardName });
       setIsConnected(true);
-      addLog(`[PORT CONNECTED] Device VID: ${usbVendor} | PID: ${usbProduct} @ 115200 baud`);
-      triggerToast(`Connected to USB Device (${usbVendor})`, 'success');
+      addLog(`[PORT CONNECTED] ${detectedBoardName} (VID: ${usbVendor} | PID: ${usbProduct}) @ 115200 baud`);
+      triggerToast(`Connected to ${detectedBoardName}`, 'success');
     } catch (err) {
-      addLog(`[CONNECT ERROR] ${err.message || 'Port selection canceled or access denied.'}`);
-      triggerToast('Failed to connect USB Serial port', 'error');
+      if (err.name === 'NotFoundError') {
+        // User dismissed the browser device selection prompt
+        addLog('[PORT SELECTION] Port selection cancelled by user. Re-click "Connect Hardware Board" when your board is plugged in.');
+        triggerToast('Device selection cancelled', 'info');
+      } else if (err.name === 'SecurityError') {
+        // Browser permission blocked by policy
+        addLog('[SECURITY ERROR] WebSerial access denied. Ensure browser site settings allow serial device permissions.');
+        triggerToast('WebSerial permission blocked by browser security policy', 'error');
+      } else if (err.name === 'NetworkError' || err.message?.includes('already open') || err.message?.includes('Failed to open')) {
+        // Port locked by another process (STM32CubeIDE, TeraTerm, openocd, or another tab)
+        addLog(`[PORT BUSY] Serial port is already open or locked by another process (e.g., STM32CubeProgrammer, openocd, or terminal). Close conflicting apps and retry.`);
+        triggerToast('Serial port locked by another process. Close conflicting apps.', 'warning');
+      } else {
+        addLog(`[CONNECT ERROR] ${err.name}: ${err.message || 'Port selection canceled or access denied.'}`);
+        triggerToast('Failed to connect USB Serial port', 'error');
+      }
     }
   };
 
@@ -272,8 +326,40 @@ export default function WebUsbFlashingPanel() {
     addLog(`-------------------------------------------------------------`);
     addLog(`rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)`);
     addLog(`configsip: 0, SPIWP:0xee, clk_drv:0x00,q_drv:0x00,d_drv:0x00`);
-    addLog(`[VoltCore MIT]: Node booted. FreeRTOS kernel started on Core 0 & Core 1.`);
+    addLog(`[VoltCore Core]: Node booted. FreeRTOS kernel started on Core 0 & Core 1.`);
     addLog(`[VoltCore LittleFS]: Spool partition mounted. 10,000 scan capacity ready.`);
+
+    // Dispatch telemetry events for cross-component integration
+    const flasherTelemetry = {
+      tool: 'WebUsbFlashingPanel',
+      timestamp: new Date().toISOString(),
+      board: activeBoard.name,
+      binary: binaryTitle,
+      sizeBytes: binarySize,
+      offset: flashOffset,
+      baudRate: baudRate,
+      status: 'SUCCESS',
+      checksum: '0x4B9E3A2F'
+    };
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('voltcore:flasher-telemetry', { detail: flasherTelemetry }));
+      window.dispatchEvent(new CustomEvent('voltcore:lab-telemetry', {
+        detail: {
+          tool: 'WebUsbFlashingPanel',
+          board: activeBoard.name,
+          binary: binaryTitle,
+          status: 'FLASH_SUCCESS',
+          timestamp: new Date().toISOString(),
+          parameters: { baudRate, flashOffset, sizeBytes: binarySize }
+        }
+      }));
+      try {
+        localStorage.setItem('voltcore_flasher_telemetry', JSON.stringify(flasherTelemetry));
+      } catch (e) {
+        // Ignore localStorage error
+      }
+    }
 
     triggerToast(`Firmware flashed successfully to ${activeBoard.name}!`, 'success');
   };
@@ -288,7 +374,7 @@ export default function WebUsbFlashingPanel() {
     } else if (terminalInput.toLowerCase() === 'help') {
       addLog(`[COMMANDS]: 'status', 'scan', 'sync', 'reset', 'version'`);
     } else if (terminalInput.toLowerCase() === 'version') {
-      addLog(`[VOLTCORE FIRMWARE]: v4.4.0 (Anna University MIT ECE Standards)`);
+      addLog(`[VOLTCORE FIRMWARE]: v4.4.0 (Autonomous Core Engineering Standards)`);
     } else {
       addLog(`[ACK]: Executed '${terminalInput}' on Xtensa Core 0.`);
     }
@@ -307,7 +393,7 @@ export default function WebUsbFlashingPanel() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00693E] to-[#00F0B5] p-[1.5px] flex items-center justify-center shadow-emerald-glow">
                 <div className="w-full h-full bg-[#020813] rounded-[10px] flex items-center justify-center text-[#00F0B5]">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                   </svg>
                 </div>
@@ -320,7 +406,7 @@ export default function WebUsbFlashingPanel() {
                   </span>
                 </h1>
                 <p className="text-xs text-slate-400 mt-1">
-                  Madras Institute of Technology (MIT Campus ECE) • Flash ESP32/STM32 binaries directly from browser over USB
+                  Core Engineering Series • Autonomous Cluster • Flash ESP32/STM32 binaries directly from browser over USB
                 </p>
               </div>
             </div>

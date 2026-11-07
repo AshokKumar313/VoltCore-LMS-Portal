@@ -1,0 +1,299 @@
+---
+moduleNumber: 16
+title: 'RTOS Synchronization Primitives: Queues, Mutexes & Priority Inheritance'
+shortTitle: 'RTOS Queues & Priority Inheritance'
+tier: 'Tier 4: RTOS & Kernel Internals'
+difficulty: 'Advanced'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '15-freertos-kernel-porting-pendsv'
+estimatedDuration: '85 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'QueueHandle_t'
+  - 'SemaphoreHandle_t'
+  - 'xQueueCreate'
+  - 'xSemaphoreCreateMutex'
+  - 'xQueueSend'
+  - 'xQueueReceive'
+description: 'Safe thread-to-thread communication with FreeRTOS queues, mutual exclusion locks, binary/counting semaphores, solving priority inversion with the Priority Inheritance Protocol, and deadlock prevention.'
+keyFormulas:
+  - 'P_{effective} = \max(P_{holder}, P_{waiting})'
+  - 'T_{inversion\_max} = C_{L} + T_{context\_switch}'
+hardwareApparatus:
+  - 'Nucleo-F401RE (Multi-Task Sensor Hub)'
+  - 'USB-to-UART Telemetry stream on PA2/PA3'
+order: 16
+xpReward: 250
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# RTOS Synchronization Primitives: Queues, Mutexes & Priority Inheritance
+
+## 1. Architectural Overview & Inter-Process Communication (IPC)
+
+In a preemptive real-time operating system, dividing embedded firmware into independent tasks introduces the challenge of **Inter-Process Communication (IPC)**. When multiple concurrent tasks access shared hardware peripherals (e.g. an I2C bus or SPI Flash) or stream sensor packets across thread boundaries, unsynchronized memory access causes race conditions, corrupted buffers, and system deadlock.
+
+FreeRTOS provides four primary synchronization and communication primitives:
+1. **Queues:** Thread-safe, FIFO (First-In, First-Out) memory buffers copying data by value.
+2. **Binary Semaphores:** Event signaling primitives used to synchronize tasks with hardware ISRs.
+3. **Counting Semaphores:** Resource-tracking tokens managing pools of identical hardware resources.
+4. **Mutexes (Mutual Exclusion):** Binary tokens featuring **ownership semantics** and **Priority Inheritance** designed strictly for protecting shared resources.
+
+```
+       +-------------------------------------------------------------+
+       |                  FREERTOS IPC PRIMITIVES TAXONOMY           |
+       +-------------------------------------------------------------+
+       | Primitive     | Primary Purpose       | Ownership | Priority|
+       |               |                       | Semantics | Inherit.|
+       +---------------+-----------------------+-----------+---------+
+       | Queue         | Data Transfer (FIFO)  | No        | No      |
+       | Binary Sem.   | Event Synchronization | No        | No      |
+       | Counting Sem. | Resource Token Count  | No        | No      |
+       | Mutex         | Resource Protection   | YES       | YES     |
+       +---------------+-----------------------+-----------+---------+
+```
+
+---
+
+## 2. FreeRTOS Queue Architecture: Copy-by-Value & Blocking Lists
+
+FreeRTOS queues operate on a **copy-by-value** paradigm rather than passing pointers by reference:
+- When a task transmits data into a queue using `xQueueSend()`, the kernel copies the byte payload directly into the queue's internal storage buffer using an internal memory copy.
+- This decoupling allows the sending task to immediately overwrite or deallocate its local stack variable without risking data corruption.
+
+```
+Task A (Sender):   [ Local Data Struct ]
+                          |
+                          v (memcpy into queue storage)
+Queue FIFO:        [ Item 0 ][ Item 1 ][ Item 2 ] . . .
+                                                  |
+                                                  v (memcpy into receiver stack)
+Task B (Receiver):                         [ Destination Struct ]
+```
+
+### 2.1 Blocked Task Lists & Zero-CPU Waiting
+When a task calls `xQueueReceive()` on an empty queue, the task does not waste CPU cycles in a spin-lock. Instead:
+1. The kernel removes the task from the **Ready List** and places it onto the queue's internal **Waiting-to-Receive List** (`xTasksWaitingToReceive`).
+2. The task's state transitions to **BLOCKED**.
+3. The scheduler triggers `vPortYield()`, allowing lower-priority ready tasks to utilize the CPU.
+4. The instant another task or ISR pushes an item into the queue via `xQueueSend()`, the kernel automatically awakens the highest-priority blocked task and returns it to the Ready List.
+
+---
+
+## 3. The Priority Inversion Anomaly & The Mars Pathfinder Case Study
+
+### 3.1 What is Unbounded Priority Inversion?
+**Priority Inversion** is a catastrophic real-time scheduling anomaly where a **low-priority task indirectly delays the execution of a high-priority task**, often causing the high-priority task to miss hard real-time deadlines.
+
+```
+HIGH Priority (Task H):  --[ Wants Mutex M ]=========== BLOCKED =============> misses deadline!
+                                                 ^
+MEDIUM Priority (Task M):                        +--[ Preempts Task L! ]----
+                                                 |
+LOW Priority (Task L):   --[ Holds Mutex M ]-----+...................[ Releases M ]-->
+```
+
+#### The Four-Step Failure Sequence:
+1. **Low-Priority Task L** acquires a shared Mutex `M` (e.g. guarding a bus).
+2. **High-Priority Task H** becomes ready to run and preempts Task L.
+3. Task H requires Mutex `M`, but finding it locked by Task L, Task H blocks.
+4. **Medium-Priority Task M** (which has nothing to do with Mutex `M`) becomes ready to run. Because `Priority(M) > Priority(L)`, Task M preempts Task L!
+
+**The Catastrophe:** Task L cannot run to release Mutex `M` because Task M is monopolizing the CPU. Consequently, High-Priority Task H is indirectly blocked by Medium-Priority Task M. If Task M runs for an extended period, Task H misses its deadline.
+
+> **Historical Precedent (Mars Pathfinder, 1997):** During the Mars Pathfinder mission, the spacecraft's attitude control thread (High Priority) was repeatedly blocked by a background communication task (Medium Priority) because a meteorology thread (Low Priority) held the information bus mutex. The watchdog timer detected the delayed attitude thread and repeatedly triggered hard system reboots on Mars until engineers remotely enabled **Priority Inheritance**.
+
+---
+
+## 4. The Priority Inheritance Protocol (PIP)
+
+To solve priority inversion, real-time operating systems implement the **Priority Inheritance Protocol**:
+
+```latex
+P_{effective} = \max(P_{holder}, P_{waiting})
+```
+
+When High-Priority Task H blocks on a mutex held by Low-Priority Task L:
+1. The FreeRTOS kernel dynamically elevates the priority of Task L to match Task H.
+2. Because Task L now runs at the priority of Task H, **Medium-Priority Task M cannot preempt Task L**.
+3. Task L rapidly executes its critical section and calls `xSemaphoreGive()`.
+4. The kernel restores Task L to its original low priority.
+5. Task H instantly acquires the mutex and preempts the CPU.
+
+```
+HIGH Priority (Task H):  --[ Wants Mutex M ]====== BLOCKED ======+--[ Runs Critical Sec ]-->
+                                                                 ^
+MEDIUM Priority (Task M):              (Cannot Preempt Task L!)  |
+                                                                 |
+LOW Priority (Task L):   --[ Holds M ]-[ Inherits Priority H! ]--+ (Restored to Low)
+```
+
+> **Critical Silicon Distinction:** A standard **Binary Semaphore does NOT support Priority Inheritance**. A **Mutex DOES support Priority Inheritance**. Therefore, never use a binary semaphore for mutual exclusion; use a Mutex (`xSemaphoreCreateMutex()`).
+
+---
+
+## 5. Deadlock Prevention & Recursive Mutexes
+
+### 5.1 The Deadly Embrace (Deadlock)
+Deadlock occurs when two tasks enter a circular wait condition:
+- Task 1 holds Mutex A and requests Mutex B.
+- Task 2 holds Mutex B and requests Mutex A.
+- Both tasks block forever, freezing that subsystem.
+
+### 5.2 Defensive RTOS Architecture Rules
+1. **Strict Lock Ordering:** Always acquire nested mutexes in identical hierarchical order across all tasks (e.g. Mutex A must always be acquired before Mutex B).
+2. **Never Block Indefinitely:** Avoid `portMAX_DELAY` in production firmware. Always specify a finite timeout:
+   ```c
+   if (xSemaphoreTake(xMutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+       // Log timeout diagnostic & handle graceful degradation
+   }
+   ```
+3. **Recursive Mutexes:** If a single task needs to re-enter a critical section recursively without deadlocking against itself, use `xSemaphoreCreateRecursiveMutex()`.
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / FreeRTOS API)
+
+The following production module demonstrates thread-safe sensor telemetry using an **IPC Queue** and protects a shared UART peripheral using a **Mutex with Priority Inheritance** on STM32F401RE.
+
+```c
+/**
+ * @file    voltcore_rtos_ipc.c
+ * @brief   Production FreeRTOS Queue & Mutex with Priority Inheritance
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// FreeRTOS Core Headers
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+
+// Telemetry Data Structure
+typedef struct {
+    uint32_t sensor_id;
+    int16_t  temperature_c;
+    uint16_t pressure_kpa;
+    uint32_t timestamp_ms;
+} sensor_packet_t;
+
+#define QUEUE_LENGTH        8
+#define QUEUE_ITEM_SIZE     sizeof(sensor_packet_t)
+
+// Global IPC Handles
+static QueueHandle_t     g_sensor_queue = NULL;
+static SemaphoreHandle_t g_uart_mutex   = NULL;
+
+/**
+ * @brief Thread-safe simulated UART print routine protected by Mutex
+ */
+void safe_uart_log(const char *msg) {
+    if (g_uart_mutex != NULL) {
+        // Attempt to take mutex with a finite timeout of 50 ms
+        if (xSemaphoreTake(g_uart_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+            // Critical Section: Hardware UART register access
+            // (Simulated print loop)
+            while (*msg) {
+                // Write byte to USART_DR and wait for TXE
+                msg++;
+            }
+            // Release Mutex (Restores original priority if inherited)
+            xSemaphoreGive(g_uart_mutex);
+        }
+    }
+}
+
+/**
+ * @brief High-Priority Task: Sensor Consumer & Telemetry Engine
+ */
+void vTaskConsumer(void *pvParameters) {
+    sensor_packet_t received_packet;
+
+    while (1) {
+        // Block indefinitely until an item arrives in the queue (Zero CPU burn)
+        if (xQueueReceive(g_sensor_queue, &received_packet, portMAX_DELAY) == pdPASS) {
+            // Process incoming telemetry packet
+            safe_uart_log("[TELEMETRY] Sensor packet processed successfully.\n");
+        }
+    }
+}
+
+/**
+ * @brief Medium-Priority Task: Periodic Sensor Acquisition
+ */
+void vTaskProducer(void *pvParameters) {
+    sensor_packet_t packet;
+    packet.sensor_id = 0x01;
+
+    while (1) {
+        // Sample sensor hardware
+        packet.temperature_c = 28;
+        packet.pressure_kpa  = 101;
+        packet.timestamp_ms  = (uint32_t)xTaskGetTickCount();
+
+        // Push data to queue with a 10 ms timeout
+        if (xQueueSend(g_sensor_queue, &packet, pdMS_TO_TICKS(10)) != pdPASS) {
+            safe_uart_log("[ERROR] Sensor queue full. Packet dropped.\n");
+        }
+
+        // Delay task for exactly 100 ms
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+/**
+ * @brief Initialize all IPC queues, mutexes, and launch RTOS tasks
+ */
+void rtos_ipc_subsystem_init(void) {
+    // 1. Create Telemetry Queue (Copy-by-value FIFO)
+    g_sensor_queue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
+    configASSERT(g_sensor_queue != NULL);
+
+    // 2. Create Mutex with Priority Inheritance
+    g_uart_mutex = xSemaphoreCreateMutex();
+    configASSERT(g_uart_mutex != NULL);
+
+    // 3. Create Consumer Task (High Priority: 3)
+    xTaskCreate(vTaskConsumer, "Consumer", 256, NULL, 3, NULL);
+
+    // 4. Create Producer Task (Medium Priority: 2)
+    xTaskCreate(vTaskProducer, "Producer", 256, NULL, 2, NULL);
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify priority inheritance and queue operations on your test bench:
+
+1. **Instrumentation Setup:**
+   - Map **Task H** state to GPIO **PA5** (High when running).
+   - Map **Task M** state to GPIO **PA6** (High when running).
+   - Map **Task L** state to GPIO **PA7** (High when running).
+2. **Priority Inversion Verification Test:**
+   - Task L acquires `g_uart_mutex`.
+   - Task H wakes and requests `g_uart_mutex`, entering BLOCKED state.
+   - Task M becomes ready.
+   - **Trace Inspection:** Observe on logic analyzer: Task L immediately elevates to Priority 3, finishing its critical section on PA7 before Task M ever executes on PA6.
+   - Once Task L releases the mutex, Task H immediately preempts and runs on PA5. Task M runs only after Task H completes, proving **zero unbounded priority inversion**.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why is using a Binary Semaphore to protect a shared resource considered an architectural bug in real-time embedded systems?**
+2. **Explain the Priority Inheritance Protocol (PIP) and how it prevented total mission loss on the 1997 Mars Pathfinder spacecraft.**
+3. **What is the difference between passing data through an RTOS queue by-value versus by-reference (passing pointers)? When is passing pointers dangerous?**
+4. **How does FreeRTOS prevent a task calling `xQueueReceive()` from consuming CPU cycles while waiting for data?**
+5. **Describe the circular wait condition in mutex deadlocks and state two firmware design rules that guarantee deadlock freedom.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

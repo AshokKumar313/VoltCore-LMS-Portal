@@ -4,12 +4,12 @@ import WokwiSandbox from '../components/WokwiSandbox.astro';
 import XPProgressionWidget from '../components/XPProgressionWidget.jsx';
 import EceCourseworkGrid from '../components/EceCourseworkGrid.jsx';
 
-// Student Profile Constants for MIT Campus, Anna University
+// Engineering Scholar Profile
 const student = {
-  name: "Ashok Kumar A",
-  rollNo: "2023MITEC042",
-  department: "Department of Electronics Engineering",
-  campus: "Madras Institute of Technology (MIT) Campus, Anna University",
+  name: "Active Scholar",
+  rollNo: "ENG-2026-042",
+  department: "Electronics & Embedded Systems",
+  campus: "Autonomous Engineering Cluster",
   rfidUid: "E2 80 6F 3B",
   streak: 14,
   xp: 4850,
@@ -18,7 +18,7 @@ const student = {
 };
 ---
 
-<MainLayout title="VoltCore Apex Academia | Anna University MIT Campus" ieeeMode={true}>
+<MainLayout title="VoltCore Apex Academia | Engineering Learning & Hardware Simulation" ieeeMode={true}>
   
   <!-- Hero Section with German Precision Technical HUD -->
   <section class="mb-10 relative">
@@ -33,13 +33,13 @@ const student = {
           <div class="flex flex-wrap items-center gap-2">
             <span class="jewel-badge-olive">
               <span class="h-1.5 w-1.5 rounded-full bg-olive-400 animate-pulse"></span>
-              Anna University ECE R2023
+              Electronics & Embedded Systems
             </span>
             <span class="jewel-badge-mustard">
-              MIT Campus Chromepet
+              Core Engineering Series
             </span>
             <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[#00F0B5] text-xs font-mono">
-              EC8702 • Lab 304
+              Hardware Station • Lab 304
             </span>
           </div>
 
@@ -250,7 +250,7 @@ const student = {
 
           <div>
             <div class="text-base font-bold text-white">{student.name}</div>
-            <div class="text-slate-400 text-[11px]">{student.rollNo} • ECE Dept</div>
+            <div class="text-slate-400 text-[11px]">{student.rollNo} • Core Engineering</div>
             <div class="text-[#00F0B5] text-[11px] font-semibold mt-0.5">{student.level}</div>
           </div>
 
@@ -293,7 +293,7 @@ const student = {
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
         <h2 class="text-xl font-bold text-white tracking-tight font-mono">
-          Gamified XP Progression & Anna University Module Hub
+          Gamified XP Progression & Modular Curriculum Hub
         </h2>
       </div>
       <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
@@ -398,17 +398,17 @@ const student = {
     </div>
   </section>
 
-  <!-- Section 3: Anna University & IEEE Capstone Curriculum Modules -->
+  <!-- Section 3: Modular Engineering & IEEE Capstone Curriculum Modules -->
   <section class="mb-12">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
         <h2 class="text-xl font-bold text-white tracking-tight font-mono">
-          Anna University ECE Tiered Curriculum & IEEE Capstones
+          Modular Engineering Tiered Curriculum & IEEE Capstones
         </h2>
       </div>
       <span class="text-xs font-mono text-[#00F0B5] hidden sm:inline">
-        R2021 Regulation • Dept of Electronics Engineering
+        Core Series • Electronics & Embedded Systems
       </span>
     </div>
 
@@ -607,22 +607,22 @@ const student = {
       
       <div class="text-center mb-6">
         <div class="text-xs font-mono uppercase tracking-widest text-[#00F0B5] mb-1 font-bold">
-          IEEE TRANSACTIONS ON INDUSTRIAL INFORMATICS & EDUCATION • ANNA UNIVERSITY MIT CAMPUS
+          IEEE TRANSACTIONS ON INDUSTRIAL INFORMATICS & EDUCATION • VOLTCORE APEX ACADEMIA
         </div>
         <h2 class="text-2xl sm:text-3xl font-bold text-white ieee-title">
           Architectural Framework for Zero-Latency Hardware-in-the-Loop LMS Telemetry Using Dual-Core ESP32 and PBKDF2-HMAC-SHA256
         </h2>
         <div class="ieee-author-block text-xs sm:text-sm">
           <strong>Ashok Kumar A</strong>, <em>Student Member, IEEE</em>, and <strong>Dr. K. S. Parthasarathy</strong>, <em>Senior Member, IEEE</em><br/>
-          Department of Electronics Engineering, Madras Institute of Technology Campus, Anna University, Chromepet, Chennai 600044, India
+          Department of Electronics & Embedded Systems, VoltCore Autonomous Engineering Research Cluster
         </div>
       </div>
 
       <!-- IEEE Abstract Block -->
       <div class="ieee-abstract">
-        <strong>Abstract</strong>—In modern embedded systems pedagogy, the convergence of physical edge nodes and real-time laboratory tracking poses severe concurrency and cryptographic overheads. This article presents the complete architecture of <em>VoltCore Apex Academia</em>, a modular learning platform integrating an ESP32 hardware telemetry node with an OWASP-compliant SQLite database utilizing PBKDF2-HMAC-SHA256 (260,000 iterations). By offloading SPI frame decoding for 13.56MHz MFRC522 RFID tokens to FreeRTOS Core 1 and servicing HTTP/REST JSON payloads over Core 0, deterministic sub-15ms verification latency is maintained. A zero-latency Wokwi simulation sandbox and a Gemini AI-driven viva voce mentor are integrated, enabling students to simulate circuit topologies, debug clock stretching, and validate laboratory competencies against Anna University R2021 curriculum benchmarks.
+        <strong>Abstract</strong>—In modern embedded systems pedagogy, the convergence of physical edge nodes and real-time laboratory tracking poses severe concurrency and cryptographic overheads. This article presents the complete architecture of <em>VoltCore Apex Academia</em>, a modular learning platform integrating an ESP32 hardware telemetry node with an OWASP-compliant SQLite database utilizing PBKDF2-HMAC-SHA256 (260,000 iterations). By offloading SPI frame decoding for 13.56MHz MFRC522 RFID tokens to FreeRTOS Core 1 and servicing HTTP/REST JSON payloads over Core 0, deterministic sub-15ms verification latency is maintained. A zero-latency Wokwi simulation sandbox and a Gemini AI-driven viva voce mentor are integrated, enabling students to simulate circuit topologies, debug clock stretching, and validate laboratory competencies against outcome-based engineering education benchmarks.
         <div class="mt-2 text-xs font-mono text-[#00F0B5]">
-          <strong>Index Terms</strong>—Embedded Systems, FreeRTOS, ESP32, Wokwi Simulation, RFID MFRC522, PBKDF2-SHA256, Anna University, Viva Voce Mentorship.
+          <strong>Index Terms</strong>—Embedded Systems, FreeRTOS, ESP32, Wokwi Simulation, RFID MFRC522, PBKDF2-SHA256, Viva Voce Mentorship, Outcome-Based Education.
         </div>
       </div>
 
@@ -631,7 +631,7 @@ const student = {
         <div>
           <h3 class="ieee-section-heading">I. Introduction & System Topologies</h3>
           <p class="leading-relaxed">
-            Embedded systems education in tier-1 institutions such as the MIT Campus of Anna University requires students to engage with register-level peripheral manipulation while understanding distributed edge telemetry. Conventional web-based portals separate theoretical LMS materials from hardware compilation and laboratory attendance.
+            Embedded systems education in advanced engineering curricula requires students to engage with register-level peripheral manipulation while understanding distributed edge telemetry. Conventional web-based portals separate theoretical LMS materials from hardware compilation and laboratory attendance.
           </p>
           <p class="mt-3 leading-relaxed">
             The VoltCore architecture eliminates this fragmentation through a tri-layer operational model: (i) an edge sensor cluster powered by ESP32 microcontrollers, (ii) a high-security backend enforcing 260,000-round key derivation, and (iii) an Astro-based reactive portal providing instant ⌘K search and Wokwi virtual hardware emulation.

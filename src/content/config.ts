@@ -2,28 +2,31 @@ import { defineCollection, z } from 'astro:content';
 
 /**
  * VoltCore Apex Academia - Content Collections Schema
- * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * Core Engineering Series • Autonomous Engineering Cluster
  */
 
-// 1. Curriculum Modules (Anna University R2021 Embedded Systems & IoT Syllabus)
+// 1. Curriculum Modules (Advanced Specialization Tracks & Core Syllabi)
 const modulesCollection = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    code: z.string(), // e.g. "EC8702", "EC3701"
+    code: z.string(), // e.g. "IOT8701", "AUTO8702", "EC8702"
     semester: z.number().min(1).max(8),
-    regulation: z.string().default('Anna University R2021'),
-    department: z.string().default('Department of Electronics Engineering, MIT Campus'),
+    regulation: z.string().default('Core Engineering Series'),
+    department: z.string().default('Autonomous Engineering Cluster'),
     credits: z.number().min(1).max(6),
     order: z.number(),
     description: z.string(),
     difficulty: z.enum(['Fundamental', 'Intermediate', 'Advanced', 'Apex Research']).default('Advanced'),
-    author: z.string().default('MIT Campus Embedded Systems Faculty'),
+    author: z.string().default('VoltCore Silicon Architecture Team'),
     publishDate: z.coerce.date(),
     prerequisites: z.array(z.string()).default([]),
     learningOutcomes: z.array(z.string()),
     hardwareKit: z.array(z.string()).default([]),
     tags: z.array(z.string()).default([]),
+    specializationTrack: z.string().optional(),
+    simulationComponent: z.string().optional(),
+    trackSlug: z.string().optional(),
     syllabusUnits: z.array(z.object({
       unit: z.number(),
       title: z.string(),
@@ -84,7 +87,7 @@ const componentsCollection = defineCollection({
     architecture: z.string().optional(),
     clockSpeed: z.string().optional(),
     description: z.string(),
-    labLocation: z.string().default('MIT Chromepet Embedded Systems Lab - Locker B'),
+    labLocation: z.string().default('Advanced Embedded Systems Laboratory - Station B'),
   }),
 });
 
@@ -119,9 +122,45 @@ const simulationsCollection = defineCollection({
   }),
 });
 
+// 4. STM32 Academy 21-Module Bare-Metal & RTOS Curriculum
+const stm32AcademyCollection = defineCollection({
+  type: 'content',
+  schema: z.object({
+    moduleNumber: z.number().min(1).max(21),
+    title: z.string(),
+    shortTitle: z.string().optional(),
+    tier: z.enum([
+      'Tier 1: Architecture & Toolchain',
+      'Tier 2: Core Peripherals',
+      'Tier 3: Serial Buses & DMA',
+      'Tier 4: RTOS & Kernel Internals',
+      'Tier 5: Industrial Hardware & Edge AI'
+    ]),
+    difficulty: z.enum(['Fundamental', 'Intermediate', 'Advanced', 'Apex Expert']),
+    boardTargets: z.array(z.enum([
+      'Nucleo-F401RE',
+      'Blue Pill (STM32F103C8T6)',
+      'STM32F4-Discovery',
+      'Universal ARM Cortex-M'
+    ])),
+    prerequisites: z.array(z.string()).default([]),
+    estimatedDuration: z.string(), // e.g. "45 mins", "1.5 hours"
+    cortexArchitecture: z.enum(['Cortex-M3', 'Cortex-M4F', 'Universal Cortex-M']).default('Cortex-M4F'),
+    registerFocus: z.array(z.string()).default([]),
+    description: z.string(),
+    keyFormulas: z.array(z.string()).default([]),
+    hardwareApparatus: z.array(z.string()).default([]),
+    order: z.number(),
+    xpReward: z.number().default(150),
+    author: z.string().default('VoltCore Silicon Architecture Team'),
+    publishDate: z.coerce.date().default(() => new Date()),
+  }),
+});
+
 export const collections = {
   modules: modulesCollection,
   components: componentsCollection,
   simulations: simulationsCollection,
+  'stm32-academy': stm32AcademyCollection,
 };
 

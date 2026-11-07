@@ -1,0 +1,38 @@
+---
+import MainLayout from '../../../layouts/MainLayout.astro';
+import Stm32AcademyHub from '../../../components/Stm32AcademyHub.jsx';
+import { getCollection } from 'astro:content';
+
+const rawModules = await getCollection('stm32-academy');
+const modules = rawModules.sort((a, b) => a.data.order - b.data.order);
+
+const pageMetadata = {
+  title: "VoltCore STM32 Academy | Universal Bare-Metal Engineering Series",
+  description: "Silicon-to-software mastery of STMicroelectronics 32-bit microcontrollers. 21 comprehensive modules covering ARM Cortex-M3 (Blue Pill) and Cortex-M4F (Nucleo-64) register architecture.",
+  activeNav: "embedded-systems",
+};
+---
+
+<MainLayout title={pageMetadata.title} description={pageMetadata.description} activeNav={pageMetadata.activeNav}>
+  <div class="space-y-6">
+
+    <!-- Fluid Breadcrumb Navigation -->
+    <nav class="flex items-center gap-2 text-xs font-mono text-slate-400 py-2 border-b border-slate-800/80">
+      <a href="/" class="hover:text-cyan-400 transition-colors flex items-center gap-1">
+        <span>⚡</span> Home
+      </a>
+      <span>/</span>
+      <a href="/embedded-systems" class="hover:text-cyan-400 transition-colors">
+        Embedded Systems
+      </a>
+      <span>/</span>
+      <span class="text-cyan-300 font-semibold">
+        STM32 Academy (21 Modules)
+      </span>
+    </nav>
+
+    <!-- Interactive STM32 Academy Hub React Island -->
+    <Stm32AcademyHub client:load modules={modules} />
+
+  </div>
+</MainLayout>

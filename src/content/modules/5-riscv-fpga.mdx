@@ -1,14 +1,17 @@
 ---
-title: "EC8705: 5-Stage Pipelined RV32I RISC-V Soft-Core Processor Design in Verilog HDL"
-code: "EC8705"
+title: "5-Stage Pipelined RV32I RISC-V Soft-Core Processor Design"
+code: "RISCV8705"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 5
+specializationTrack: "RISC-V RTL"
+simulationComponent: "FpgaSynthesisHub"
+trackSlug: "riscv-rtl"
 description: "Architect and synthesize a 5-stage classic pipelined 32-bit RISC-V (RV32I) soft-core processor in Verilog HDL for Xilinx Artix-7 FPGAs, featuring hazard forwarding units, branch prediction, and memory-mapped AXI4-Lite interfaces."
 difficulty: "Apex Research"
-author: "MIT Campus VLSI & Silicon Architecture Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-09-15
 prerequisites:
   - "Digital VLSI Design & Verilog HDL (Gate-level & RTL Modeling)"
@@ -31,7 +34,7 @@ tags:
   - "Artix-7 FPGA"
   - "Hazard Forwarding"
   - "Pipeline Stalls"
-  - "Anna University R2021"
+  - "RISC-V RTL"
 syllabusUnits:
   - unit: 1
     title: "RV32I Base Integer Instruction Set Architecture"
@@ -58,10 +61,10 @@ ieeeReference: "IEEE Transactions on Very Large Scale Integration (VLSI) Systems
 xpReward: 500
 ---
 
-# EC8705: 5-Stage Pipelined RV32I RISC-V Soft-Core Processor Design in Verilog HDL
+# 5-Stage Pipelined RV32I RISC-V Soft-Core Processor Design
 
 <div class="ieee-abstract">
-  <strong>Abstract</strong>—The transition toward open-standard Instruction Set Architectures (ISA) has positioned RISC-V at the forefront of defense, avionics, and high-performance embedded systems. This module presents the register-transfer level (RTL) microarchitecture of a 5-stage pipelined 32-bit RISC-V (RV32I) soft-core processor synthesized on a Xilinx Artix-7 FPGA. Through rigorous data hazard analysis, an autonomous forwarding unit and a load-use stall detector are designed to preserve pipeline throughput. The processor achieves a maximum operating frequency of $125 \text{ MHz}$ on the XC7A35T fabric while utilizing fewer than $1,850$ Look-Up Tables (LUTs).
+  <strong>Abstract</strong>—The transition toward open-standard Instruction Set Architectures (ISA) has positioned RISC-V at the forefront of defense, avionics, and high-performance embedded systems. This module presents the register-transfer level (RTL) microarchitecture of a 5-stage pipelined 32-bit RISC-V (RV32I) soft-core processor synthesized on a Xilinx Artix-7 FPGA. Through rigorous data hazard analysis, an autonomous forwarding unit and a load-use stall detector are designed to preserve pipeline throughput. The processor achieves a maximum operating frequency of $125  MHz$ on the XC7A35T fabric while utilizing fewer than $1,850$ Look-Up Tables (LUTs).
   <div class="mt-2 text-xs font-mono text-[#00F0B5]">
     <strong>Index Terms</strong>—RISC-V, RV32I, Verilog HDL, 5-Stage Pipeline, Hazard Forwarding, Artix-7 FPGA, Load-Use Hazard.
   </div>
@@ -119,7 +122,7 @@ The RV32I datapath is segmented into five discrete stages separated by synchrono
   </div>
 
   <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
-    <div class="text-[#00F0B5] font-bold">✓ Anna University Hardware Verification Solution:</div>
+    <div class="text-[#00F0B5] font-bold">✓ RISC-V RTL Verification Solution:</div>
     <p>
       The <strong>Hazard Detection Unit</strong> must inspect the pipeline registers during the ID stage and force a 1-cycle bubble (NOP stall):
     </p>
@@ -207,11 +210,11 @@ The complete RV32I processor was synthesized using Xilinx Vivado on the **XC7A35
 
 | Metric | Target Specification | Synthesized Result |
 | :--- | :--- | :--- |
-| **LUT Utilization** | $< 2,500$ Slice LUTs | **1,842 LUTs (8.85%)** |
-| **Flip-Flop Utilization** | $< 2,000$ Slice Registers | **1,438 FFs (3.45%)** |
-| **Block RAM (BRAM36E1)** | $\le 8$ Tiles | **4 Tiles (8.00%)** |
-| **Worst Negative Slack (WNS)** | $\ge 0.000 \text{ ns}$ | **+0.742 ns @ 125 MHz** |
-| **Maximum Operating Frequency ($F_{\text{max}}$)** | $\ge 100 \text{ MHz}$ | **128.4 MHz** |
+| **LUT Utilization** | `$< 2,500$` Slice LUTs | **1,842 LUTs (8.85%)** |
+| **Flip-Flop Utilization** | `$< 2,000$` Slice Registers | **1,438 FFs (3.45%)** |
+| **Block RAM (BRAM36E1)** | `$\le 8$` Tiles | **4 Tiles (8.00%)** |
+| **Worst Negative Slack (WNS)** | `$\ge 0.000  ns$` | **+0.742 ns @ 125 MHz** |
+| **Maximum Operating Frequency (`$F_{max}$`)** | `$\ge 100  MHz$` | **128.4 MHz** |
 
 ---
 

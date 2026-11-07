@@ -159,8 +159,8 @@ class TestPhase10SmartLab(unittest.TestCase):
         with open(page_path, "r", encoding="utf-8") as f:
             content = f.read()
             self.assertIn("SmartLabMonitor", content)
-            self.assertIn("Madras Institute of Technology", content)
-            self.assertIn("Ashok Kumar A", content)
+            self.assertIn("Autonomous Engineering Cluster", content)
+            self.assertIn("VoltCore Apex", content)
 
     def test_data_privacy_invariants_no_leakage(self):
         """Strictly ensures private admin contact credentials are never present in client files."""

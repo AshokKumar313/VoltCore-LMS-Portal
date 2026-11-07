@@ -1,0 +1,273 @@
+---
+moduleNumber: 4
+title: 'Memory Map, Bus Architecture (AHB/APB) & Linker Script Anatomy'
+shortTitle: 'Memory Map & Linker Script Anatomy'
+tier: 'Tier 1: Architecture & Toolchain'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '03-reset-sequence-vector-table-crt0'
+estimatedDuration: '75 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'RCC_CFGR'
+  - 'FLASH_ACR'
+  - 'SYSCFG_MEMRMP'
+  - 'SCB_CPACR'
+description: 'Comprehensive analysis of the 4GB ARM Cortex-M address space, AHB/APB multi-layer bus matrix, Flash wait-states, and GNU Linker script anatomy (.text, .data, .bss).'
+keyFormulas:
+  - 'Flash Size = SIZEOF(.text) + SIZEOF(.rodata) + SIZEOF(.data)'
+  - 'SRAM Consumption = SIZEOF(.data) + SIZEOF(.bss) + Stack\_Size + Heap\_Size'
+  - 'Top of Stack: _estack = ORIGIN(RAM) + LENGTH(RAM)'
+hardwareApparatus:
+  - 'Nucleo-F401RE (512K Flash / 96K SRAM)'
+  - 'arm-none-eabi-objdump'
+  - 'arm-none-eabi-size'
+order: 4
+xpReward: 200
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Memory Map, Bus Architecture (AHB/APB) & Linker Script Anatomy
+
+## 1. The ARM Cortex-M 4 GB Unified Memory Map
+
+The ARM Cortex-M architecture specifies a 32-bit linear address space encompassing 4,294,967,296 individual addressable byte locations (4 Gigabytes). STMicroelectronics maps embedded Flash, internal SRAM, hardware peripheral buses, and core system blocks into standardized regions:
+
+```
+  Address Range           Size       Memory Region Designation & Target Hardware
+  ---------------------------------------------------------------------------------
+  0x00000000 - 0x0007FFFF (512 KB)   Boot Aliased Memory (Flash, System ROM, or SRAM)
+  0x08000000 - 0x0807FFFF (512 KB)   Main Embedded Flash Memory (Code Storage)
+  0x1FFF0000 - 0x1FFF77FF (30 KB)    System Memory (Factory ROM DFU / USART Bootloader)
+  0x1FFF7A10 - 0x1FFF7A27 (96 bits)  Unique Device ID (UID) & Flash Size Registers
+  0x20000000 - 0x20017FFF (96 KB)    Embedded Static RAM (SRAM1 on STM32F401RE)
+  0x22000000 - 0x23FFFFFF (32 MB)    SRAM Bit-Band Alias Region (Atomic bit operations)
+  0x40000000 - 0x40007FFF (32 KB)    APB1 Low-Speed Peripheral Bus (max 42 MHz)
+  0x40010000 - 0x400157FF (22 KB)    APB2 High-Speed Peripheral Bus (max 84 MHz)
+  0x40020000 - 0x4007FFFF (384 KB)   AHB1 Advanced High-Performance Bus (max 84 MHz)
+  0x50000000 - 0x5003FFFF (256 KB)   AHB2 USB OTG FS Core Peripherals
+  0xE0000000 - 0xE00FFFFF (1 MB)     ARM Core System Control (NVIC, SysTick, SCB, MPU)
+```
+
+### 1.1 Physical Memory Allocation on STM32F401RE
+- **Flash Memory (`0x08000000`):** 512 KBytes non-volatile storage organized into sectors (Sectors 0..3: 16 KB each; Sector 4: 64 KB; Sectors 5..7: 128 KB each).
+- **Embedded SRAM (`0x20000000`):** 96 KBytes of static volatile RAM accessible with zero wait states by CPU and DMA masters.
+- **Top of Stack (`_estack`):** Stacks grow downwards in memory. The initial Main Stack Pointer (`MSP`) is anchored at the very end of SRAM: `0x20000000 + 96 * 1024 = 0x20018000`.
+
+---
+
+## 2. Multi-Layer Bus Architecture (AHB & APB)
+
+Microcontrollers do not connect all peripherals directly to the CPU; doing so would saturate the bus and create intolerable latency. The STM32F4 features a **Multi-Layer 32-bit AHB Bus Matrix** interconnecting multiple bus masters and slaves:
+
+```
+  BUS MASTERS                           BUS SLAVES
+  +-------------------------+           +------------------------------+
+  | Cortex-M4 I-Code Bus    |-----+     | Flash Memory Controller (ART)|
+  +-------------------------+     |     +------------------------------+
+  | Cortex-M4 D-Code Bus    |---+ |     | Embedded SRAM (96 KB)        |
+  +-------------------------+   | |     +------------------------------+
+  | Cortex-M4 System (S) Bus|---| |===> | AHB1 Peripherals (GPIOA..H)  |
+  +-------------------------+   | |     +------------------------------+
+  | DMA1 Controller (8 Strm)|---+ |     | AHB2 Peripherals (USB OTG)   |
+  +-------------------------+     |     +------------------------------+
+  | DMA2 Controller (8 Strm)|-----+     | AHB-to-APB Bridges (1 & 2)   |
+  +-------------------------+           +------------------------------+
+```
+
+### 2.1 The Bus Hierarchy & Operating Frequencies
+1. **AHB1 Bus (Advanced High-Performance Bus 1, clocking up to 84 MHz):**
+   - High-throughput peripherals: `GPIOA` through `GPIOH`, `RCC` (Reset & Clock Control), `DMA1`, `DMA2`, and `CRC`.
+2. **APB1 Bus (Low-Speed Peripheral Bus, clocking up to 42 MHz):**
+   - General-purpose timers (`TIM2`, `TIM3`, `TIM4`, `TIM5`), communication transceivers (`USART2`, `SPI2`, `I2C1`, `I2C2`, `I2C3`), power control (`PWR`), and window watchdog (`WWDG`).
+   - Clocked via a prescaler divider (`HCLK / 2`).
+3. **APB2 Bus (High-Speed Peripheral Bus, clocking up to 84 MHz):**
+   - High-speed communication and timing: Advanced motor control timer (`TIM1`), `USART1`, `USART6`, `SPI1`, Analog-to-Digital Converter (`ADC1`), and System Configuration (`SYSCFG`).
+
+### 2.2 Flash Latency & The ART Accelerator
+Embedded Flash memory physics limit reading access times to approximately 30 MHz. When running the core at 84 MHz, wait-states must be inserted:
+- **0 to 30 MHz:** 0 Wait States (`FLASH_ACR.LATENCY = 0`)
+- **30 to 60 MHz:** 1 Wait State (`FLASH_ACR.LATENCY = 1`)
+- **60 to 84 MHz:** 2 Wait States (`FLASH_ACR.LATENCY = 2`)
+
+ST's proprietary **Adaptive Real-Time (ART) Accelerator** integrates a 64-line instruction cache (128 bits per line) and prefetch queue, delivering equivalent 0-wait state execution performance at 84 MHz.
+
+---
+
+## 3. Linker Script Anatomy (`stm32f401re.ld`)
+
+The linker script is the architectural blueprint directing the GNU Linker (`arm-none-eabi-ld`) on how to place compiled object code sections into physical silicon memory.
+
+```
++-------------------------------------------------------------------------------+
+|                       GNU LINKER SCRIPT SECTION ANATOMY                       |
++-------------------------------------------------------------------------------+
+| Section     | Physical Memory | VMA (Execution) | LMA (Load Address)          |
++-------------+-----------------+-----------------+-----------------------------+
+| .isr_vector | FLASH           | 0x08000000      | 0x08000000 (Fixed at origin)|
+| .text       | FLASH           | 0x08000xxx      | 0x08000xxx (Executable code)|
+| .rodata     | FLASH           | 0x08000xxx      | 0x08000xxx (Const data)     |
+| .data       | SRAM (Loaded FL)| 0x20000000 (RAM)| 0x0800xxxx (Stored in Flash)|
+| .bss        | SRAM            | 0x2000xxxx (RAM)| None (Zeroed during boot)   |
+| Stack / Heap| SRAM            | 0x20018000 (Top)| None (Dynamic RAM space)    |
++-------------------------------------------------------------------------------+
+```
+
+### 3.1 Production GNU Linker Script Template
+
+```ld
+/* Entry Point Definition */
+ENTRY(Reset_Handler)
+
+/* Target Memory Region Declarations */
+MEMORY
+{
+    FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 512K
+    RAM   (xrw) : ORIGIN = 0x20000000, LENGTH = 96K
+}
+
+/* Highest Address of the User Stack (End of 96K SRAM) */
+_estack = ORIGIN(RAM) + LENGTH(RAM);
+
+/* Required Minimum Sizes for Heap and Stack */
+_Min_Heap_Size  = 0x200; /* 512 Bytes */
+_Min_Stack_Size = 0x400; /* 1024 Bytes */
+
+SECTIONS
+{
+    /* 1. Vector Table: Must reside at the very start of Flash */
+    .isr_vector :
+    {
+        . = ALIGN(4);
+        KEEP(*(.isr_vector)) /* Prevent garbage collection of vector table */
+        . = ALIGN(4);
+    } >FLASH
+
+    /* 2. Program Code & Read-Only Constants */
+    .text :
+    {
+        . = ALIGN(4);
+        *(.text)           /* Program code instructions */
+        *(.text*)          /* Additional function sections */
+        *(.rodata)         /* Read-only constant variables */
+        *(.rodata*)        /* Constant string literals */
+        . = ALIGN(4);
+        _etext = .;        /* Global symbol marking end of code */
+    } >FLASH
+
+    /* Used by startup code to locate initialized data in Flash */
+    _sidata = LOADADDR(.data);
+
+    /* 3. Initialized Data Section: Executes in RAM, stored in Flash */
+    .data :
+    {
+        . = ALIGN(4);
+        _sdata = .;        /* Global symbol: start of .data in RAM */
+        *(.data)
+        *(.data*)
+        . = ALIGN(4);
+        _edata = .;        /* Global symbol: end of .data in RAM */
+    } >RAM AT> FLASH
+
+    /* 4. Uninitialized Data Section: Allocated in RAM, zeroed at startup */
+    .bss :
+    {
+        . = ALIGN(4);
+        _sbss = .;         /* Global symbol: start of .bss in RAM */
+        *(.bss)
+        *(.bss*)
+        *(COMMON)
+        . = ALIGN(4);
+        _ebss = .;         /* Global symbol: end of .bss in RAM */
+    } >RAM
+
+    /* 5. Memory Limit Assertion Guard */
+    ._check_ram :
+    {
+        . = ALIGN(4);
+        . = . + _Min_Heap_Size;
+        . = . + _Min_Stack_Size;
+        . = ALIGN(4);
+    } >RAM
+}
+```
+
+---
+
+## 4. The Minimal C Runtime Startup (`Reset_Handler`)
+
+When the MCU exits reset, the processor loads the initial Stack Pointer from `0x08000000` into `MSP` and leaps to the address at `0x08000004` (`Reset_Handler`). The startup routine bridges the linker script symbols to the executing C runtime:
+
+```c
+#include <stdint.h>
+
+/* Symbols exported by the linker script */
+extern uint32_t _sidata; /* Load address of .data in Flash */
+extern uint32_t _sdata;  /* Start address of .data in SRAM */
+extern uint32_t _edata;  /* End address of .data in SRAM */
+extern uint32_t _sbss;   /* Start address of .bss in SRAM */
+extern uint32_t _ebss;   /* End address of .bss in SRAM */
+
+extern int main(void);
+
+void Reset_Handler(void) {
+    /* 1. Copy initialized data section from Flash (LMA) to SRAM (VMA) */
+    uint32_t *src = &_sidata;
+    uint32_t *dst = &_sdata;
+    while (dst < &_edata) {
+        *dst++ = *src++;
+    }
+
+    /* 2. Zero-initialize the uninitialized .bss section in SRAM */
+    dst = &_sbss;
+    while (dst < &_ebss) {
+        *dst++ = 0U;
+    }
+
+    /* 3. Enable ARM Cortex-M4 Hardware Floating Point Unit (FPU) */
+    /* Coprocessor Access Control Register: Set CP10 and CP11 to Full Access (0b11) */
+    volatile uint32_t *scb_cpacr = (volatile uint32_t *)0xE000ED88UL;
+    *scb_cpacr |= (0xFUL << 20);
+    __asm volatile ("dsb");
+    __asm volatile ("isb");
+
+    /* 4. Branch to Application Entry Point */
+    main();
+
+    /* Unreachable trap */
+    while (1);
+}
+```
+
+---
+
+## 5. Memory Sizing & Firmware Budgeting Math
+
+Firmware engineers must calculate Flash and SRAM consumption before linking binaries:
+
+```latex
+# Equation 1: Flash Memory Footprint
+Flash_{Used} = SIZEOF(.text) + SIZEOF(.rodata) + SIZEOF(.data)
+```
+
+```latex
+# Equation 2: SRAM Memory Utilization
+SRAM_{Used} = SIZEOF(.data) + SIZEOF(.bss) + Stack_{Size} + Heap_{Size}
+```
+
+---
+
+## 6. Self-Assessment & Viva Voce Challenge
+
+1. **Why does `.data` have two different memory addresses (LMA vs. VMA)?**
+   *Answer:* Non-volatile Flash memory stores the initial variable values during power-off (**Load Memory Address / LMA**). However, the processor can only write to RAM at runtime. The startup code copies `.data` to volatile SRAM (**Virtual Memory Address / VMA**) where functions can read and modify the variables.
+
+2. **What occurs if global variables inside `.bss` are not cleared to zero by `Reset_Handler`?**
+   *Answer:* Uninitialized global and static C variables will contain random garbage values left behind in SRAM capacitor cells upon power-up, violating standard C semantics and triggering unpredictable program bugs.
+
+3. **How does the linker guarantee that the Vector Table is placed at address `0x08000000`?**
+   *Answer:* The `.isr_vector` section is placed first in the `SECTIONS` definition targeting `FLASH`, and the `KEEP(*(.isr_vector))` directive instructs the linker never to strip or relocate the table during dead-code elimination.

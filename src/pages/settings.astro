@@ -1,15 +1,16 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
 import CloudSyncStatus from '../components/CloudSyncStatus.jsx';
+import InstitutionalProfileTab from '../components/InstitutionalProfileTab.jsx';
 
 // Settings Page Metadata
 const systemMeta = {
-  platformLead: "Ashok Kumar A",
-  rollNo: "2023MITEC042",
-  department: "Department of Electronics Engineering",
-  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
-  campus: "Chromepet, Chennai - 600 044",
-  publicEmail: "ashokkumar3132008@gmail.com",
+  platformLead: "VoltCore Apex",
+  rollNo: "Core Series",
+  department: "Electronics & Embedded Systems",
+  institution: "Autonomous Engineering Cluster",
+  campus: "Core Engineering Series",
+  publicEmail: "scholar.core@voltcore.org",
   githubRepo: "https://github.com/AshokKumar313",
   thermalProfile: "HP Victus 15-fa2xxx Low-Overhead Safe (< 300MB RAM)",
   databaseEngine: "SQLite WAL (Write-Ahead Logging) + 8MB RAM Cache",
@@ -17,7 +18,7 @@ const systemMeta = {
 };
 ---
 
-<MainLayout title={`System Settings & Cloud Sync | ${systemMeta.platformLead}`} activeNav="settings">
+<MainLayout title={`System Settings & Cloud Sync | VoltCore Apex`} activeNav="settings">
   <div class="space-y-8 font-mono">
     
     <!-- Hero Settings Identity Header -->
@@ -43,10 +44,10 @@ const systemMeta = {
               </span>
             </div>
             <div class="text-xs sm:text-sm text-slate-300 mt-1">
-              {systemMeta.platformLead} ({systemMeta.rollNo}) • {systemMeta.department}
+              {systemMeta.department} • {systemMeta.institution}
             </div>
             <div class="text-xs text-slate-400 mt-0.5">
-              {systemMeta.institution} • {systemMeta.campus}
+              Core Engineering Architecture • {systemMeta.concurrencyLimiter}
             </div>
           </div>
         </div>
@@ -165,6 +166,9 @@ const systemMeta = {
         </div>
       </div>
     </div>
+
+    <!-- Dedicated Institutional Profile & Localized Regulatory Mapping (Dormant by Default) -->
+    <InstitutionalProfileTab client:load />
 
   </div>
 </MainLayout>

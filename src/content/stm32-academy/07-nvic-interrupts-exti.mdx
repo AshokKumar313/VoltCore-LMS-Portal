@@ -1,0 +1,217 @@
+---
+moduleNumber: 7
+title: 'Interrupt Architecture (NVIC Priority Grouping) & External Edge Triggers (EXTI Multiplexing)'
+shortTitle: 'NVIC & EXTI Edge Interfacing'
+tier: 'Tier 2: Core Peripherals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '06-rcc-clock-tree-pll-flash-latency'
+estimatedDuration: '75 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'SCB_AIRCR'
+  - 'NVIC_ISERx'
+  - 'NVIC_IPRx'
+  - 'SYSCFG_EXTICR'
+  - 'EXTI_IMR'
+  - 'EXTI_PR'
+description: 'Master hardware interrupt architecture: NVIC priority grouping, preemption vs subpriority math, EXTI multiplexing via SYSCFG/AFIO, tail-chaining latency, and push-button edge detection.'
+keyFormulas:
+  - 'AIRCR VECTKEY: 0x5FA0000 | (PRIGROUP << 8)'
+  - 'NVIC IP Index: IPR[IRQn] = (Priority << 4)'
+  - 'Tail-Chaining Latency: 6 Clock Cycles'
+hardwareApparatus:
+  - 'Nucleo-F401RE (B1 User Button on PC13)'
+  - 'Logic Analyzer measuring interrupt response time'
+  - 'ST-LINK GDB Console'
+order: 7
+xpReward: 200
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Interrupt Architecture (NVIC Priority Grouping) & External Edge Triggers (EXTI Multiplexing)
+
+## 1. The Nested Vectored Interrupt Controller (NVIC)
+
+The Nested Vectored Interrupt Controller (NVIC) is a high-performance hardware interrupt controller integrated directly onto the ARM Cortex-M silicon core. Unlike traditional architectures where an interrupt must jump through a generic dispatcher routine, the NVIC vector table directly points to the entry address of each individual Interrupt Service Routine (ISR).
+
+```
+                      NVIC HARDWARE ACCELERATION TIMELINE
+  0 ns                                               142 ns (at 84 MHz)
+  +----------------------------------------------------+--------------------------+
+  | Hardware Stacking Phase: R0-R3, R12, LR, PC, xPSR | First instruction of ISR |
+  +----------------------------------------------------+--------------------------+
+  |<-------------- 12 Clock Cycles ------------------>| Execution begins directly
+```
+
+### 1.1 Architectural Capabilities
+- **Deterministic Latency:** Exactly 12 clock cycles from signal assertion to execution of the first ISR instruction.
+- **Dynamic Preemption:** Higher-priority interrupts immediately preempt lower-priority running ISRs.
+- **Tail-Chaining (6 Clock Cycles):** When exiting an ISR while another interrupt is pending, the core skips the unstacking/restacking sequence and immediately enters the next ISR in just 6 clock cycles.
+- **Late-Arriving Preemption:** If a high-priority interrupt arrives while the core is in the middle of stacking registers for a low-priority interrupt, the core redirects directly to the high-priority handler without wasting cycles.
+
+---
+
+## 2. NVIC Priority Grouping (`SCB->AIRCR`)
+
+In ARM Cortex-M microcontrollers, each external interrupt has an 8-bit priority register (`NVIC_IPR0` through `NVIC_IPR59`). On STM32 microcontrollers, only the **upper 4 bits (bits [7:4])** are physically implemented in silicon, providing 16 distinct priority levels.
+
+Firmware splits these 4 bits into **Preemption Priority** (which governs nesting) and **Subpriority** (which breaks ties when simultaneous interrupts trigger) using the `PRIGROUP` bitfield inside the Application Interrupt and Reset Control Register (`SCB->AIRCR`):
+
+```
++-------------------------------------------------------------------------------+
+|                      NVIC PRIORITY GROUPING SCHEMES                           |
++-------------------------------------------------------------------------------+
+| PRIGROUP | Preemption Bits | Preempt Levels | Subpriority Bits | Sub Levels   |
++----------+-----------------+----------------+------------------+--------------+
+| 0b011    | 4 bits [7:4]    | 16 (0..15)     | 0 bits           | None         |
+| 0b100    | 3 bits [7:5]    | 8  (0..7)      | 1 bit [4]        | 2 (0..1)     |
+| 0b101    | 2 bits [7:6]    | 4  (0..3)      | 2 bits [5:4]     | 4 (0..3)     |
+| 0b110    | 1 bit  [7]      | 2  (0..1)      | 3 bits [6:4]     | 8 (0..7)     |
+| 0b111    | 0 bits          | None (No nest) | 4 bits [7:4]     | 16 (0..15)   |
++-------------------------------------------------------------------------------+
+```
+
+> **The Vector Key Requirement:** Writing to `SCB->AIRCR` requires writing the magic key `0x5FA` into bits `[31:16]`. Any write without this key is ignored by the CPU hardware to prevent accidental resets.
+
+```c
+/* Configure Priority Group 2: 2 bits Preemption (0..3), 2 bits Subpriority (0..3) */
+#define SCB_AIRCR (*(volatile uint32_t *)0xE000ED0CUL)
+SCB_AIRCR = (0x5FAUL << 16) | (0x5UL << 8);
+```
+
+---
+
+## 3. EXTI Line Routing & Port Multiplexing (F1 vs. F4)
+
+External interrupts originate from GPIO pins through the External Interrupt/Event Controller (EXTI). Because there are only 16 GPIO EXTI lines (`EXTI0` through `EXTI15`), pins sharing the same index across different ports are multiplexed:
+
+```
+  Port A Pin 0 ---+
+  Port B Pin 0 ---+===> SYSCFG/AFIO Multiplexer ===> EXTI Line 0 ===> NVIC Vector 6 (EXTI0_IRQn)
+  Port C Pin 0 ---+
+  
+  Port A Pin 13 --+
+  Port B Pin 13 --+===> SYSCFG/AFIO Multiplexer ===> EXTI Line 13 ===> NVIC Vector 40 (EXTI15_10_IRQn)
+  Port C Pin 13 --+ (Nucleo Blue Button B1)
+```
+
+### 3.1 Hardware Multiplexer Configuration
+- **STM32F4 (Modern):** Uses `SYSCFG->EXTICR[4]` registers (`SYSCFG_EXTICR1` through `SYSCFG_EXTICR4`). Requires enabling the SYSCFG peripheral clock gate: `RCC_APB2ENR |= (1 << 14)`.
+- **STM32F1 (Legacy):** Uses `AFIO->EXTICR` registers. Requires enabling the AFIO peripheral clock gate: `RCC_APB2ENR |= (1 << 0)`.
+
+---
+
+## 4. Edge Detection & Interrupt Clearing (`EXTI_PR`)
+
+The EXTI controller features dedicated rising and falling edge trigger latches:
+- **`EXTI_RTSR` (Rising Trigger):** Detects low-to-high transitions (0V -> 3.3V).
+- **`EXTI_FTSR` (Falling Trigger):** Detects high-to-low transitions (3.3V -> 0V, ideal for active-low push buttons).
+- **`EXTI_IMR` (Interrupt Mask):** Unmasks the interrupt line so edge detections generate an NVIC request.
+- **`EXTI_PR` (Pending Register):** When an edge is detected, hardware asserts the corresponding bit in `EXTI_PR`.
+
+> **CRITICAL HARDWARE TRAP (rc_w1):** `EXTI_PR` is a **Read/Clear-Write-1** register. To clear the pending interrupt flag, firmware must write a `1` to that bit position:
+> `EXTI_PR = (1UL << 13);`
+> Writing `0` leaves the pending flag set, causing the CPU to endlessly re-enter the ISR the moment it exits!
+
+---
+
+## 5. Production C Implementation: Push-Button PC13 Interrupt Driver
+
+Below is the complete bare-metal implementation routing the Nucleo-64 user blue push-button (`B1` on `PC13`) to `EXTI13`, toggling the green LED (`PA5`) on every button press:
+
+```c
+#include <stdint.h>
+
+/* Base Memory Addresses */
+#define RCC_BASE        (0x40023800UL)
+#define GPIOA_BASE      (0x40020000UL)
+#define GPIOC_BASE      (0x40020800UL)
+#define SYSCFG_BASE     (0x40013800UL)
+#define EXTI_BASE       (0x40013C00UL)
+#define NVIC_BASE       (0xE000E100UL)
+
+/* Register Mappings */
+#define RCC_AHB1ENR     (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define RCC_APB2ENR     (*(volatile uint32_t *)(RCC_BASE + 0x44UL))
+#define GPIOA_MODER     (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_BSRR      (*(volatile uint32_t *)(GPIOA_BASE + 0x18UL))
+#define GPIOC_MODER     (*(volatile uint32_t *)(GPIOC_BASE + 0x00UL))
+#define SYSCFG_EXTICR4  (*(volatile uint32_t *)(SYSCFG_BASE + 0x14UL))
+#define EXTI_IMR        (*(volatile uint32_t *)(EXTI_BASE + 0x00UL))
+#define EXTI_FTSR       (*(volatile uint32_t *)(EXTI_BASE + 0x0CUL))
+#define EXTI_PR         (*(volatile uint32_t *)(EXTI_BASE + 0x14UL))
+
+/* NVIC Enable & Priority Registers */
+#define NVIC_ISER1      (*(volatile uint32_t *)(NVIC_BASE + 0x004UL)) /* IRQ 32-63 */
+#define NVIC_IPR10      (*(volatile uint32_t *)(NVIC_BASE + 0x428UL)) /* IRQ 40-43 */
+
+#define EXTI15_10_IRQn  (40) /* Vector position for EXTI lines 10 to 15 */
+
+void exti13_button_init(void) {
+    /* 1. Enable GPIOA, GPIOC, and SYSCFG Clock Gates */
+    RCC_AHB1ENR |= (1UL << 0) | (1UL << 2); /* GPIOA (Bit 0) & GPIOC (Bit 2) */
+    RCC_APB2ENR |= (1UL << 14);             /* SYSCFG Enable (Bit 14) */
+
+    /* 2. Configure PA5 as Output (01) for LED */
+    GPIOA_MODER &= ~(3UL << (5 * 2));
+    GPIOA_MODER |=  (1UL << (5 * 2));
+
+    /* 3. Configure PC13 as Input (00) for User Button */
+    GPIOC_MODER &= ~(3UL << (13 * 2));
+
+    /* 4. Route EXTI Line 13 to Port C in SYSCFG_EXTICR4 */
+    /* Pin 13 is governed by bits [7:4] in EXTICR4; Port C code is 0b0010 */
+    SYSCFG_EXTICR4 &= ~(0xFUL << 4);
+    SYSCFG_EXTICR4 |=  (0x2UL << 4);
+
+    /* 5. Configure Falling-Edge Trigger on EXTI Line 13 (Active-Low button) */
+    EXTI_FTSR |= (1UL << 13);
+
+    /* 6. Unmask Interrupt Request on Line 13 */
+    EXTI_IMR |= (1UL << 13);
+
+    /* 7. Configure NVIC Priority for IRQ 40 (Priority 2, Subpriority 0) */
+    /* EXTI15_10 is IRQ 40. Byte offset is 40 % 4 = 0 in NVIC_IPR10 */
+    NVIC_IPR10 &= ~(0xFFUL << 0);
+    NVIC_IPR10 |=  ((2UL << 6) << 0); /* Preemption priority 2 */
+
+    /* 8. Enable IRQ 40 in NVIC_ISER1 (40 - 32 = Bit 8) */
+    NVIC_ISER1 |= (1UL << (EXTI15_10_IRQn - 32));
+}
+
+/**
+ * @brief Interrupt Service Routine for EXTI Lines 10 through 15
+ */
+void EXTI15_10_IRQHandler(void) {
+    /* Check if EXTI Line 13 triggered the interrupt */
+    if (EXTI_PR & (1UL << 13)) {
+        /* Clear the pending flag by writing 1 to bit 13 */
+        EXTI_PR = (1UL << 13);
+
+        /* Toggle LED PA5 atomically */
+        static uint8_t led_state = 0;
+        if (led_state) {
+            GPIOA_BSRR = (1UL << (5 + 16)); /* Turn OFF */
+            led_state = 0;
+        } else {
+            GPIOA_BSRR = (1UL << 5);        /* Turn ON */
+            led_state = 1;
+        }
+    }
+}
+```
+
+---
+
+## 6. Self-Assessment & Viva Voce Challenge
+
+1. **Why does clearing a pending interrupt flag in `EXTI_PR` require writing a `1` rather than a `0`?**
+   *Answer:* The hardware register uses a clear-on-write-1 (`rc_w1`) circuit. This design allows firmware to clear specific event bits atomically with a single `STR` instruction without reading and modifying unrelated pending flags on neighboring pins.
+
+2. **What is tail-chaining in the NVIC and what is its cycle cost?**
+   *Answer:* When exiting an ISR while another interrupt is already pending, the NVIC skips unstacking registers back to the main thread and restacking them for the next handler. It transfers execution directly to the new ISR in only **6 clock cycles**, saving 18 clock cycles.

@@ -1,0 +1,422 @@
+---
+moduleNumber: 13
+title: 'Controller Area Network (CAN 2.0B / bxCAN) on Silicon - Differential Physics & Acceptance Filters'
+shortTitle: 'CAN Bus & bxCAN Engine'
+tier: 'Tier 3: Serial Buses & DMA'
+difficulty: 'Advanced'
+boardTargets:
+  - 'Blue Pill (STM32F103C8T6)'
+  - 'Nucleo-F401RE'
+prerequisites:
+  - '07-nvic-interrupts-exti'
+estimatedDuration: '90 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'CAN_MCR'
+  - 'CAN_MSR'
+  - 'CAN_TSR'
+  - 'CAN_BTR'
+  - 'CAN_TI0R'
+  - 'CAN_TDT0R'
+  - 'CAN_TDL0R'
+  - 'CAN_TDH0R'
+  - 'CAN_FMR'
+  - 'CAN_FA1R'
+description: 'Automotive differential bus physics, non-destructive bitwise arbitration, bit timing calculations, mailbox transmission, 14-bank acceptance filtering, and transceiver interfacing.'
+keyFormulas:
+  - 't_{bit} = t_{Sync\_Seg} + t_{Prop\_Seg} + t_{Phase\_Seg1} + t_{Phase\_Seg2}'
+  - '\text{BaudRate} = \frac{f_{PCLK1}}{(BRP + 1) \times (1 + (TS1 + 1) + (TS2 + 1))}'
+  - '\text{Sample Point} = \frac{1 + (TS1 + 1)}{1 + (TS1 + 1) + (TS2 + 1)} \times 100\%'
+hardwareApparatus:
+  - 'SN65HVD230 3.3V CAN Transceiver Pair'
+  - 'USB CAN Protocol Analyzer (PCAN / CANable)'
+  - 'Digital Oscilloscope differential probe on CAN_H and CAN_L'
+order: 13
+xpReward: 275
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Controller Area Network (CAN 2.0B / bxCAN) on Silicon - Differential Physics & Acceptance Filters
+
+## 1. Automotive Differential Bus Physics & Physical Layer
+
+The **Controller Area Network (CAN)**, created by Robert Bosch GmbH, is the de facto standard serial communications backbone for automotive electronic control units (ECUs), avionics, and industrial automation. Designed for harsh electromagnetic interference (EMI) environments, CAN abandons single-ended signaling in favor of a balanced **two-wire differential bus**: **`CAN_H`** (CAN High) and **`CAN_L`** (CAN Low).
+
+```
+                            +12V / +24V VEHICLE BUS
+                                     |
+       +-----------------------+     |     +-----------------------+
+       | STM32 MICROCONTROLLER |     |     | CAN TRANSCEIVER       |
+       |  (e.g. STM32F103)     |     |     |  (e.g. SN65HVD230)    |
+       |                       |     |     |                       |
+       |       [CAN_TX] -------+-----+---->| D (TXD)        CAN_H  |---+--- CAN_H
+       |       [CAN_RX] <------+-----+-----| R (RXD)        CAN_L  |---|--- CAN_L
+       +-----------------------+           +-----------------------+   |
+                                                                       |
+       TERMINATION: [ 60 Ω ] --- (Split Termination / 120 Ω Total) ----+
+```
+
+### 1.1 Dominant vs. Recessive Differential States
+
+The CAN transceiver translates single-ended TTL/CMOS logic from the STM32's `CAN_TX` pin into differential voltage states across the bus lines:
+
+```
+VOLTS
+  4.0V +
+       |        /‾‾‾‾‾‾‾‾‾‾‾‾\                      /‾‾‾‾‾‾‾‾‾‾‾‾\
+  3.5V +-------/  CAN_H       \--------------------/  CAN_H       \---
+       |      /   (3.5V)       \                  /   (3.5V)       \
+  2.5V +=====<==================>================<==================>== 2.5V (Idle / Recessive)
+       |      \   CAN_L        /                  \   CAN_L        /
+  1.5V +-------\  (1.5V)      /--------------------\  (1.5V)      /---
+       |        \____________/                      \____________/
+  0.0V +
+       +-------------------------------------------------------------> TIME
+               DOMINANT (0)          RECESSIVE (1)         DOMINANT (0)
+               Vdiff = 2.0V          Vdiff = 0.0V          Vdiff = 2.0V
+```
+
+- **Recessive State (Logical 1):** Both `CAN_H` and `CAN_L` are passively biased to approximately **2.5V**. The differential voltage `V_diff = CAN_H - CAN_L ≈ 0.0V`.
+- **Dominant State (Logical 0):** The transceiver actively drives `CAN_H` up to **3.5V** and pulls `CAN_L` down to **1.5V**. The differential voltage `V_diff = 3.5V - 1.5V ≈ 2.0V`.
+- **Wired-AND Collision Property:** Because any transmitting node driving Dominant (2.0V diff) physically overrides all nodes driving Recessive (0.0V diff), **Dominant always overwrites Recessive**.
+
+---
+
+## 2. Non-Destructive Bitwise Arbitration & Frame Layout
+
+CAN networks operate without central master nodes. When the bus is idle, multiple nodes can simultaneously attempt to transmit. **Non-Destructive Bitwise Arbitration** resolves this contention without losing a single bit of the highest-priority frame.
+
+```
+Node A (ID 0x244: 010 0100 0100): 0 1 0 0 1 [0] 0 0 1 0 0 ... (Loses Arbitration)
+Node B (ID 0x240: 010 0100 0000): 0 1 0 0 1 [0] 0 0 0 0 0 ... (Wins Arbitration!)
+Actual Bus State:                 0 1 0 0 1  0  0 0 0 0 0 ...
+                                              ^
+                              Bit 5: Node A reads 0 while sending 1,
+                              backs off immediately, becomes receiver!
+```
+
+- While transmitting the Identifier, every node reads back the bus state simultaneously.
+- When Node A transmits a Recessive bit (1) but senses a Dominant bit (0) on the bus, it recognizes that a higher-priority message is present.
+- Node A instantly halts transmission and transitions to receiver mode. **The message with the lower numerical ID wins arbitration with zero delay.**
+
+### 2.1 Standard Frame Layout (CAN 2.0A)
+
+```
++-----+------------+-----+-----+----+-----+---------+--------+-----+-----+-----+
+| SOF | Identifier | RTR | IDE | r0 | DLC |  Data   |  CRC   | ACK | EOF | IFS |
+| (1) |   (11)     | (1) | (1) |(1) | (4) |(0-8 B)  |  (15)  | (2) | (7) | (3) |
++-----+------------+-----+-----+----+-----+---------+--------+-----+-----+-----+
+```
+- **`SOF`:** Start of Frame (1 dominant bit).
+- **`RTR`:** Remote Transmission Request (0 = Data Frame, 1 = Remote Frame).
+- **`IDE`:** Identifier Extension Flag (0 = 11-bit Standard, 1 = 29-bit Extended).
+- **`DLC`:** Data Length Code (0 to 8 bytes).
+- **`ACK`:** Transmitting node sends recessive; any node that correctly received the frame drives dominant.
+
+---
+
+## 3. Bit Timing Calculations & The Time Quantum (T_q)
+
+The CAN bit period is partitioned into 4 distinct segments:
+
+```
++--------------+------------------+------------------+------------------+
+| Sync_Seg (1) |   Prop_Seg       |    Phase_Seg1    |    Phase_Seg2    |
++--------------+------------------+------------------+------------------+
+|<----------------- Time Segment 1 (TS1) ----------->|<--- Time Seg 2 ->|
+                                                     ^
+                                                Sample Point
+```
+
+```latex
+t_{bit} = t_{Sync\_Seg} + t_{Prop\_Seg} + t_{Phase\_Seg1} + t_{Phase\_Seg2}
+```
+
+In the STM32 bxCAN controller:
+- `Sync_Seg`: Always fixed at **1 Time Quantum (`T_q`)**.
+- `Time Segment 1 (TS1)`: Combines `Prop_Seg` and `Phase_Seg1`. Programmed via `CAN_BTR.TS1[3:0]` as `(TS1 + 1)` quanta.
+- `Time Segment 2 (TS2)`: Represents `Phase_Seg2`. Programmed via `CAN_BTR.TS2[2:0]` as `(TS2 + 1)` quanta.
+- `Resynchronization Jump Width (SJW)`: Dynamic phase compensation programmed via `CAN_BTR.SJW[1:0]` as `(SJW + 1)` quanta.
+
+### 3.1 Bit Rate Formula
+The Time Quantum is derived from the peripheral clock `f_PCLK1`:
+
+```latex
+T_q = (BRP + 1) \times T_{PCLK1} = \frac{BRP + 1}{f_{PCLK1}}
+```
+
+```latex
+\text{BaudRate} = \frac{f_{PCLK1}}{(BRP + 1) \times (1 + (TS1 + 1) + (TS2 + 1))}
+```
+
+### 3.2 Worked Example: 500 kbps Configuration
+Given STM32F103 or STM32F401 with `f_PCLK1 = 42 MHz` and target baud rate of **500 kbps**:
+1. Total Quanta per bit = `42 MHz / ((BRP + 1) * 500 kHz) = 84 / (BRP + 1)`.
+2. Choose `BRP + 1 = 6` (so `BRP = 5`).
+3. Total Quanta = `84 / 6 = 14 T_q`.
+4. Split Quanta:
+   - `Sync_Seg = 1 T_q`
+   - `TS1 + 1 = 10 T_q` (so `TS1 = 9`)
+   - `TS2 + 1 = 3 T_q` (so `TS2 = 2`)
+   - Check total: `1 + 10 + 3 = 14 T_q`.
+5. **Sample Point:**
+   ```latex
+   \text{Sample Point} = \frac{1 + 10}{14} \times 100\% = 78.57\%
+   ```
+   *(Complies with the automotive CiA 301 standard requirement of 75% to 80%).*
+
+---
+
+## 4. STM32 bxCAN Hardware Architecture
+
+The **Basic Extended CAN (bxCAN)** peripheral features dedicated hardware transmit mailboxes and dual receive FIFOs:
+
+```
+                           +-------------------------------------+
+                           |         bxCAN SILICON ENGINE        |
+                           +-------------------------------------+
+                                    |                   ^
+                                    v                   |
+                           +-----------------+ +-----------------+
+                           | 3 TX MAILBOXES  | | 14 FILTER BANKS |
+                           | (TXMB0, 1, 2)   | | (Mask or List)  |
+                           +--------+--------+ +--------+--------+
+                                    |                   |
+                                    v                   v
+                               +---------+     +-----------------+
+                               | CAN_TX  |     | 2 RX FIFOS      |
+                               | Pin     |     | (3 stages deep) |
+                               +---------+     +-----------------+
+```
+
+- **Transmit Engine:** 3 independent Transmit Mailboxes (`TXMB0`, `TXMB1`, `TXMB2`). Arbitration priority can be based strictly on CAN Identifier (`TXFP = 0`) or chronologically on arrival order (`TXFP = 1`).
+- **Receive Engine:** 2 independent Receive FIFOs (`FIFO0` and `FIFO1`), each 3 messages deep. When all 3 message slots are occupied, subsequent incoming messages trigger the `FOVR` (FIFO Overrun) error flag.
+- **Filter Banks (14 Banks):** Filter incoming frames in hardware before waking the CPU. Each bank can operate in:
+  1. **32-Bit Mask Mode:** Matches specific bits defined by an identifier and mask register.
+  2. **16-Bit Mask Mode:** Two 16-bit identifier/mask pairs.
+  3. **32-Bit List Mode:** Matches two exact 32-bit identifiers.
+  4. **16-Bit List Mode:** Matches four exact 16-bit identifiers.
+
+---
+
+## 5. Register Level Architecture & Bit Manipulation
+
+The bxCAN peripheral is controlled via memory-mapped registers on the APB1 bus:
+
+| Register Mnemonic | Base Offset | Reset Value | Hardware Function |
+| :--- | :--- | :--- | :--- |
+| **`CAN_MCR`** | `+0x00` | `0x00010002` | Master control register: Initialization request (`INRQ`), Sleep mode (`SLEEP`), Automatic retransmission (`NART`), Transmit FIFO priority (`TXFP`) |
+| **`CAN_MSR`** | `+0x04` | `0x00000C02` | Master status register: Initialization acknowledge (`INAK`), Sleep acknowledge (`SLAK`) |
+| **`CAN_TSR`** | `+0x08` | `0x1C000000` | Transmit status: Mailbox empty flags (`TME0`, `TME1`, `TME2`), Request completed (`RQCPx`) |
+| **`CAN_RF0R`**| `+0x0C` | `0x00000000` | Receive FIFO 0 register: Message pending count (`FMP0[1:0]`), Release output mailbox (`RFOM0`) |
+| **`CAN_BTR`** | `+0x1C` | `0x01230000` | Bit timing register: Baud rate prescaler (`BRP[9:0]`), `TS1[3:0]`, `TS2[2:0]`, `SJW[1:0]`, Loopback mode (`LBKM`), Silent mode (`SILM`) |
+| **`CAN_TI0R`**| `+0x180`| `0x00000000` | Transmit Mailbox 0 Identifier: Standard ID (`STID[10:0]`), Extended ID (`EXID[17:0]`), `IDE`, `RTR`, Transmit request (`TXRQ`) |
+| **`CAN_TDT0R`**| `+0x184`| `0x00000000`| Transmit Mailbox 0 Data Length (`DLC[3:0]`) |
+| **`CAN_TDL0R`**| `+0x188`| `0x00000000`| Transmit Mailbox 0 Data Low (Bytes 0, 1, 2, 3) |
+| **`CAN_TDH0R`**| `+0x18C`| `0x00000000`| Transmit Mailbox 0 Data High (Bytes 4, 5, 6, 7) |
+| **`CAN_FMR`**  | `+0x200`| `0x2A1C0E01`| Filter master register: Filter init mode (`FINIT`), CAN2 start bank |
+| **`CAN_FA1R`** | `+0x21C`| `0x00000000`| Filter activation register (enable individual filter banks) |
+
+> **Critical Silicon Trap (Entering bxCAN Init Mode):** Setting `CAN_MCR.INRQ = 1` does **not** take effect immediately. The core must wait in a loop until `CAN_MSR.INAK == 1` confirms the hardware has synchronized with the bus and entered initialization state. Attempting to write to `CAN_BTR` while `INAK == 0` is completely ignored by hardware.
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following production driver initializes the **bxCAN controller on STM32F103** (**PA11 = CAN_RX, PA12 = CAN_TX**) for **500 kbps**, configures **Filter Bank 0** to accept all standard frames into **FIFO0**, and provides transmission routines.
+
+```c
+/**
+ * @file    voltcore_can_driver.c
+ * @brief   Bare-Metal bxCAN Driver for STM32F103 / STM32F401 (500 kbps)
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+// Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define APB1PERIPH_BASE     (PERIPH_BASE + 0x00000000UL)
+#define APB2PERIPH_BASE     (PERIPH_BASE + 0x00010000UL)
+
+// RCC Registers
+#define RCC_BASE            (PERIPH_BASE + 0x00021000UL)
+#define RCC_APB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x1CUL))
+#define RCC_APB2ENR         (*(volatile uint32_t *)(RCC_BASE + 0x18UL))
+
+// GPIOA Registers (STM32F1)
+#define GPIOA_BASE          (APB2PERIPH_BASE + 0x0800UL)
+#define GPIOA_CRH           (*(volatile uint32_t *)(GPIOA_BASE + 0x04UL))
+
+// bxCAN1 Registers
+#define CAN1_BASE           (APB1PERIPH_BASE + 0x6400UL)
+#define CAN1_MCR            (*(volatile uint32_t *)(CAN1_BASE + 0x00UL))
+#define CAN1_MSR            (*(volatile uint32_t *)(CAN1_BASE + 0x04UL))
+#define CAN1_TSR            (*(volatile uint32_t *)(CAN1_BASE + 0x08UL))
+#define CAN1_RF0R           (*(volatile uint32_t *)(CAN1_BASE + 0x0CUL))
+#define CAN1_BTR            (*(volatile uint32_t *)(CAN1_BASE + 0x1CUL))
+
+// Mailbox 0 Registers
+#define CAN1_TI0R           (*(volatile uint32_t *)(CAN1_BASE + 0x180UL))
+#define CAN1_TDT0R          (*(volatile uint32_t *)(CAN1_BASE + 0x184UL))
+#define CAN1_TDL0R          (*(volatile uint32_t *)(CAN1_BASE + 0x188UL))
+#define CAN1_TDH0R          (*(volatile uint32_t *)(CAN1_BASE + 0x18CUL))
+
+// Filter Registers
+#define CAN1_FMR            (*(volatile uint32_t *)(CAN1_BASE + 0x200UL))
+#define CAN1_FM1R           (*(volatile uint32_t *)(CAN1_BASE + 0x20CUL))
+#define CAN1_FS1R           (*(volatile uint32_t *)(CAN1_BASE + 0x214UL))
+#define CAN1_FFA1R          (*(volatile uint32_t *)(CAN1_BASE + 0x21CUL))
+#define CAN1_FA1R           (*(volatile uint32_t *)(CAN1_BASE + 0x21CUL + 0x04UL))
+#define CAN1_F0R1           (*(volatile uint32_t *)(CAN1_BASE + 0x240UL))
+#define CAN1_F0R2           (*(volatile uint32_t *)(CAN1_BASE + 0x244UL))
+
+#define CAN_TIMEOUT_CYCLES  50000UL
+
+/**
+ * @brief Initialize bxCAN at 500 kbps (assuming APB1 = 36 MHz)
+ */
+bool can1_init_500kbps(void) {
+    volatile uint32_t timeout;
+
+    // 1. Enable Clock Gates for GPIOA and CAN1
+    RCC_APB2ENR |= (1UL << 2);  // GPIOA clock
+    RCC_APB1ENR |= (1UL << 25); // CAN1 clock
+
+    // 2. Configure PA11 (CAN_RX) as Input Floating, PA12 (CAN_TX) as Alt-Function Push-Pull 50MHz
+    // PA11: CRH bits [15:12] = 0100 (Input floating)
+    // PA12: CRH bits [19:16] = 1011 (AF Output Push-Pull 50MHz)
+    GPIOA_CRH &= ~((0xFUL << 12) | (0xFUL << 16));
+    GPIOA_CRH |=  (4UL << 12) | (11UL << 16);
+
+    // 3. Exit Sleep Mode and Request Initialization Mode
+    CAN1_MCR &= ~(1UL << 1); // SLEEP = 0
+    CAN1_MCR |=  (1UL << 0); // INRQ = 1
+
+    timeout = CAN_TIMEOUT_CYCLES;
+    while (!(CAN1_MSR & (1UL << 0)) && --timeout); // Wait for INAK = 1
+    if (!timeout) return false;
+
+    // Configure MCR: Automatic Retransmission, Transmit FIFO Priority
+    CAN1_MCR &= ~(1UL << 4); // NART = 0 (Auto-retransmission enabled)
+    CAN1_MCR |=  (1UL << 2); // TXFP = 1 (Transmit order: FIFO chronological)
+
+    // 4. Configure Bit Timing for 500 kbps on 36 MHz APB1:
+    // T_total = 36 MHz / 500 kHz = 72 quanta
+    // Choose BRP = 4 (Prescaler = 4): Quanta per bit = 72 / 4 = 18 Quanta
+    // Sync_Seg = 1
+    // TS1 = 12 (quanta = 13)
+    // TS2 = 3  (quanta = 4)
+    // Total: 1 + 13 + 4 = 18 Quanta. Sample point: 14/18 = 77.7%
+    // BTR: SJW[1:0] = 00 (1 Tq), TS2[2:0] = 3, TS1[3:0] = 12, BRP[9:0] = 3
+    CAN1_BTR = (0UL << 24)  | // SJW = 1
+               (3UL << 20)  | // TS2 = 4 quanta (value 3)
+               (12UL << 16) | // TS1 = 13 quanta (value 12)
+               (3UL << 0);    // BRP = 4 (value 3: prescaler /4)
+
+    // 5. Leave Initialization Mode and Enter Normal Mode
+    CAN1_MCR &= ~(1UL << 0); // INRQ = 0
+    timeout = CAN_TIMEOUT_CYCLES;
+    while ((CAN1_MSR & (1UL << 0)) && --timeout); // Wait for INAK = 0
+    if (!timeout) return false;
+
+    // 6. Configure Acceptance Filter Bank 0 (Accept all frames into FIFO0)
+    CAN1_FMR |= (1UL << 0); // FINIT = 1 (Filter init mode)
+
+    CAN1_FA1R &= ~(1UL << 0); // Deactivate Filter 0
+    CAN1_FS1R |=  (1UL << 0); // 32-bit scale for Filter 0
+    CAN1_FM1R &= ~(1UL << 0); // Identifier Mask mode
+    CAN1_FFA1R &= ~(1UL << 0); // Assign Filter 0 to FIFO 0
+
+    // Set Identifier and Mask to 0x00000000 (Accept all messages)
+    CAN1_F0R1 = 0x00000000UL;
+    CAN1_F0R2 = 0x00000000UL;
+
+    CAN1_FA1R |= (1UL << 0); // Activate Filter 0
+    CAN1_FMR &= ~(1UL << 0); // FINIT = 0 (Leave filter init mode)
+
+    return true;
+}
+
+/**
+ * @brief Transmit a standard 11-bit CAN frame using Mailbox 0
+ * @param std_id 11-bit Standard Identifier (0x000 to 0x7FF)
+ * @param data Pointer to data payload (up to 8 bytes)
+ * @param dlc Data length code (0 to 8)
+ * @return true on success, false if mailbox is busy or timeout
+ */
+bool can1_transmit_frame(uint16_t std_id, const uint8_t *data, uint8_t dlc) {
+    volatile uint32_t timeout;
+
+    // Verify Mailbox 0 is empty (TME0 = 1 in TSR)
+    if (!(CAN1_TSR & (1UL << 26))) {
+        return false;
+    }
+
+    if (dlc > 8) dlc = 8;
+
+    // 1. Set Standard Identifier: STID[10:0] in bits [31:21] of TI0R
+    CAN1_TI0R = ((uint32_t)(std_id & 0x7FFUL) << 21); // IDE = 0 (Std), RTR = 0 (Data)
+
+    // 2. Set Data Length Code (DLC)
+    CAN1_TDT0R = (uint32_t)(dlc & 0x0FUL);
+
+    // 3. Load Data Payload (Low Word = Bytes 0-3, High Word = Bytes 4-7)
+    uint32_t data_low = 0;
+    uint32_t data_high = 0;
+
+    for (int i = 0; i < 4 && i < dlc; i++) {
+        data_low |= ((uint32_t)data[i] << (i * 8));
+    }
+    for (int i = 4; i < 8 && i < dlc; i++) {
+        data_high |= ((uint32_t)data[i] << ((i - 4) * 8));
+    }
+
+    CAN1_TDL0R = data_low;
+    CAN1_TDH0R = data_high;
+
+    // 4. Request Transmission: TXRQ = 1 in TI0R
+    CAN1_TI0R |= (1UL << 0);
+
+    // 5. Wait for Transmission Request Completed (RQCP0 = 1 in TSR)
+    timeout = CAN_TIMEOUT_CYCLES;
+    while (!(CAN1_TSR & (1UL << 0)) && --timeout);
+    return (timeout > 0);
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify robust CAN communication on your physical test bench:
+
+1. **Physical Apparatus Connections:**
+   - Connect **PA12** to the `D` (TXD) pin of an SN65HVD230 3.3V CAN Transceiver.
+   - Connect **PA11** to the `R` (RXD) pin of the transceiver.
+   - Connect `CAN_H` and `CAN_L` terminals across a twisted pair to a USB CAN protocol analyzer (PCAN-USB / CANable).
+   - Ensure a 120 Ω termination resistor is placed across the ends of the twisted pair line.
+2. **Differential Voltage Measurement:**
+   - Connect Channel 1 of an oscilloscope to `CAN_H` and Channel 2 to `CAN_L`.
+   - Configure math channel to `CH1 - CH2`.
+   - Measure idle baseline: `V_diff ≈ 0.0V`.
+   - Transmit frame `0x240` with data `{0x01, 0x02, 0x03}`: verify `V_diff ≈ 2.0V` during dominant bits with clean 500 kbps bit width (`2.00 µs`).
+3. **Arbitration Torture Test:**
+   - Configure the PCAN analyzer to broadcast ID `0x241` continuously at 500 kbps.
+   - Transmit ID `0x240` from the STM32 simultaneously.
+   - Observe the bus trace: ID `0x240` completes without error or retransmission; ID `0x241` is delayed until the next frame gap, verifying hardware bitwise arbitration.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why does CAN physical layer signaling utilize a differential voltage (`CAN_H - CAN_L`) rather than a single-ended reference to GND?**
+2. **Explain the electrical mechanism by which the lower numerical CAN Identifier always wins arbitration without data corruption.**
+3. **What is the consequence of configuring `CAN_BTR` with a sample point outside the recommended 75% to 80% range in high-capacitance automotive wire harnesses?**
+4. **Why must the `INRQ` bit in `CAN_MCR` be followed by polling `CAN_MSR.INAK` before writing to `CAN_BTR`?**
+5. **How does 32-bit Identifier Mask filtering in bxCAN allow a microcontroller to process only messages matching IDs `0x700` through `0x70F` while ignoring all other traffic?**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

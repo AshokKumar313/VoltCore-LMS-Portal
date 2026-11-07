@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "astro-build.astro-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "esbenp.prettier-vscode",
+    "eamodio.gitlens"
+  ]
+}

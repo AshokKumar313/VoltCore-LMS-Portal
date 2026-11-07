@@ -1,0 +1,380 @@
+---
+moduleNumber: 9
+title: 'Analog Interfacing (SAR ADC & DMA Streaming) & Serial Protocols (UART, SPI, I2C)'
+shortTitle: 'ADC, DMA & Serial Protocols'
+tier: 'Tier 2: Core Peripherals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '08-timers-pwm-generation'
+estimatedDuration: '105 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'ADC_CR1'
+  - 'ADC_CR2'
+  - 'ADC_SMPR1'
+  - 'ADC_SQR3'
+  - 'ADC_DR'
+  - 'DMA2_Stream0_CR'
+  - 'USART_BRR'
+  - 'SPI_CR1'
+  - 'I2C_CR1'
+description: '12-bit Successive Approximation Register (SAR) ADC, sampling time math, factory calibration words, DMA circular ping-pong streaming, and hardware serial protocols (UART, SPI, I2C).'
+keyFormulas:
+  - 'T_{conv} = T_{sampling} + 12\text{ cycles}'
+  - 'V_{DDA} = 3.30\text{V} \times \frac{V_{REFINT\_CAL}}{ADC\_RAW_{VREFINT}}'
+  - 'T (^{\circ}\text{C}) = \frac{110 - 30}{TS\_CAL2 - TS\_CAL1} \times (ADC\_RAW_{TEMP} - TS\_CAL1) + 30'
+  - 'USART\_BRR = \frac{f_{CK}}{8 \times (2 - OVER8) \times Baud}'
+hardwareApparatus:
+  - '10k Potentiometer on PA0 (ADC1_IN0)'
+  - 'Internal Temperature Sensor & VREFINT'
+  - 'USB-to-UART Bridge on PA2 (TX) / PA3 (RX)'
+  - 'Logic Analyzer connected to SPI / I2C lines'
+order: 9
+xpReward: 250
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# Analog Interfacing (SAR ADC & DMA Streaming) & Serial Protocols (UART, SPI, I2C)
+
+## 1. Architectural Overview & Hardware Foundations
+Bare-metal engineering requires interfacing real-world analog physical signals with the discrete digital realm of the ARM Cortex-M CPU. The primary hardware peripheral responsible for this conversion is the **Successive Approximation Register (SAR) Analog-to-Digital Converter (ADC)**.
+
+Furthermore, communicating sensor acquisitions to host systems and peripheral ICs demands deep mastery of hardware serial buses: **UART/USART**, **SPI**, and **I2C**.
+
+```
+    ANALOG INPUT                                                  DIGITAL BUS
+   +-------------+       +-----------------------------------+   +-----------+
+   | External    |       |        12-BIT SAR ADC CORE        |   | DMA2      |
+   | Voltages    |------>|  +------------+   +------------+  |-->| Stream 0  |
+   | (0V to VDDA)|       |  | Sample &   |   | Capacitor  |  |   | (Circular |
+   +-------------+       |  | Hold (Cadc)|-->| DAC (CDAC) |  |   |  Buffer)  |
+   +-------------+       |  +------------+   +------+-----+  |   +-----+-----+
+   | VREFINT     |------>|                          |        |         |
+   | (1.2V Cal)  |       |                   +------v-----+  |         v
+   +-------------+       |                   | Comparator |  |   +-----------+
+   +-------------+       |                   +------+-----+  |   | Ping-Pong |
+   | Temp Sensor |------>|                          |        |   | DSP Frame |
+   | (Internal)  |       |                   +------v-----+  |   | Buffers   |
+   +-------------+       |                   | SAR Logic  |  |   +-----------+
+                         |                   +------------+  |
+                         +-----------------------------------+
+```
+
+---
+
+## 2. 12-Bit SAR ADC Architecture & Conversion Mathematics
+
+### 2.1 The SAR Conversion Principle
+The STM32 SAR ADC utilizes a capacitive redistributive digital-to-analog converter (CDAC) and a high-speed analog comparator:
+1. **Sampling Phase:** An internal sampling capacitor `C_ADC` (typically 4 to 7 pF) charges to the input pin voltage through internal switch resistance `R_ADC` (typically 6 kΩ) and external source impedance `R_AIN`.
+2. **Hold & Approximation Phase:** The sampling switch opens. The SAR logic executes a binary search algorithm from the Most Significant Bit (bit 11) down to the Least Significant Bit (bit 0) over exactly **12 clock cycles**.
+
+```latex
+T_{conv} = T_{sampling} + 12\text{ cycles}
+```
+
+```latex
+V_{IN} = \frac{ADC\_RAW}{4095} \times V_{REF+}
+```
+
+### 2.2 Input Impedance & Sampling Time Constraint
+If the external source impedance `R_AIN` is high, the internal capacitor `C_ADC` cannot fully charge to within 0.5 LSB during the allocated sampling window `T_sampling`. This results in severe conversion non-linearity and gain attenuation.
+
+To guarantee 12-bit precision (error < 0.25 LSB), `T_sampling` must satisfy:
+
+```latex
+T_{sampling} \ge (R_{AIN} + R_{ADC}) \times C_{ADC} \times \ln(2^{12 + 1})
+```
+
+Because `\ln(2^{13}) \approx 9.01`, for an `R_AIN` of 50 kΩ:
+
+```latex
+T_{sampling} \ge (50000 + 6000) \times 7 \times 10^{-12} \times 9.01 \approx 3.53\text{ }\mu\text{s}
+```
+
+If the ADC is clocked at 21 MHz (period = 47.6 ns), the firmware must configure `ADC_SMPR` to select at least **84 cycles** (`84 \times 47.6\text{ ns} = 4.0\text{ }\mu\text{s}`) rather than the default 3 cycles.
+
+---
+
+## 3. Factory eFuse Calibration Words: VREFINT & Internal Temperature
+
+### 3.1 Precise Supply Voltage Calculation via VREFINT
+When operating on battery power, `VDDA` drifts downward, causing uncalibrated ADC readings to skew upward. To eliminate this error, STM32 silicon includes an internal bandgap reference `VREFINT` (nominal 1.21V).
+
+During production testing at ST factories, the raw ADC reading of `VREFINT` at exactly `VDDA = 3.30V` and `25°C` is stored in read-only system memory (eFuse):
+- **STM32F401RE VREFINT Factory Calibration Address:** `0x1FFF7A2A` (16-bit unsigned integer)
+
+Firmware calculates the exact true supply voltage `VDDA` dynamically using:
+
+```latex
+V_{DDA} = 3.30\text{V} \times \frac{*(\text{uint16\_t}*)(0x1FFF7A2A)}{ADC\_RAW_{VREFINT}}
+```
+
+### 3.2 Silicon Die Temperature Linear Interpolation
+The internal temperature sensor output voltage is non-linear across production batches. ST calibrates each individual die at two temperatures:
+- **`TS_CAL1` (`0x1FFF7A2C`):** Raw ADC code at 30°C (with `VDDA = 3.3V`).
+- **`TS_CAL2` (`0x1FFF7A2E`):** Raw ADC code at 110°C (with `VDDA = 3.3V`).
+
+The die temperature in Celsius is calculated via linear interpolation:
+
+```latex
+\text{Temperature (}^{\circ}\text{C)} = \frac{110.0 - 30.0}{TS\_CAL2 - TS\_CAL1} \times (ADC\_RAW_{TEMP} - TS\_CAL1) + 30.0
+```
+
+---
+
+## 4. DMA Circular Buffer Streaming & Ping-Pong Processing
+Reading the ADC by polling `ADC_SR.EOC` wastes 100% of CPU cycles. Servicing interrupts at 100 kHz sampling rates causes CPU saturation due to context-switch thrashing.
+
+The production-grade solution is **DMA (Direct Memory Access)** circular streaming:
+- On STM32F401RE, **DMA2 Stream 0 Channel 0** routes data directly from `ADC1->DR` into an SRAM array.
+- In **Circular Mode (`CIRC = 1`)**, the DMA hardware wraps around seamlessly to the beginning of the memory buffer without CPU involvement.
+- **Double Buffering (Ping-Pong):** The DMA engine raises two hardware interrupts:
+  1. **Half-Transfer Complete (`HTIF`):** Signals that Buffer Half A (indices `0` to `N/2 - 1`) is full and ready for DSP filtering, while the DMA hardware continues populating Buffer Half B.
+  2. **Transfer Complete (`TCIF`):** Signals that Buffer Half B (indices `N/2` to `N - 1`) is full and ready for processing, while DMA wraps around to overwrite Buffer Half A.
+
+This architecture guarantees **zero data loss and zero race conditions** between sampling and CPU signal processing.
+
+---
+
+## 5. Serial Protocols Architecture Deep Dive
+
+### 5.1 UART / USART (Universal Asynchronous Receiver-Transmitter)
+UART communicates data asynchronously using a framing structure:
+1. **Idle State:** Line held High (VCC).
+2. **Start Bit:** High-to-Low transition for 1 bit period.
+3. **Data Payload:** 8 or 9 bits transmitted LSB first.
+4. **Parity Bit:** Optional Even or Odd hardware check.
+5. **Stop Bit(s):** 1 or 2 bits held High.
+
+#### Fractional Baud Rate Generation
+The Baud Rate Register (`USART_BRR`) consists of a 12-bit mantissa and a 4-bit fraction:
+
+```latex
+USART\_BRR = \frac{f_{CK}}{8 \times (2 - OVER8) \times BaudRate}
+```
+
+For `f_CK = 84 MHz`, `OVER8 = 0` (16x oversampling), and `BaudRate = 115200`:
+
+```latex
+USART\_BRR = \frac{84000000}{16 \times 115200} = 45.5729
+```
+- Mantissa = `45 = 0x2D`
+- Fraction = `round(0.5729 * 16) = round(9.166) = 9 = 0x9`
+- `USART_BRR = 0x02D9`
+
+### 5.2 SPI (Serial Peripheral Interface)
+SPI is a synchronous, full-duplex, master-slave serial bus capable of speeds exceeding 40 MHz on STM32. It utilizes 4 lines:
+- **`SCK`**: Serial Clock driven by Master.
+- **`MOSI`**: Master Out Slave In.
+- **`MISO`**: Master In Slave Out.
+- **`NSS` / `CS`**: Slave Select (Active Low).
+
+#### Clock Modes Matrix (CPOL & CPHA)
+SPI timing is determined by Clock Polarity (`CPOL`) and Clock Phase (`CPHA`):
+
+| SPI Mode | CPOL (Clock Idle State) | CPHA (Data Latch Edge) | Description |
+| :--- | :--- | :--- | :--- |
+| **Mode 0 (0,0)** | Low (0) | 1st Edge (Rising) | Data sampled on rising edge, shifted on falling edge |
+| **Mode 1 (0,1)** | Low (0) | 2nd Edge (Falling) | Data shifted on rising edge, sampled on falling edge |
+| **Mode 2 (1,0)** | High (1) | 1st Edge (Falling) | Data sampled on falling edge, shifted on rising edge |
+| **Mode 3 (1,1)** | High (1) | 2nd Edge (Rising) | Data shifted on falling edge, sampled on rising edge |
+
+> **Critical Silicon Trap (SPI Overrun):** Because SPI is bidirectional and shift-register driven, transmitting a byte automatically shifts an incoming byte into the receive buffer. If firmware does not read `SPI_DR` after transmitting, the `OVR` (Overrun) flag sets and locks the peripheral.
+
+### 5.3 I2C (Inter-Integrated Circuit)
+I2C is a multi-master, multi-slave 2-wire serial bus utilizing **Open-Drain** drivers with external pull-up resistors:
+- **`SCL`**: Serial Clock line.
+- **`SDA`**: Serial Data line.
+
+#### Pull-Up Resistor Calculation
+Because pins operate in open-drain, rising edges are governed entirely by passive pull-up resistors `R_p` charging the parasitic bus capacitance `C_b`:
+
+```latex
+R_{p(min)} = \frac{V_{DD} - V_{OL(max)}}{I_{OL}}
+```
+
+```latex
+R_{p(max)} = \frac{t_r}{0.8473 \times C_b}
+```
+For `V_DD = 3.3V`, `I_OL = 3 mA`, `V_OL = 0.4V`, `C_b = 200 pF`, and Fast-mode rise time limit `t_r = 300 ns`:
+- `R_p(min) = (3.3 - 0.4) / 0.003 = 966 Ω`
+- `R_p(max) = 300e-9 / (0.8473 * 200e-12) = 1770 Ω`
+- Standard design value: **1.5 kΩ to 2.2 kΩ**.
+
+---
+
+## 6. Production-Grade Bare-Metal Implementation (C99 / CMSIS)
+
+The following driver configures **ADC1** on STM32F401RE to continuously scan **PA0 (Potentiometer)** and **Channel 18 (VREFINT)**, streaming the raw samples autonomously into a circular memory buffer using **DMA2 Stream 0**:
+
+```c
+/**
+ * @file    voltcore_adc_dma.c
+ * @brief   Bare-Metal ADC1 with DMA2 Circular Ping-Pong Streaming on STM32F401RE
+ * @author  VoltCore Silicon Architecture Team
+ */
+
+#include <stdint.h>
+
+// Peripheral Base Addresses
+#define PERIPH_BASE         (0x40000000UL)
+#define APB2PERIPH_BASE     (PERIPH_BASE + 0x00010000UL)
+#define AHB1PERIPH_BASE     (PERIPH_BASE + 0x00020000UL)
+
+// RCC Registers
+#define RCC_BASE            (AHB1PERIPH_BASE + 0x3800UL)
+#define RCC_AHB1ENR         (*(volatile uint32_t *)(RCC_BASE + 0x30UL))
+#define RCC_APB2ENR         (*(volatile uint32_t *)(RCC_BASE + 0x44UL))
+
+// GPIOA Registers
+#define GPIOA_BASE          (AHB1PERIPH_BASE + 0x0000UL)
+#define GPIOA_MODER         (*(volatile uint32_t *)(GPIOA_BASE + 0x00UL))
+#define GPIOA_PUPDR         (*(volatile uint32_t *)(GPIOA_BASE + 0x0CUL))
+
+// ADC1 Registers
+#define ADC1_BASE           (APB2PERIPH_BASE + 0x2000UL)
+#define ADC1_SR             (*(volatile uint32_t *)(ADC1_BASE + 0x00UL))
+#define ADC1_CR1            (*(volatile uint32_t *)(ADC1_BASE + 0x04UL))
+#define ADC1_CR2            (*(volatile uint32_t *)(ADC1_BASE + 0x08UL))
+#define ADC1_SMPR1          (*(volatile uint32_t *)(ADC1_BASE + 0x0CUL))
+#define ADC1_SMPR2          (*(volatile uint32_t *)(ADC1_BASE + 0x10UL))
+#define ADC1_SQR1           (*(volatile uint32_t *)(ADC1_BASE + 0x2CUL))
+#define ADC1_SQR3           (*(volatile uint32_t *)(ADC1_BASE + 0x34UL))
+#define ADC1_DR             (*(volatile uint32_t *)(ADC1_BASE + 0x4CUL))
+#define ADC_COMMON_CCR      (*(volatile uint32_t *)(ADC1_BASE + 0x300UL + 0x04UL))
+
+// DMA2 Registers
+#define DMA2_BASE           (AHB1PERIPH_BASE + 0x6400UL)
+#define DMA2_S0CR           (*(volatile uint32_t *)(DMA2_BASE + 0x10UL))
+#define DMA2_S0NDTR         (*(volatile uint32_t *)(DMA2_BASE + 0x14UL))
+#define DMA2_S0PAR          (*(volatile uint32_t *)(DMA2_BASE + 0x18UL))
+#define DMA2_S0M0AR         (*(volatile uint32_t *)(DMA2_BASE + 0x1CUL))
+
+// Buffer Definitions
+#define BUFFER_SAMPLES      128
+#define NUM_CHANNELS        2
+static uint16_t adc_dma_buffer[BUFFER_SAMPLES * NUM_CHANNELS];
+
+// Factory Calibration Register Addresses
+#define VREFINT_CAL_ADDR    ((volatile uint16_t *)(0x1FFF7A2AUL))
+
+/**
+ * @brief Initialize ADC1 with DMA2 Stream 0 in circular ping-pong mode
+ */
+void adc1_dma_circular_init(void) {
+    // 1. Enable Clock Gates for GPIOA, ADC1, and DMA2
+    RCC_AHB1ENR |= (1UL << 0);   // GPIOA enable
+    RCC_AHB1ENR |= (1UL << 22);  // DMA2 enable
+    RCC_APB2ENR |= (1UL << 8);   // ADC1 enable
+
+    // 2. Configure PA0 as Analog Mode (MODER[1:0] = 11, PUPDR[1:0] = 00)
+    GPIOA_MODER |= (3UL << 0);
+    GPIOA_PUPDR &= ~(3UL << 0);
+
+    // 3. Configure ADC Prescaler: f_ADC = APB2 / 4 (84 MHz / 4 = 21 MHz)
+    ADC_COMMON_CCR &= ~(3UL << 16);
+    ADC_COMMON_CCR |=  (1UL << 16); // ADCPRE = 01 (/4)
+
+    // Enable internal VREFINT channel in common control register
+    ADC_COMMON_CCR |= (1UL << 23);  // TSVREFE = 1
+
+    // 4. Configure DMA2 Stream 0 (Channel 0 = ADC1):
+    // Disable stream before configuration
+    DMA2_S0CR = 0;
+    while (DMA2_S0CR & (1UL << 0));
+
+    DMA2_S0PAR = (uint32_t)&ADC1_DR;
+    DMA2_S0M0AR = (uint32_t)adc_dma_buffer;
+    DMA2_S0NDTR = BUFFER_SAMPLES * NUM_CHANNELS;
+
+    // Channel 0 (CHSEL = 000), 16-bit Peripheral size (PSIZE = 01),
+    // 16-bit Memory size (MSIZE = 01), Memory increment (MINC = 1),
+    // Circular mode (CIRC = 1), High priority (PL = 10)
+    DMA2_S0CR = (0UL << 25)          | // Channel 0
+                (2UL << 16)          | // Priority High
+                (1UL << 13)          | // MSIZE = 16-bit
+                (1UL << 11)          | // PSIZE = 16-bit
+                (1UL << 10)          | // MINC = 1 (Memory increment)
+                (1UL << 8)           | // CIRC = 1 (Circular mode)
+                (1UL << 4)           | // TCIE = 1 (Transfer complete interrupt)
+                (1UL << 3);            // HTIE = 1 (Half transfer interrupt)
+
+    // Enable DMA2 Stream 0
+    DMA2_S0CR |= (1UL << 0); // EN = 1
+
+    // 5. Configure ADC Sequence: 2 conversions (PA0 = CH0, VREFINT = CH17)
+    // SQR1: L[3:0] = 1 (2 conversions)
+    ADC1_SQR1 &= ~(0xFUL << 20);
+    ADC1_SQR1 |=  (1UL << 20);
+
+    // SQR3: 1st conversion = CH0 (PA0), 2nd conversion = CH17 (VREFINT)
+    ADC1_SQR3 = (0UL << 0) | (17UL << 5);
+
+    // Set sampling time for Channel 0 and Channel 17 to 84 cycles
+    // SMPR2 Channel 0 bits [2:0] = 100 (84 cycles)
+    ADC1_SMPR2 |= (4UL << 0);
+    // SMPR1 Channel 17 bits [23:21] = 100 (84 cycles)
+    ADC1_SMPR1 |= (4UL << 21);
+
+    // 6. Configure ADC1 Control Registers:
+    // CR1: SCAN mode enable (SCAN = 1)
+    ADC1_CR1 |= (1UL << 8);
+
+    // CR2: Continuous conversion (CONT = 1), DMA enable (DMA = 1),
+    // DDS enable (DMA requests continue in circular mode, DDS = 1)
+    ADC1_CR2 |= (1UL << 1) | (1UL << 8) | (1UL << 9);
+
+    // 7. Turn on ADC and start continuous scanning
+    ADC1_CR2 |= (1UL << 0); // ADON = 1
+    for (volatile int i = 0; i < 10000; i++); // Startup stabilization delay
+    ADC1_CR2 |= (1UL << 30); // SWSTART = 1
+}
+
+/**
+ * @brief Calculate calibrated true supply voltage in millivolts
+ * @param raw_vrefint Current average raw ADC reading of Channel 17
+ * @return True VDDA in millivolts (e.g. 3312 mV)
+ */
+uint32_t adc_calculate_true_vdda_mv(uint16_t raw_vrefint) {
+    if (raw_vrefint == 0) return 3300;
+    uint32_t cal_val = (uint32_t)(*VREFINT_CAL_ADDR);
+    return (3300UL * cal_val) / (uint32_t)raw_vrefint;
+}
+```
+
+---
+
+## 7. Hardware-in-the-Loop Verification Protocol
+
+To verify precise analog conversion and serial telemetry on your test bench:
+
+1. **Bench Connections:**
+   - Connect wiper of a 10 kΩ potentiometer to **PA0** (Morpho CN7-28 / Arduino A0).
+   - Connect potentiometer outer terminals to **3.3V** and **GND**.
+   - Attach logic analyzer channels to **PA2** (USART2 TX) and **PA3** (USART2 RX).
+2. **Buffer Ping-Pong Latency Verification:**
+   - Toggle a debug GPIO (e.g. **PB0**) inside the `DMA2_Stream0_IRQHandler`:
+     - Toggle on `HTIF0` (Half-Transfer complete).
+     - Toggle on `TCIF0` (Transfer complete).
+   - Measure the exact frequency of toggling on an oscilloscope: confirms deterministic, jitter-free buffer acquisition at precisely calculated frame rates.
+3. **Supply Rail Rejection & Calibration Verification:**
+   - Drop the board power input voltage from 3.3V down to 2.8V using an adjustable bench power supply.
+   - Observe that raw ADC readings on PA0 increase, but firmware dynamically compensates via `VREFINT_CAL` to report the identical physical input voltage within +/- 0.5% accuracy.
+
+---
+
+## 8. Self-Assessment & Viva Voce Challenge
+
+1. **Why does high source resistance (`R_AIN > 50 kΩ`) cause conversion non-linearity when the ADC sampling time is set to minimum cycles?**
+2. **Explain the mathematical and hardware mechanism by which the factory eFuse word at `0x1FFF7A2A` enables dynamic compensation for falling battery supply rails.**
+3. **In DMA circular mode, what catastrophic race condition occurs if the CPU attempts to process an entire buffer without utilizing Half-Transfer and Full-Transfer interrupts?**
+4. **Why does SPI require reading the data register (`SPI_DR`) after every transmission, even in write-only applications like driving an OLED display?**
+5. **Calculate the maximum allowable pull-up resistor `R_p` on an I2C Fast-mode (400 kHz) bus with a total load capacitance of `350 pF`.**
+
+---
+*VoltCore STM32 Academy — Bare-Metal Engineering Series.*

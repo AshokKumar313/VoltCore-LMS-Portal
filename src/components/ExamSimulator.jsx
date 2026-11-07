@@ -380,7 +380,7 @@ export default function ExamSimulator() {
                 ? 'bg-rose-950/80 border-rose-500 text-rose-300 animate-pulse'
                 : 'bg-[#020813] border-slate-700 text-slate-200'
             }`}>
-              <svg className="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg className="w-4 h-4 text-[#00F0B5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>

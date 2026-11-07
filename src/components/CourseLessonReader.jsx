@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { getLessonsByCourse, getLessonsByUnit } from '../data/course_lessons_data';
 import KatexFormulaCard from './KatexFormulaCard';
 import { DepartmentalBadgeIcon } from './CourseShellHub';
+import CourseSimulationIsland from './CourseSimulationIsland';
 
 /**
  * ========================================================================================
  * VoltCore Apex Academia - Unit-Wise Lesson Library & Student Bookmarking Hub
- * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Core Engineering Series • Autonomous Engineering Cluster Standards
  * Platform Lead & Systems Architect: Ashok Kumar A
  * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
  *
@@ -14,6 +15,7 @@ import { DepartmentalBadgeIcon } from './CourseShellHub';
  *   - Unit-wise curated lesson library across all 5 syllabus units
  *   - Markdown lecture notes reader with theoretical derivations
  *   - KaTeX mathematical formula inspector integration
+ *   - Virtual hardware serial stimulus bridge (voltcore:lesson-transmit)
  *   - Student study notes and persistent bookmarking (localStorage with zero background polling)
  *   - Completion tracking and progress metric visualizer
  * ========================================================================================
@@ -43,6 +45,23 @@ export default function CourseLessonReader({
   const [studyNotes, setStudyNotes] = useState({});
   const [currentNoteText, setCurrentNoteText] = useState("");
   const [noteSavedFeedback, setNoteSavedFeedback] = useState(false);
+  const [stimulusTransmitted, setStimulusTransmitted] = useState(false);
+
+  // Transmit hardware serial command to active Wokwi hardware bridge
+  const handleTransmitStimulus = (lesson) => {
+    if (typeof window === 'undefined' || !lesson) return;
+    const stimulusText = `CMD:${lesson.courseCode}_L${lesson.lessonNumber}:${lesson.simulationBridge?.tool || 'HIL'}`;
+    window.dispatchEvent(new CustomEvent('voltcore:lesson-transmit', {
+      detail: {
+        text: stimulusText,
+        lessonId: lesson.id,
+        courseCode: lesson.courseCode,
+        timestamp: new Date().toISOString()
+      }
+    }));
+    setStimulusTransmitted(true);
+    setTimeout(() => setStimulusTransmitted(false), 2000);
+  };
 
   // Hydrate persistent state from localStorage on client-side mount
   useEffect(() => {
@@ -433,7 +452,7 @@ export default function CourseLessonReader({
             {/* Learning Objectives */}
             <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
               <div className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
-                Anna University Regulation 2023 Learning Deliverables:
+                Modular Curriculum Learning Deliverables:
               </div>
               <ul className="space-y-1 text-slate-300 list-disc list-inside">
                 {activeLesson.learningObjectives.map((obj, i) => (
@@ -482,20 +501,44 @@ export default function CourseLessonReader({
                   </div>
                 </div>
 
-                {onLaunchSimulator && (
+                <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => {
-                      setActiveLesson(null);
-                      onLaunchSimulator();
-                    }}
-                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0"
+                    type="button"
+                    onClick={() => handleTransmitStimulus(activeLesson)}
+                    className="px-3 py-2 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                    title="Transmit hardware serial command to active Wokwi hardware bridge"
                   >
-                    <span>Launch Simulator</span>
-                    <span>→</span>
+                    <span>{stimulusTransmitted ? '✓ Transmitted' : '📡 Send Serial Stimulus'}</span>
                   </button>
-                )}
+                  {onLaunchSimulator && (
+                    <button
+                      onClick={() => {
+                        setActiveLesson(null);
+                        onLaunchSimulator();
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
+                    >
+                      <span>Launch Simulator</span>
+                      <span>→</span>
+                    </button>
+                  )}
+                </div>
               </div>
             )}
+
+            {/* Dedicated Interactive Course Simulation Island */}
+            <div className="space-y-2">
+              <div className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: themeColor }}>
+                <span>⚡</span>
+                <span>Interactive Laboratory Simulation Workbench:</span>
+              </div>
+              <CourseSimulationIsland
+                courseCode={courseCode}
+                themeColor={themeColor}
+                themeFamily={themeFamily}
+                compact={true}
+              />
+            </div>
 
             {/* Student Personal Study Notes */}
             <div className="p-5 rounded-2xl bg-[#020813] border border-slate-800 space-y-3 font-mono text-xs">
@@ -531,7 +574,7 @@ export default function CourseLessonReader({
 
             {/* Modal Footer */}
             <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-xs font-mono text-slate-500">
-              <span>Anna University ECE R2023 Study Module</span>
+              <span>Modular Engineering Study Series</span>
               <button
                 onClick={() => setActiveLesson(null)}
                 className="hover:text-white transition-colors"

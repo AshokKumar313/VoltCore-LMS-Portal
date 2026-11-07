@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens } from '../data/course_config_schema';
+import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens, TIER3_SPECIALIZATION_TRACKS } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
 import CourseLabSimulator from './CourseLabSimulator';
 import CourseProjectsHub from './CourseProjectsHub';
+import InstitutionalProfileTab from './InstitutionalProfileTab';
 
 /**
  * ========================================================================================
@@ -195,6 +196,10 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
   // Prerequisite Checklist State
   const [prereqChecked, setPrereqChecked] = useState({});
 
+  // Tier 3 Specialization Tracks Filters
+  const [specSearch, setSpecSearch] = useState("");
+  const [specDifficulty, setSpecDifficulty] = useState("all");
+
   // Resolve current active course
   const currentCourse = useMemo(() => {
     return getCourseByCode(selectedCourseId) || PRIORITY_COURSES["EC23S01"];
@@ -219,7 +224,9 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
     { id: "prerequisites", label: "Prerequisites & DAG", icon: "🔗", key: "6" },
     { id: "simulator", label: "Lab Simulator", icon: "⚡", key: "7" },
     { id: "projects", label: "Projects & Progress", icon: "🚀", key: "8" },
-    { id: "textbooks", label: "Textbooks & NPTEL", icon: "🏛️", key: "9" }
+    { id: "textbooks", label: "Textbooks & NPTEL", icon: "📚", key: "9" },
+    { id: "specializations", label: "Specialization Tracks (Tier 3)", icon: "🌐", key: "s" },
+    { id: "institutional", label: "Institutional Profile (Isolated)", icon: "🏛️", key: "0" }
   ], []);
 
   // Keyboard navigation handler (zero polling daemons)
@@ -288,7 +295,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-[#041026] border border-slate-800 font-mono text-xs shadow-lg">
           <div className="flex items-center gap-2 text-slate-400">
             <span className="text-base">🎓</span>
-            <span className="font-bold text-slate-300 uppercase tracking-wider">ECE Regulation 2023 Courses:</span>
+            <span className="font-bold text-slate-300 uppercase tracking-wider">Modular Course Series:</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -431,7 +438,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 <span>🏛️ Course Academic Profile</span>
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Formally sanctioned under Anna University Regulation 2023 for Bachelor of Engineering in Electronics and Communication Engineering at Madras Institute of Technology (MIT Campus). Aligned with Choice-Based Credit System (CBCS) and Outcome-Based Education (OBE) Tier-1 accreditation benchmarks.
+                Standardized modular engineering curriculum aligned with Outcome-Based Education (OBE) and Choice-Based Credit System (CBCS) Tier-1 benchmarks.
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
@@ -448,8 +455,8 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                   <div className="text-emerald-400 font-bold text-sm mt-0.5">{currentCourse.credits} ({currentCourse.lectureTutorialLabHours})</div>
                 </div>
                 <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                  <div className="text-[10px] text-slate-500 uppercase">Regulation</div>
-                  <div className="text-white font-bold text-xs mt-0.5">Reg 2023</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Curriculum Framework</div>
+                  <div className="text-white font-bold text-xs mt-0.5">{currentCourse.regulation || "Modular Core"}</div>
                 </div>
                 <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase">Syllabus Hours</div>
@@ -506,7 +513,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 <div className="text-xs text-slate-400">Direct shortcuts to interactive course modules</div>
               </div>
               <span className="text-xs font-mono px-2.5 py-1 rounded bg-[#020813] border border-slate-700 text-emerald-400">
-                Anna Univ Reg 2023 Aligned
+                Modular Syllabus Aligned
               </span>
             </div>
 
@@ -753,8 +760,8 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
         <div role="tabpanel" id="panel-outcomes" aria-labelledby="tab-outcomes" className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
             <div>
-              <h3 className="font-bold text-base text-white">Course Outcomes (COs) & NBA Tier-1 Mapping</h3>
-              <div className="text-xs text-slate-400">Anna University Regulation 2023 OBE Attainment Matrix</div>
+              <h3 className="font-bold text-base text-white">Course Outcomes (COs) & Outcome-Based Education Mapping</h3>
+              <div className="text-xs text-slate-400">Outcome-Based Education (OBE) Attainment Matrix</div>
             </div>
             <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-[#020813] border border-slate-800 text-emerald-400">
               Bloom's Taxonomy: L3-L6 HOTS
@@ -916,7 +923,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
               <div className="text-slate-400 uppercase text-[10px]">Associated NPTEL Course ID:</div>
               <div className="font-bold text-sm" style={{ color: theme.primaryColor }}>{currentCourse.nptelCourseId || "noc23-ee44"}</div>
               <div className="text-slate-400 text-[11px] leading-relaxed">
-                Lectures mapped directly from Indian Institute of Technology (IIT) faculties to Anna University Regulation 2023 curriculum units.
+                Lectures mapped from premier open educational resources and IIT faculties to modular syllabus units.
               </div>
             </div>
 
@@ -927,6 +934,143 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
               Open NPTEL Smart Lecture Player →
             </a>
           </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB 10: TIER 3 ADVANCED SPECIALIZATION TRACKS                         */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "specializations" && (
+        <div role="tabpanel" id="panel-specializations" aria-labelledby="tab-specializations" className="space-y-6">
+          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🌐</span>
+                  <h2 className="text-xl font-extrabold text-white tracking-tight">
+                    Tier 3 Advanced Specialization Tracks
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    10 Specializations
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Reconciled advanced engineering curriculum modules mapped to hardware simulators, zero-copy IPC, TinyML, and RISC-V microarchitectures.
+                </p>
+              </div>
+
+              {/* Filter controls */}
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Filter tracks, codes, hardware..."
+                  value={specSearch}
+                  onChange={(e) => setSpecSearch(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                />
+                <select
+                  value={specDifficulty}
+                  onChange={(e) => setSpecDifficulty(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-cyan-400"
+                >
+                  <option value="all">All Difficulties</option>
+                  <option value="Fundamental">Fundamental</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Apex Research">Apex Research</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Specialization Tracks Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {TIER3_SPECIALIZATION_TRACKS
+                .filter(t => {
+                  const matchDiff = specDifficulty === "all" || t.difficulty === specDifficulty;
+                  const query = specSearch.toLowerCase();
+                  const matchQuery = !query ||
+                    t.track.toLowerCase().includes(query) ||
+                    t.title.toLowerCase().includes(query) ||
+                    t.code.toLowerCase().includes(query) ||
+                    t.summary.toLowerCase().includes(query) ||
+                    t.hardwareKit.some(h => h.toLowerCase().includes(query));
+                  return matchDiff && matchQuery;
+                })
+                .map(track => (
+                  <div
+                    key={track.id}
+                    className="p-5 rounded-2xl border border-slate-800/80 bg-slate-900/50 hover:border-slate-700 transition-all space-y-3 flex flex-col justify-between"
+                    style={{
+                      borderLeft: `4px solid ${track.themeColor}`
+                    }}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{track.icon}</span>
+                          <span className="font-bold text-white text-sm">{track.track}</span>
+                        </div>
+                        <span
+                          className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold"
+                          style={{
+                            color: track.themeColor,
+                            backgroundColor: `${track.themeColor}15`,
+                            border: `1px solid ${track.themeColor}40`
+                          }}
+                        >
+                          {track.code}
+                        </span>
+                      </div>
+
+                      <h3 className="font-semibold text-xs text-slate-200 leading-snug">
+                        {track.title}
+                      </h3>
+
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
+                        {track.summary}
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {track.hardwareKit.map((hw, idx) => (
+                          <span key={idx} className="text-[9px] px-2 py-0.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700/60 font-mono">
+                            {hw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                        <span>⏱️ {track.duration}</span>
+                        <span>•</span>
+                        <span className="text-amber-400">{track.difficulty}</span>
+                      </div>
+
+                      <a
+                        href={track.simRoute}
+                        className="px-3 py-1 rounded-xl font-bold font-mono text-[11px] transition-all hover:scale-105 inline-flex items-center gap-1.5 shadow-md"
+                        style={{
+                          color: track.themeColor,
+                          border: `1px solid ${track.themeColor}60`,
+                          backgroundColor: `${track.themeColor}15`
+                        }}
+                      >
+                        <span>⚡</span>
+                        <span>Simulator: {track.simulationComponent}</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB 11: INSTITUTIONAL PROFILE & REGULATORY ISOLATION                  */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "institutional" && (
+        <div role="tabpanel" id="panel-institutional" aria-labelledby="tab-institutional" className="space-y-6">
+          <InstitutionalProfileTab isEmbeddedInShell={true} />
         </div>
       )}
     </div>

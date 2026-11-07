@@ -1,14 +1,17 @@
 ---
-title: "EC8702: Embedded Systems & Real-Time Operating Systems Architecture"
+title: "Advanced Embedded Systems Architecture & Real-Time Operating Systems"
 code: "EC8702"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 1
-description: "Master embedded C development, FreeRTOS multi-tasking, memory-mapped I/O, SPI/I2C peripheral drivers, and low-power ESP32 IoT nodes tailored for Anna University standards."
+specializationTrack: "Advanced Embedded Systems"
+simulationComponent: "EmbeddedSystemsHub"
+trackSlug: "embedded-systems"
+description: "Master embedded C development, FreeRTOS multi-tasking, memory-mapped I/O, SPI/I2C peripheral drivers, and low-power ESP32 IoT nodes tailored for production engineering standards."
 difficulty: "Advanced"
-author: "MIT Campus Embedded Systems Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-08-15
 prerequisites:
   - "Digital Electronics & Microprocessors (8086 / 8051)"
@@ -29,7 +32,7 @@ tags:
   - "FreeRTOS"
   - "ESP32"
   - "IoT Architecture"
-  - "Anna University R2021"
+  - "Real-Time Systems"
 syllabusUnits:
   - unit: 1
     title: "Introduction to Embedded Computing & ARM Cortex Architecture"
@@ -56,9 +59,9 @@ ieeeReference: "IEEE Transactions on Industrial Informatics, Vol. 19, No. 4, pp.
 xpReward: 350
 ---
 
-# EC8702: Embedded Systems & Real-Time Operating Systems Architecture
+# Advanced Embedded Systems Architecture & Real-Time Operating Systems
 
-Welcome to the Anna University / MIT Campus syllabus for **EC8702**. This advanced module covers the bridge between silicon physics, register abstractions, and real-time deterministic software.
+Welcome to the **Core Engineering Series** module for **Advanced Embedded Systems Architecture**. This advanced module covers the bridge between silicon physics, register abstractions, and real-time deterministic software.
 
 ## Key Laboratory Directives
 - **Hardware Target**: ESP32-WROOM-32 DevKit v4

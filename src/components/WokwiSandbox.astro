@@ -20,7 +20,7 @@ const {
 // Standard Wokwi Topology Schema for the ESP32 Smart Attendance Node
 const diagramJsonData = {
   "version": 1,
-  "author": "VoltCore Silicon Architecture Team (MIT Campus)",
+  "author": "VoltCore Silicon Architecture Team (Autonomous Cluster)",
   "editor": "wokwi",
   "parts": [
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
@@ -57,7 +57,7 @@ const diagramJsonString = JSON.stringify(diagramJsonData, null, 2);
 const firmwareCodeSample = `/**
  * VoltCore Apex Academia - ESP32 Smart Attendance Node
  * Target: ESP32-WROOM-32 | MFRC522 RFID SPI & SSD1306 I2C
- * Anna University / MIT Campus Standards
+ * Core Engineering Series • Autonomous Test Bench Standards
  */
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -65,7 +65,7 @@ const firmwareCodeSample = `/**
 const char* WIFI_SSID     = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
 const char* SERVER_URL    = "http://10.0.2.2:5000/api/attendance";
-const char* NODE_ID       = "ESP32_MIT_IOT_LAB_01";
+const char* NODE_ID       = "ESP32_VOLTCORE_IOT_01";
 
 #define STATUS_LED_PIN 2
 #define MANUAL_BTN_PIN 0
@@ -77,9 +77,9 @@ struct StudentCard {
 };
 
 const StudentCard ROSTER[] = {
-    { "2023MITEC042", "Ashok Kumar A", "E2 80 6F 3B" },
-    { "2023MITEC015", "Kavitha Raman", "C3 4D 8A 11" },
-    { "MIT-FAC-019",  "Dr. K. S. Parthasarathy", "A4 12 99 F0" }
+    { "VOLT-ENG-042", "Ashok Kumar A", "E2 80 6F 3B" },
+    { "VOLT-ENG-015", "Kavitha Raman", "C3 4D 8A 11" },
+    { "FAC-ENG-019",  "Dr. K. S. Parthasarathy", "A4 12 99 F0" }
 };
 
 int cardIndex = 0;
@@ -427,10 +427,10 @@ void loop() {
         <div class="text-slate-500">I (38) boot: Flash: 4MB (DIO, 40MHz) | SRAM: 520KB</div>
         <div class="text-slate-400">======================================================================</div>
         <div class="text-slate-300 font-bold">       VOLTCORE APEX ACADEMIA - ESP32 IOT ATTENDANCE NODE             </div>
-        <div class="text-slate-300">     Madras Institute of Technology (MIT) Campus, Anna University     </div>
+        <div class="text-slate-300">     Core Engineering Series • Autonomous Engineering Cluster         </div>
         <div class="text-slate-400">======================================================================</div>
-        <div class="text-slate-300">  Target Node ID  : ESP32_MIT_IOT_LAB_01</div>
-        <div class="text-slate-300">  Lab Facility    : MIT Chromepet - Embedded Systems Lab 304</div>
+        <div class="text-slate-300">  Target Node ID  : ESP32_VOLTCORE_IOT_01</div>
+        <div class="text-slate-300">  Lab Facility    : Autonomous Embedded Cluster Lab 304</div>
         <div class="text-slate-400">----------------------------------------------------------------------</div>
         <div class="text-cyan-400">[WIFI] Connecting to SSID: 'Wokwi-GUEST' ......</div>
         <div class="text-[#00F0B5] font-bold">[WIFI] Connected Successfully!</div>
@@ -444,8 +444,8 @@ void loop() {
         <!-- Interactive Simulated Scan Event -->
         <div class="text-[#00F0B5] font-bold pt-2">[CARD DETECTED] Simulated RFID Tap: E2 80 6F 3B</div>
         <div class="text-slate-200">  Student Name : Ashok Kumar A</div>
-        <div class="text-slate-200">  Roll Number  : 2023MITEC042</div>
-        <div class="text-slate-200">  Department   : Dept of Electronics Engg (MIT Campus)</div>
+        <div class="text-slate-200">  Roll Number  : VOLT-ENG-042</div>
+        <div class="text-slate-200">  Cluster      : Autonomous Engineering Cluster</div>
         <div class="text-cyan-300">[HTTP POST] Target: http://10.0.2.2:5000/api/attendance</div>
         <div class="text-emerald-400 font-bold">[HTTP RES]  Code: 200 OK | Response: &#123;&quot;status&quot;:&quot;success&quot;,&quot;xp_awarded&quot;:50&#125;</div>
         <div class="text-slate-400">[LED] GPIO 2 pulse acknowledged. Attendance recorded.</div>
@@ -508,9 +508,9 @@ void loop() {
     scanDiv.innerHTML = `
       <div class="text-amber-400 font-bold">[${now}] [USER TRIGGER] Manual RFID Card Tap Triggered!</div>
       <div class="text-[#00F0B5] font-semibold">  Card UID     : E2 80 6F 3B</div>
-      <div class="text-slate-200">  Student      : Ashok Kumar A (2023MITEC042)</div>
+      <div class="text-slate-200">  Student      : Ashok Kumar A (VOLT-ENG-042)</div>
       <div class="text-cyan-300">  [HTTP POST]  Dispatching to Flask Server on port 5000...</div>
-      <div class="text-emerald-400 font-bold">  [HTTP 200]   Lab Attendance Logged! +50 XP Awarded (MIT Campus Gateway)</div>
+      <div class="text-emerald-400 font-bold">  [HTTP 200]   Lab Attendance Logged! +50 XP Awarded (Autonomous Gateway)</div>
     `;
     terminalLog.appendChild(scanDiv);
     terminalLog.scrollTop = terminalLog.scrollHeight;

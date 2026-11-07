@@ -1,17 +1,20 @@
 ---
-title: "EC8704: Automotive Radar & Ultrasonic Edge Sensing Telemetry"
-code: "EC8704"
+title: "Automotive Radar & Ultrasonic Edge Sensing Telemetry"
+code: "AUTO8702"
 semester: 7
-regulation: "Anna University R2021"
-department: "Department of Electronics Engineering, MIT Campus"
+regulation: "Core Engineering Series"
+department: "Autonomous Engineering Cluster"
 credits: 4
 order: 2
+specializationTrack: "Automotive Radar"
+simulationComponent: "VirtualOscilloscope"
+trackSlug: "automotive-radar"
 description: "Design automotive ultrasonic Time-of-Flight (ToF) obstacle detection and CAN-bus telemetry nodes, analyzing acoustic multipath reflections, temperature velocity drift, and hardware input-capture timers."
 difficulty: "Intermediate"
-author: "MIT Campus Automotive Electronics Faculty"
+author: "VoltCore Silicon Architecture Team"
 publishDate: 2026-08-25
 prerequisites:
-  - "EC8701: IoT Edge Node Foundations"
+  - "IoT Edge Node Foundations"
   - "Acoustics & Wave Propagation in Fluid Media"
   - "Controller Area Network (CAN 2.0B) Protocol"
 learningOutcomes:
@@ -29,7 +32,7 @@ tags:
   - "Ultrasonic ToF"
   - "CAN-Bus"
   - "Temperature Drift"
-  - "Anna University R2021"
+  - "Automotive Radar"
 syllabusUnits:
   - unit: 1
     title: "Acoustic Transducer Mechanics & 40 kHz Wave Propagation"
@@ -56,7 +59,7 @@ ieeeReference: "IEEE Transactions on Vehicular Technology, Vol. 72, No. 8, pp. 9
 xpReward: 350
 ---
 
-# EC8704: Automotive Radar & Ultrasonic Edge Sensing Telemetry
+# Automotive Radar & Ultrasonic Edge Sensing Telemetry
 
 <div class="ieee-abstract">
   <strong>Abstract</strong>—Advanced Driver Assistance Systems (ADAS) in contemporary electric and autonomous vehicles utilize multi-sensor fusion combining ultrasonic transducers with mmWave radar for blind-spot and low-speed parking navigation. This module explores the signal conditioning, hardware timer input-capture routines, and CAN-bus telemetry interfacing of 40 kHz ultrasonic transceivers. We examine acoustic attenuation in atmospheric media, mathematically evaluate speed-of-sound thermal gradients, and evaluate specular reflection failure modes.
@@ -69,19 +72,27 @@ xpReward: 350
 
 ## I. Speed of Sound Temperature Dynamics & Time-of-Flight Formulation
 
-The distance $d$ to a reflecting target is determined by measuring round-trip Time-of-Flight ($\Delta t$):
+The distance $d$ to a reflecting target is determined by measuring round-trip Time-of-Flight (`$\Delta t$`):
 
-$$d = \frac{c_{\text{air}}(T) \cdot \Delta t}{2}$$
 
-The velocity of sound in dry air $c_{\text{air}}$ varies with absolute temperature $T$ (in Celsius):
+```latex
+d = \frac{c_{air}(T) \cdot \Delta t}{2}
+```
 
-$$c_{\text{air}}(T) = 331.3 \cdot \sqrt{1 + \frac{T}{273.15}} \approx 331.3 + 0.606 \cdot T \quad [\text{m/s}]$$
 
-| Temperature ($T$) | Speed of Sound ($c$) | Echo Pulse Width ($2 \times 1.0\text{ m}$) | Distance Error without Compensation |
+The velocity of sound in dry air `$c_{air}$` varies with absolute temperature $T$ (in Celsius):
+
+
+```latex
+c_{air}(T) = 331.3 \cdot \sqrt{1 + \frac{T}{273.15}} \approx 331.3 + 0.606 \cdot T \quad [m/s]
+```
+
+
+| Temperature ($T$) | Speed of Sound ($c$) | Echo Pulse Width (`$2 \times 1.0 m$`) | Distance Error without Compensation |
 | :--- | :--- | :--- | :--- |
-| **$-20^\circ\text{C}$** | $318.9 \text{ m/s}$ | $6.27 \text{ ms}$ | **$-7.1\%$ Error (Under-reads)** |
-| **$+25^\circ\text{C}$ (Standard)** | $346.3 \text{ m/s}$ | $5.77 \text{ ms}$ | **$0.0\%$ (Calibrated Baseline)** |
-| **$+50^\circ\text{C}$ (Tarmac)** | $361.2 \text{ m/s}$ | $5.54 \text{ ms}$ | **$+4.3\%$ Error (Over-reads)** |
+| **`$-20^\circC$`** | $318.9  m/s$ | $6.27  ms$ | **`$-7.1\%$` Error (Under-reads)** |
+| **`$+25^\circC$` (Standard)** | $346.3  m/s$ | $5.77  ms$ | **`$0.0\%$` (Calibrated Baseline)** |
+| **`$+50^\circC$` (Tarmac)** | $361.2  m/s$ | $5.54  ms$ | **`$+4.3\%$` Error (Over-reads)** |
 
 ---
 
@@ -94,25 +105,25 @@ $$c_{\text{air}}(T) = 331.3 \cdot \sqrt{1 + \frac{T}{273.15}} \approx 331.3 + 0.
   </div>
 
   <p class="text-xs text-slate-200 leading-relaxed font-sans">
-    When reversing an autonomous prototype toward smooth, angled surfaces (such as slanted rear bumper plastics, diamond-mesh security gates, or curbs), the ultrasonic receiver records <strong>maximum timeout ($> 38 \text{ ms}$ / "clear path")</strong> despite being only $30 \text{ cm}$ away from an imminent collision.
+    When reversing an autonomous prototype toward smooth, angled surfaces (such as slanted rear bumper plastics, diamond-mesh security gates, or curbs), the ultrasonic receiver records <strong>maximum timeout (`$> 38  ms$` / "clear path")</strong> despite being only $30  cm$ away from an imminent collision.
   </p>
 
   <div class="p-3 rounded-xl bg-[#020813] border border-red-500/30 text-xs font-mono text-slate-300 space-y-2">
     <div class="text-amber-400 font-bold">1. Acoustic Specular Reflection:</div>
     <p>
-      At 40 kHz, sound waves have a wavelength $\lambda \approx 8.6 \text{ mm}$. When an obstacle surface has surface roughness smaller than $\lambda / 8 \approx 1.1 \text{ mm}$, reflection is purely <em>specular</em> (mirror-like) rather than <em>diffuse</em>. If the angle of incidence $\theta_i > 22.5^\circ$, the reflected echo bounces away at angle $\theta_r = \theta_i$, entirely missing the receiving piezoelectric receiver cone!
+      At 40 kHz, sound waves have a wavelength `$\lambda \approx 8.6  mm$`. When an obstacle surface has surface roughness smaller than `$\lambda / 8 \approx 1.1  mm$`, reflection is purely <em>specular</em> (mirror-like) rather than <em>diffuse</em>. If the angle of incidence `$\theta_i > 22.5^\circ$`, the reflected echo bounces away at angle `$\theta_r = \theta_i$`, entirely missing the receiving piezoelectric receiver cone!
     </p>
 
     <div class="text-amber-400 font-bold pt-1">2. Ground Multi-Path & Snow Layer Absorption:</div>
     <p>
-      Porous snow, gravel, or thick automotive carpeting acts as an acoustic quarter-wave destructive absorber, dissipating up to $18 \text{ dB}$ of return acoustic energy and yielding phantom false-clear navigation readings.
+      Porous snow, gravel, or thick automotive carpeting acts as an acoustic quarter-wave destructive absorber, dissipating up to $18  dB$ of return acoustic energy and yielding phantom false-clear navigation readings.
     </p>
   </div>
 
   <div class="p-3 rounded-xl bg-[#00693E]/20 border border-[#00F0B5]/30 text-xs font-mono text-slate-300 space-y-1">
-    <div class="text-[#00F0B5] font-bold">✓ Anna University Laboratory Mitigation Protocol:</div>
+    <div class="text-[#00F0B5] font-bold">✓ Automotive Radar Mitigation Protocol:</div>
     <ul class="list-disc list-inside space-y-1 text-slate-300">
-      <li><strong>Triangulated Multi-Transducer Grid:</strong> Deploy an array of 3 transducers spaced at $\ge 25 \text{ cm}$. If Sensor 1 emits, Sensor 2 and Sensor 3 capture angled specular returns.</li>
+      <li><strong>Triangulated Multi-Transducer Grid:</strong> Deploy an array of 3 transducers spaced at `$\ge 25  cm$`. If Sensor 1 emits, Sensor 2 and Sensor 3 capture angled specular returns.</li>
       <li><strong>Real-Time Temperature Probe:</strong> Sample a digital thermometer (DS18B20) every 5 seconds and dynamically update the speed-of-sound conversion multiplier in the timer ISR.</li>
       <li><strong>CAN Bus Redundancy:</strong> Route ultrasonic readings over CAN 2.0B with a dedicated high-priority frame identifier (ID: `0x0F0`) and cross-verify with optical ToF lidar sensors.</li>
     </ul>

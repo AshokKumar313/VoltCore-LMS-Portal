@@ -1,19 +1,25 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { getLabsByCourse, getLabById } from '../data/course_lab_data';
+import VirtualOscilloscope from './VirtualOscilloscope.jsx';
+import WokwiSimulationController from './WokwiSimulationController.jsx';
+import WebUsbFlashingPanel from './WebUsbFlashingPanel.jsx';
+import GeminiTutorChat from './GeminiTutorChat.jsx';
 
 /**
  * ========================================================================================
  * VoltCore Apex Academia - Laboratory Simulators & Interactive Benchmarks (Phase 8)
- * Anna University / MIT Campus - Department of Electronics Engineering (Regulation 2023)
+ * Core Engineering Series • Autonomous Test Bench Standards
  * Platform Lead & Systems Architect: Ashok Kumar A
  * Public Contact: ashokkumar3132008@gmail.com | GitHub: https://github.com/AshokKumar313
+ * Series: Core Engineering Series • Autonomous Engineering Cluster
  *
  * Capabilities:
  *   - Client-side physics simulators with real-time SVG waveform / characteristic rendering
  *   - DSP Filter Bode grapher, Diode/MOSFET IV curve tracer, Laser g-stability diagram, RTOS Gantt
- *   - One-click benchmark preset scenario injection
+ *   - Universal Virtual Benches: DSO, Wokwi Bridge, WebUSB Flasher, Gemini AI Tutor
+ *   - Cross-tool telemetry logging (voltcore:lab-telemetry event bus)
  *   - Local observation data logger (CSV export, zero background polling daemons)
- *   - Anna University Regulation 2023 viva-voce rubrics and safety protocols
+ *   - Engineering syllabus viva-voce rubrics and safety protocols
  * ========================================================================================
  */
 
@@ -54,7 +60,8 @@ export default function CourseLabSimulator({
 
   // Observation records: array of logged row objects
   const [recordedTrials, setRecordedTrials] = useState([]);
-  const [activeTab, setActiveTab] = useState("simulator"); // "simulator" | "observations" | "viva"
+  const [activeTab, setActiveTab] = useState("simulator"); // "simulator" | "instruments" | "observations" | "viva"
+  const [activeBench, setActiveBench] = useState("dso"); // "dso" | "wokwi" | "flasher" | "tutor"
 
   // Load trials from localStorage
   useEffect(() => {
@@ -71,6 +78,42 @@ export default function CourseLabSimulator({
     } catch (e) {
       // Graceful fallback
     }
+  }, [currentLab?.id]);
+
+  // Cross-component telemetry listener for Virtual Benches (DSO, Wokwi, Flasher, Gemini Viva)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleIncomingTelemetry = (event) => {
+      if (!event.detail) return;
+      const telemetry = event.detail;
+      const newEntry = {
+        id: `tel-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        timestamp: new Date().toLocaleTimeString(),
+        source: telemetry.tool || "Virtual Bench",
+        ...(telemetry.board ? { board: telemetry.board } : {}),
+        ...(telemetry.status ? { status: telemetry.status } : {}),
+        ...(telemetry.topic ? { topic: telemetry.topic } : {}),
+        ...(telemetry.parameters || {})
+      };
+
+      setRecordedTrials((prev) => {
+        const updated = [newEntry, ...prev].slice(0, 50);
+        try {
+          if (currentLab?.id) {
+            localStorage.setItem(`${STORAGE_KEY_PREFIX}${currentLab.id}`, JSON.stringify(updated));
+          }
+        } catch (e) {
+          // Graceful fallback
+        }
+        return updated;
+      });
+    };
+
+    window.addEventListener('voltcore:lab-telemetry', handleIncomingTelemetry);
+    return () => {
+      window.removeEventListener('voltcore:lab-telemetry', handleIncomingTelemetry);
+    };
   }, [currentLab?.id]);
 
   // Update a single parameter
@@ -112,9 +155,18 @@ export default function CourseLabSimulator({
       const logF = Math.log10(minF) + (i / (numPoints - 1)) * (Math.log10(maxF) - Math.log10(minF));
       const f = Math.pow(10, logF);
       const ratio = f / fc;
-      // Butterworth |H(f)|^2 = A0^2 / (1 + (f/fc)^(2N))
-      const magGain = gain / Math.sqrt(1 + Math.pow(ratio, 2 * order));
-      const magDb = 20 * Math.log10(magGain);
+      
+      let magGain = gain;
+      if (paramValues.filterType === 1 || paramValues.isChebyshev) {
+        // Chebyshev Type I polynomial CN(x)
+        const eps = Math.sqrt(Math.pow(10, (paramValues.rippleDb || 1.0) / 10) - 1);
+        const cn = ratio <= 1.0 ? Math.cos(order * Math.acos(ratio)) : Math.cosh(order * Math.acosh(ratio));
+        magGain = gain / Math.sqrt(1 + Math.pow(eps * cn, 2));
+      } else {
+        // Butterworth |H(f)|^2 = A0^2 / (1 + (f/fc)^(2N))
+        magGain = gain / Math.sqrt(1 + Math.pow(ratio, 2 * order));
+      }
+      const magDb = 20 * Math.log10(Math.max(magGain, 1e-4));
       points.push({ f: Math.round(f), ratio: Number(ratio.toFixed(2)), magGain: Number(magGain.toFixed(4)), magDb: Number(magDb.toFixed(2)) });
     }
 
@@ -364,7 +416,7 @@ export default function CourseLabSimulator({
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-bold" style={{ color: themeColor }}>
               <span>🧪</span>
-              <span>ANNA UNIVERSITY REG 2023 • VIRTUAL LAB WORKBENCH</span>
+              <span>MODULAR ENGINEERING SERIES • VIRTUAL LAB WORKBENCH</span>
               <span className="text-slate-500">•</span>
               <span className="text-slate-400">Unit {currentLab.unitRoman} Practical</span>
             </div>
@@ -413,12 +465,13 @@ export default function CourseLabSimulator({
           </div>
         )}
 
-        {/* View Mode Navigation: Simulator vs Observations vs Viva Voce */}
-        <div className="flex gap-2 pt-2">
+        {/* View Mode Navigation: Simulator vs Universal Instruments vs Observations vs Viva Voce */}
+        <div className="flex flex-wrap gap-2 pt-2">
           {[
             { id: "simulator", label: "Simulation & Waveforms", icon: "📊" },
+            { id: "instruments", label: "Universal Virtual Benches", icon: "🔬" },
             { id: "observations", label: `Observation Data Log (${recordedTrials.length})`, icon: "📋" },
-            { id: "viva", label: "Viva-Voce & Reg 2023 Rubric", icon: "🎓" }
+            { id: "viva", label: "Viva-Voce & Lab Rubric", icon: "🎓" }
           ].map(tab => (
             <button
               key={tab.id}
@@ -517,7 +570,7 @@ export default function CourseLabSimulator({
             <div className="p-4 rounded-xl bg-[#020813] border border-slate-800 font-mono text-xs space-y-2">
               <div className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                 <span>🛡️</span>
-                <span>Regulation 2023 Safety Compliance:</span>
+                <span>Laboratory Safety Compliance:</span>
               </div>
               <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
                 {currentLab.safetyProtocol}
@@ -919,6 +972,54 @@ export default function CourseLabSimulator({
       )}
 
       {/* --------------------------------------------------------------------- */}
+      {/* VIEW: UNIVERSAL VIRTUAL INSTRUMENTATION BENCHES */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "instruments" && (
+        <div className="space-y-6">
+          <div className="p-5 rounded-2xl bg-[#041026] border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <span>🔬</span>
+                <span>Universal Hardware Simulation Benches &amp; Test Instrumentation</span>
+              </h3>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
+                Cross-instrument telemetry automatically logs into the current laboratory observation ledger
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+              {[
+                { id: 'dso', label: 'Virtual DSO (Rigol DS1054Z)', icon: '📈' },
+                { id: 'wokwi', label: 'Wokwi Silicon Controller', icon: '⚡' },
+                { id: 'flasher', label: 'WebUSB/Serial Flasher', icon: '🔌' },
+                { id: 'tutor', label: 'Gemini AI Lab Tutor', icon: '🤖' }
+              ].map(bench => (
+                <button
+                  key={bench.id}
+                  type="button"
+                  onClick={() => setActiveBench(bench.id)}
+                  className={`px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
+                    activeBench === bench.id
+                      ? 'border-[#00F0B5] bg-[#020813] text-[#00F0B5] font-bold shadow-emerald-glow'
+                      : 'border-slate-800 bg-[#020813]/60 text-slate-400 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  <span className="mr-1.5">{bench.icon}</span>
+                  <span>{bench.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="transition-all duration-200">
+            {activeBench === 'dso' && <VirtualOscilloscope />}
+            {activeBench === 'wokwi' && <WokwiSimulationController />}
+            {activeBench === 'flasher' && <WebUsbFlashingPanel />}
+            {activeBench === 'tutor' && <GeminiTutorChat />}
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
       {/* VIEW 2: OBSERVATION DATA LOG TABLE */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "observations" && (
@@ -930,7 +1031,7 @@ export default function CourseLabSimulator({
                 <span>Recorded Laboratory Observations &amp; Verification Matrix</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5 font-mono">
-                Anna University Regulation 2023 Student Trial Audit • Zero-Overhead Local Storage
+                Modular Engineering Laboratory Trial Audit • Zero-Overhead Local Storage
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -963,6 +1064,7 @@ export default function CourseLabSimulator({
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 bg-[#020813]/60">
                     <th className="py-2.5 px-3">Time</th>
+                    <th className="py-2.5 px-3">Origin / Tool</th>
                     {currentLab.observationColumns.map(col => (
                       <th key={col.id} className="py-2.5 px-3">
                         {col.label} ({col.unit})
@@ -974,9 +1076,14 @@ export default function CourseLabSimulator({
                   {recordedTrials.map((t, idx) => (
                     <tr key={t.id || idx} className="hover:bg-slate-800/20">
                       <td className="py-2.5 px-3 text-slate-400">{t.timestamp}</td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-emerald-400 border border-slate-700">
+                          {t.source || "Manual Trial"}
+                        </span>
+                      </td>
                       {currentLab.observationColumns.map(col => (
                         <td key={col.id} className="py-2.5 px-3 font-bold text-white">
-                          {t[col.id] || "—"}
+                          {t[col.id] !== undefined ? t[col.id] : (t.status || t.board || "—")}
                         </td>
                       ))}
                     </tr>

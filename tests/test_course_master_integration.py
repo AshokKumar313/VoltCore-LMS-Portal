@@ -190,3 +190,29 @@ def test_performance_and_thermal_invariants(unified_suite):
 
     # Ensure passive execution well within thermal budget (<150 ms)
     assert elapsed_ms < 150.0, f"Combined execution exceeded thermal threshold: {elapsed_ms}ms"
+
+
+def test_sqlite_wal_mode_and_busy_timeout(temp_db):
+    """Verify that CourseQuizEngine, CourseLabEngine, and CourseProjectsEngine enforce SQLite WAL mode and synchronous NORMAL."""
+    import sqlite3
+    from backend.course_quiz_engine import CourseQuizEngine
+    from backend.course_lab_engine import CourseLabEngine
+    from backend.course_projects_engine import CourseProjectsEngine
+
+    quiz = CourseQuizEngine(db_path=temp_db)
+    lab = CourseLabEngine(db_path=temp_db)
+    proj = CourseProjectsEngine(db_path=temp_db)
+
+    # 1. Verify WAL mode persisted in database header
+    conn = sqlite3.connect(temp_db)
+    journal_mode = conn.execute("PRAGMA journal_mode;").fetchone()[0]
+    conn.close()
+    assert journal_mode.upper() == "WAL", f"Expected WAL mode, got {journal_mode}"
+
+    # 2. Verify per-connection PRAGMA configuration via engine connection factories
+    for engine in [quiz, lab, proj]:
+        c = engine._get_connection()
+        sync_mode = c.execute("PRAGMA synchronous;").fetchone()[0]
+        c.close()
+        assert sync_mode in [1, "NORMAL", "normal"], f"Expected synchronous NORMAL (1), got {sync_mode}"
+

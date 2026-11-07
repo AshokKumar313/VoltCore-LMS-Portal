@@ -2,15 +2,16 @@
 import MainLayout from '../layouts/MainLayout.astro';
 import SystemStatusWidget from '../components/SystemStatusWidget.jsx';
 import CapstonePortfolioHub from '../components/CapstonePortfolioHub.jsx';
+import InstitutionalProfileTab from '../components/InstitutionalProfileTab.jsx';
 
-// Student Profile Constants for Ashok Kumar A
+// Student Profile Constants
 const profile = {
-  name: "Ashok Kumar A",
-  rollNo: "2023MITEC042",
-  department: "Department of Electronics Engineering",
-  institution: "Madras Institute of Technology (MIT) Campus, Anna University",
-  campus: "Chromepet, Chennai - 600 044",
-  email: "ashok.kumar.a@mitindia.edu",
+  name: "Engineering Scholar",
+  rollNo: "ENGR-2026-042",
+  department: "Electronics & Embedded Systems",
+  institution: "Autonomous Engineering Cluster",
+  campus: "Core Engineering Series",
+  email: "scholar.core@voltcore.org",
   rfidUid: "E2 80 6F 3B",
   rank: "Silicon Grandmaster (Level 18)",
   xpPoints: 4850,
@@ -18,21 +19,21 @@ const profile = {
   streakDays: 14,
   specialization: "Embedded Systems, FreeRTOS & IoT Hardware Design",
   completedModules: [
-    { code: "EC8702", title: "Embedded and Real-Time Systems Architecture", grade: "O (Outstanding)", credits: 4 },
-    { code: "EC8691", title: "Microprocessors and Microcontrollers (ARM Cortex)", grade: "O (Outstanding)", credits: 3 },
-    { code: "EC8791", title: "Internet of Things (IoT) Sensor Networks", grade: "A+", credits: 3 },
-    { code: "EC8711", title: "Embedded System Laboratory & Hardware In-The-Loop", grade: "O (Outstanding)", credits: 2 }
+    { code: "EMB401", title: "Embedded and Real-Time Systems Architecture", grade: "O (Outstanding)", credits: 4 },
+    { code: "MCU302", title: "Microprocessors and Microcontrollers (ARM Cortex)", grade: "O (Outstanding)", credits: 3 },
+    { code: "IOT303", title: "Internet of Things (IoT) Sensor Networks", grade: "A+", credits: 3 },
+    { code: "HIL304", title: "Embedded System Laboratory & Hardware In-The-Loop", grade: "O (Outstanding)", credits: 2 }
   ],
   hardwareBadges: [
     { title: "FreeRTOS Kernel Master", icon: "⚡", description: "Configured multi-task preemption, mutexes, and queues on dual-core ESP32." },
     { title: "Wokwi Hardware Virtuoso", icon: "🔬", description: "Successfully simulated SPI/I2C mixed topologies with zero timing jitter." },
     { title: "Silicon Cryptographer", icon: "🛡️", description: "Implemented PBKDF2-HMAC-SHA256 authenticated edge node verification." },
-    { title: "14-Day Lab Attendance Streak", icon: "🔥", description: "Consistently swiped RFID MFRC522 card at MIT Embedded Lab 304." }
+    { title: "14-Day Lab Attendance Streak", icon: "🔥", description: "Consistently swiped RFID MFRC522 card at Embedded Hardware Lab." }
   ]
 };
 ---
 
-<MainLayout title={`Student Portfolio | ${profile.name} (MIT Campus)`} activeNav="profile">
+<MainLayout title={`Student Portfolio | ${profile.name} (Core Series)`} activeNav="profile">
   <div class="space-y-8">
     
     <!-- Hero Profile Identity Header -->
@@ -54,7 +55,7 @@ const profile = {
                 {profile.name}
               </h1>
               <span class="px-2.5 py-0.5 rounded-full bg-[#00693E]/50 text-[#00F0B5] text-xs font-mono font-bold border border-[#00F0B5]/40">
-                MIT CAMPUS
+                CORE ENGINEERING
               </span>
             </div>
             <div class="text-xs sm:text-sm text-slate-300 font-mono mt-0.5">
@@ -194,6 +195,9 @@ const profile = {
 
     <!-- Phase 40: ECE Capstone Portfolio & Viva-Voce Examination Simulator Island -->
     <CapstonePortfolioHub client:load />
+
+    <!-- Dedicated Institutional Profile & Localized Regulatory Mapping (Dormant by Default) -->
+    <InstitutionalProfileTab client:load />
 
   </div>
 </MainLayout>

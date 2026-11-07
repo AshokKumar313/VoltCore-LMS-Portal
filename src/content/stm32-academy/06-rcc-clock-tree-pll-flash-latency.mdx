@@ -1,0 +1,207 @@
+---
+moduleNumber: 6
+title: 'RCC Clock Trees, PLL Multipliers & Flash Access Latency (16 MHz HSE to 84 MHz SYSCLK)'
+shortTitle: 'RCC Clock Tree & Flash Latency'
+tier: 'Tier 2: Core Peripherals'
+difficulty: 'Intermediate'
+boardTargets:
+  - 'Nucleo-F401RE'
+  - 'Blue Pill (STM32F103C8T6)'
+prerequisites:
+  - '05-bare-metal-gpio-atomic-bit-ops'
+estimatedDuration: '70 mins'
+cortexArchitecture: 'Universal Cortex-M'
+registerFocus:
+  - 'RCC_CR'
+  - 'RCC_PLLCFGR'
+  - 'RCC_CFGR'
+  - 'FLASH_ACR'
+  - 'PWR_CR'
+description: 'Industrial clock distribution architecture: HSE/HSI oscillator selection, multi-stage Phase-Locked Loop (PLL) multiplier math, bus prescalers, power regulator scaling, and Flash wait-state programming.'
+keyFormulas:
+  - 'PLL VCO: f_{VCO} = (f_{PLL_IN} / M) * N'
+  - 'SYSCLK: f_{SYSCLK} = f_{VCO} / P'
+  - 'USB Clock: f_{USB} = f_{VCO} / Q = 48 MHz'
+  - 'Flash Latency: 2 Wait States for 84 MHz'
+hardwareApparatus:
+  - 'Nucleo-F401RE (16 MHz Crystal)'
+  - 'Oscilloscope connected to MCO1 (PA8)'
+  - 'ST-LINK GDB Console'
+order: 6
+xpReward: 175
+author: 'VoltCore Silicon Architecture Team'
+publishDate: '2026-11-07'
+---
+
+# RCC Clock Trees, PLL Multipliers & Flash Access Latency (16 MHz HSE to 84 MHz SYSCLK)
+
+## 1. The Multi-Source Clock Distribution Architecture
+
+The Reset and Clock Control (RCC) subsystem is the heartbeat of the STM32 microcontroller. The processor core, memory controllers, and peripheral buses cannot operate without disciplined, low-jitter clock signals.
+
+```
+  OSCILLATOR SOURCES                          PHASE-LOCKED LOOP (PLL)                 TARGET SYSTEM DOMAINS
+  +----------------------+                     +---------------------+                 +------------------------+
+  | HSI: 16 MHz Int. RC  |----+                | /M Divider (2..63)  |                 | SYSCLK: Up to 84 MHz   |
+  +----------------------+    |                +---------------------+                 +------------------------+
+  | HSE: 16 MHz Ext. Osc |----+===> MUX =====> | *N Multiplier(50..432)===> MUX =====> | AHB: HCLK (max 84 MHz) |
+  +----------------------+                     +---------------------+                 +------------------------+
+  | LSI: 32 kHz Watchdog |                     | /P Divider (2,4,6,8)|                 | APB1: PCLK1 (max 42 MHz|
+  +----------------------+                     +---------------------+                 +------------------------+
+  | LSE: 32.768 kHz RTC  |                     | /Q Divider (USB 48M)|                 | APB2: PCLK2 (max 84 MHz|
+  +----------------------+                     +---------------------+                 +------------------------+
+```
+
+### 1.1 The Four Primary Clock Sources
+1. **HSI (High-Speed Internal):** 16 MHz on-chip RC oscillator. Factory-calibrated with approximately 1% accuracy at 25°C. Serves as default system clock immediately upon power-on reset.
+2. **HSE (High-Speed External):** External quartz crystal resonator or ceramic oscillator (4 MHz to 26 MHz). The ST-LINK on the Nucleo board outputs a stabilized 8 MHz or 16 MHz bypass clock to `OSC_IN` (`PH0`).
+3. **LSI (Low-Speed Internal):** 32 kHz low-power RC oscillator dedicated to the Independent Watchdog (`IWDG`) and auto-wakeup logic.
+4. **LSE (Low-Speed External):** 32.768 kHz precision crystal for the battery-backed Real-Time Clock (`RTC`).
+
+---
+
+## 2. Mathematical Derivations: Multi-Stage Phase-Locked Loop (PLL)
+
+To reach the maximum specified operating throughput of **84 MHz** on the STM32F401RE from a 16 MHz external HSE crystal, the main PLL multiplication and division chain must be computed according to ST's silicon guidelines:
+
+```latex
+# Equation 1: Voltage-Controlled Oscillator (VCO) Input Frequency
+f_{VCO\_IN} = \frac{f_{PLL\_IN}}{M} \quad (1\text{ MHz} \le f_{VCO\_IN} \le 2\text{ MHz})
+```
+
+```latex
+# Equation 2: Intermediate High-Speed VCO Frequency
+f_{VCO} = f_{VCO\_IN} \times N \quad (100\text{ MHz} \le f_{VCO} \le 432\text{ MHz})
+```
+
+```latex
+# Equation 3: Core System Clock (SYSCLK)
+f_{SYSCLK} = \frac{f_{VCO}}{P} \quad (f_{SYSCLK} \le 84\text{ MHz on STM32F401})
+```
+
+```latex
+# Equation 4: USB OTG Full-Speed / SDIO Clock
+f_{USB} = \frac{f_{VCO}}{Q} = 48\text{ MHz (Mandatory for USB 2.0 PHY)}
+```
+
+### 2.1 The 84 MHz Parameter Solution (HSE = 16 MHz)
+- **Input Division Factor M:** Set `M = 16`
+```latex
+f_{VCO_IN} = 16 MHz / 16 = 1.0 MHz
+```
+- **Multiplier Factor N:** Set `N = 336`
+```latex
+f_{VCO} = 1.0 MHz * 336 = 336 MHz
+```
+- **Main System Divider P:** Set `P = 4` (`PLLP = 0b01`)
+```latex
+f_{SYSCLK} = 336 MHz / 4 = 84.0 MHz
+```
+- **USB OTG Divider Q:** Set `Q = 7` (`PLLQ = 0b0111`)
+```latex
+f_{USB} = 336 MHz / 7 = 48.0 MHz
+```
+
+---
+
+## 3. Flash Memory Wait-States & Power Voltage Scaling
+
+### 3.1 Flash Access Control Register (`FLASH_ACR`)
+Because embedded Flash memory cannot be read at 84 MHz, firmware must configure the Flash Access Control Register before switching the system clock to the PLL output:
+- **`LATENCY` Bits [2:0]:** At `VDD = 3.3V`, 2 wait states (`LATENCY = 0b010`) are mandatory for speeds between 60 MHz and 84 MHz.
+- **`PRFTEN` (Bit 8):** Prefetch buffer enable.
+- **`ICEN` (Bit 9):** Instruction cache enable (ART Accelerator).
+- **`DCEN` (Bit 10):** Data cache enable.
+
+```c
+/* Configure 2 Wait States and enable ART Accelerator */
+FLASH_ACR = (1UL << 8) | (1UL << 9) | (1UL << 10) | (2UL << 0);
+```
+
+### 3.2 Power Controller (`PWR`) Voltage Scaling
+At 84 MHz, internal core regulator voltage must maintain sufficient drive strength:
+1. Enable `PWR` clock gate: `RCC_APB1ENR |= (1 << 28)`.
+2. Configure Voltage Output Scaling Mode: Set `PWR_CR.VOS` to Scale 2 (for operations up to 84 MHz).
+
+---
+
+## 4. Bus Clock Prescalers: AHB, APB1, APB2
+
+To prevent exceeding maximum bus bandwidth specifications:
+- **AHB Prescaler (`HPRE` in `RCC_CFGR`):** Set to `/1` (`HCLK = 84 MHz`).
+- **APB1 Prescaler (`PPRE1` in `RCC_CFGR`):** Low-speed bus limited to 42 MHz. Set to `/2` (`PCLK1 = 42 MHz`).
+- **APB2 Prescaler (`PPRE2` in `RCC_CFGR`):** High-speed bus rated to 84 MHz. Set to `/1` (`PCLK2 = 84 MHz`).
+
+> **Timer Clock Multiplier:** When an APB prescaler is not `/1`, internal hardware automatically doubles the clock feed to timer peripherals on that bus (`2 * 42 MHz = 84 MHz`), allowing high-resolution PWM even on the APB1 bus.
+
+---
+
+## 5. Production C Routine: `rcc_clock_init_84mhz_hse`
+
+```c
+#include <stdint.h>
+
+#define RCC_BASE        (0x40023800UL)
+#define FLASH_BASE      (0x40023C00UL)
+#define PWR_BASE        (0x40007000UL)
+
+#define RCC_CR          (*(volatile uint32_t *)(RCC_BASE + 0x00UL))
+#define RCC_PLLCFGR     (*(volatile uint32_t *)(RCC_BASE + 0x04UL))
+#define RCC_CFGR        (*(volatile uint32_t *)(RCC_BASE + 0x08UL))
+#define RCC_APB1ENR     (*(volatile uint32_t *)(RCC_BASE + 0x40UL))
+#define FLASH_ACR       (*(volatile uint32_t *)(FLASH_BASE + 0x00UL))
+#define PWR_CR          (*(volatile uint32_t *)(PWR_BASE + 0x00UL))
+
+void rcc_clock_init_84mhz_hse(void) {
+    /* 1. Turn on HSE Oscillator (Bit 16 in RCC_CR) */
+    RCC_CR |= (1UL << 16);
+    while (!(RCC_CR & (1UL << 17))) {
+        /* Wait for HSERDY (Bit 17) to stabilize */
+    }
+
+    /* 2. Enable Power Controller clock and set Voltage Scaling to Scale 2 */
+    RCC_APB1ENR |= (1UL << 28);
+    PWR_CR |= (2UL << 14); // Scale 2 mode (up to 84 MHz)
+
+    /* 3. Configure Flash Latency: 2 Wait States + Prefetch + Cache */
+    FLASH_ACR = (1UL << 8)  | /* PRFTEN: Prefetch Enable */
+                (1UL << 9)  | /* ICEN: Instruction Cache Enable */
+                (1UL << 10) | /* DCEN: Data Cache Enable */
+                (2UL << 0);   /* LATENCY: 2 Wait States */
+
+    /* 4. Configure Bus Prescalers: AHB = /1, APB1 = /2, APB2 = /1 */
+    RCC_CFGR |= (0UL << 4);   /* HPRE: AHB = /1 */
+    RCC_CFGR |= (4UL << 10);  /* PPRE1: APB1 = /2 (42 MHz max) */
+    RCC_CFGR |= (0UL << 13);  /* PPRE2: APB2 = /1 (84 MHz max) */
+
+    /* 5. Configure Main PLL: Source=HSE, M=16, N=336, P=4, Q=7 */
+    RCC_PLLCFGR = (1UL << 22)         | /* PLLSRC = HSE */
+                  (16UL << 0)         | /* PLLM = 16 */
+                  (336UL << 6)        | /* PLLN = 336 */
+                  (1UL << 16)         | /* PLLP = 01 (Division by 4: 336 / 4 = 84 MHz) */
+                  (7UL << 24);          /* PLLQ = 7  (336 / 7 = 48 MHz USB) */
+
+    /* 6. Enable Main PLL (Bit 24 in RCC_CR) */
+    RCC_CR |= (1UL << 24);
+    while (!(RCC_CR & (1UL << 25))) {
+        /* Wait for PLLRDY (Bit 25) */
+    }
+
+    /* 7. Switch System Clock to PLL Output (SW[1:0] = 0b10) */
+    RCC_CFGR &= ~(3UL << 0);
+    RCC_CFGR |=  (2UL << 0);
+    while ((RCC_CFGR & (3UL << 2)) != (2UL << 2)) {
+        /* Wait for SWS[1:0] = 0b10 (PLL used as system clock) */
+    }
+}
+```
+
+---
+
+## 6. Self-Assessment & Viva Voce Challenge
+
+1. **What happens if you switch the system clock to 84 MHz before configuring `FLASH_ACR.LATENCY = 2`?**
+   *Answer:* The processor core executes instructions at 84 MHz while the Flash memory array is unable to respond faster than 30 MHz. Instruction prefetch fails immediately, corrupting instruction decoding and causing an unrecoverable `HardFault`.
+
+2. **Why does APB1 require a `/2` prescaler when AHB runs at 84 MHz?**
+   *Answer:* The maximum silicon clock limit for the APB1 peripheral bus on STM32F401 is 42 MHz. Operating APB1 above 42 MHz causes timing violations in UART, I2C, and SPI peripheral shift registers.

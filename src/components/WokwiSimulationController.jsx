@@ -2,21 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * VoltCore Apex Academia - Advanced Wokwi Hardware Simulation Controller
- * Standards: Anna University / MIT Campus (Department of Electronics Engineering)
+ * Core Engineering Series • Autonomous Engineering Cluster
  * Features:
  *   - Virtual Potentiometer 12-bit ADC (GPIO 34 / 35) with live millivolt scaling
  *   - Interactive Tactile Pushbuttons (GPIO 0 Boot / GPIO 4 Manual Scan)
  *   - 4-Bit Hardware DIP Switch Register Simulator
  *   - DHT22 & HC-SR04 Ultrasonic Multi-Sensor Injection Engine
  *   - Real-Time Streaming UART Serial Terminal (115200 Baud) with Filter & Hex Export
- *   - Dynamic Logic Analyzer / Signal Waveform Canvas
+ *   - Cross-component telemetry dispatching (voltcore:lab-telemetry)
  */
 
 const PRESET_RFID_CARDS = [
-  { name: 'Ashok Kumar A', roll: '2023MITEC042', uid: 'E2 80 6F 3B', dept: 'ECE Dept' },
-  { name: 'Kavitha Raman', roll: '2023MITEC015', uid: 'C3 4D 8A 11', dept: 'ECE Dept' },
-  { name: 'Dr. K. S. Parthasarathy', roll: 'MIT-FAC-019', uid: 'A4 12 99 F0', dept: 'Faculty' },
-  { name: 'Rogue Card (Unauthorized)', roll: 'UNKNOWN-99', uid: 'FF FF FF FF', dept: 'Visitor' }
+  { name: 'Ashok Kumar A', roll: 'VOLT-ENG-042', uid: 'E2 80 6F 3B', dept: 'Embedded Cluster' },
+  { name: 'Kavitha Raman', roll: 'VOLT-ENG-015', uid: 'C3 4D 8A 11', dept: 'Embedded Cluster' },
+  { name: 'Dr. K. S. Parthasarathy', roll: 'FAC-ENG-019', uid: 'A4 12 99 F0', dept: 'Lead Faculty' },
+  { name: 'Rogue Card (Unauthorized)', roll: 'UNKNOWN-99', uid: 'FF FF FF FF', dept: 'Guest' }
 ];
 
 export default function WokwiSimulationController({
@@ -49,6 +49,8 @@ export default function WokwiSimulationController({
   const [baudRate, setBaudRate] = useState(defaultBaud);
   const [autoScroll, setAutoScroll] = useState(true);
   const [serialFilter, setSerialFilter] = useState('');
+  const [serialInputText, setSerialInputText] = useState('');
+  const [streamActive, setStreamActive] = useState(false);
   const [serialLogs, setSerialLogs] = useState([
     { id: 1, ts: '15:22:40.012', text: '[BOOT] ESP32-WROOM-32 (Xtensa LX6 @ 240MHz) FreeRTOS Kernel v10.4.3 initialized.', type: 'sys' },
     { id: 2, ts: '15:22:40.115', text: '[GPIO] Pin Mappings: SPI_CS=5, SCK=18, MOSI=23, MISO=19, I2C_SDA=21, I2C_SCL=22', type: 'info' },
@@ -72,6 +74,107 @@ export default function WokwiSimulationController({
     setSerialLogs((prev) => [...prev, { id: Date.now() + Math.random(), ts, text, type }]);
   };
 
+  // Live SSE Telemetry & Lesson Reader Bridge (Push-driven, ZERO polling loops)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let es = null;
+    if ('EventSource' in window) {
+      try {
+        es = new EventSource(`${serverUrl}/api/telemetry/stream`);
+
+        es.addEventListener('connect', () => {
+          setStreamActive(true);
+          appendSerialLog('[STREAM] Live SSE Telemetry Pipeline connected to Wokwi Bridge.', 'sys');
+        });
+
+        es.addEventListener('hardware_telemetry', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const payload = data.data || data;
+            if (payload.gpio_states?.GPIO34 !== undefined) {
+              setPotentiometerVal(payload.gpio_states.GPIO34);
+            }
+            if (payload.adc_readings?.ADC1_CH6_V !== undefined) {
+              appendSerialLog(`[REMOTE_ADC] GPIO 34 = ${payload.adc_readings.ADC1_CH6_V} V`, 'info');
+            }
+          } catch (_) {}
+        });
+
+        es.addEventListener('virtual_serial', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const payload = data.data || data;
+            appendSerialLog(`[UART_RX] ${payload.payload_text || payload.text}`, 'info');
+          } catch (_) {}
+        });
+
+        es.onerror = () => {
+          setStreamActive(false);
+          if (es) {
+            try { es.close(); } catch (_) {}
+          }
+        };
+      } catch (_) {}
+    }
+
+    // Local cross-component transmission from Lesson Reader or Virtual Instruments
+    const handleLessonTransmit = (e) => {
+      const text = e.detail?.text || e.detail?.payload || '';
+      if (text) {
+        appendSerialLog(`[LESSON_BRIDGE] Transmitted from curriculum lesson: "${text}"`, 'success');
+      }
+    };
+    window.addEventListener('voltcore:lesson-transmit', handleLessonTransmit);
+
+    return () => {
+      if (es) {
+        try { es.close(); } catch (_) {}
+      }
+      window.removeEventListener('voltcore:lesson-transmit', handleLessonTransmit);
+    };
+  }, [serverUrl]);
+
+  // Transmit Virtual Serial Command
+  const handleSendSerialCommand = async (e) => {
+    e.preventDefault();
+    const cmd = serialInputText.trim();
+    if (!cmd) return;
+
+    appendSerialLog(`> ${cmd}`, 'sys');
+    setSerialInputText('');
+
+    // Dispatch locally for zero-latency client response
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('voltcore:serial-tx', {
+        detail: { text: cmd, board: 'ESP32_VOLTCORE_IOT_01', timestamp: new Date().toISOString() }
+      }));
+    }
+
+    // Forward to backend stream if connected
+    try {
+      await fetch(`${serverUrl}/api/telemetry/serial/transmit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          board_id: 'ESP32_VOLTCORE_IOT_01',
+          text: cmd,
+          baud_rate: baudRate,
+          direction: 'TX'
+        })
+      });
+    } catch (_) {
+      // Offline fallback: respond to standard AT / diagnostic commands
+      if (cmd.toUpperCase() === 'AT') {
+        setTimeout(() => appendSerialLog('OK', 'success'), 50);
+      } else if (cmd.toUpperCase() === 'AT+GMR' || cmd.toUpperCase() === 'VERSION') {
+        setTimeout(() => appendSerialLog('[ESP-IDF] v5.1.2-dirty / FreeRTOS v10.4.3', 'info'), 50);
+      } else if (cmd.toUpperCase() === 'ADC?') {
+        setTimeout(() => appendSerialLog(`[ADC1_CH6] Raw: ${potentiometerVal} | ${calculatedVoltage} V`, 'info'), 50);
+      }
+    }
+  };
+
   // Calculated Voltage based on 12-bit ADC (0 - 4095)
   const calculatedVoltage = ((potentiometerVal / 4095.0) * 3.3).toFixed(3);
   const ultrasonicEchoUs = Math.round(ultrasonicDistance * 58.0); // 58 us per cm
@@ -84,6 +187,35 @@ export default function WokwiSimulationController({
     if (val % 256 === 0 || val === 0 || val === 4095) {
       appendSerialLog(`[ADC1_CH6] GPIO 34 Raw: ${val} | Voltage: ${v} V | Status: Sampled`, 'info');
     }
+  };
+
+  const [telemetrySaved, setTelemetrySaved] = useState(false);
+
+  // Dispatch Telemetry to Laboratory Gradebook & Local Storage
+  const handleRecordWokwiTelemetry = () => {
+    const payload = {
+      source: 'WokwiSimulationController (ESP32-WROOM-32)',
+      timestamp: new Date().toLocaleTimeString(),
+      potentiometerRaw: potentiometerVal,
+      calculatedVoltageV: parseFloat(calculatedVoltage),
+      temperatureC: temperature,
+      humidityPct: humidity,
+      ultrasonicDistanceCm: ultrasonicDistance,
+      ultrasonicEchoUs,
+      dipSwitches,
+      activeRfidCard: PRESET_RFID_CARDS[selectedCardIdx]
+    };
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('voltcore_wokwi_telemetry', JSON.stringify(payload));
+        window.dispatchEvent(new CustomEvent('voltcore:lab-telemetry', { detail: payload }));
+      }
+    } catch (_) {}
+
+    appendSerialLog(`[TELEMETRY] Synced to Student Lab Record: ${calculatedVoltage}V | ${ultrasonicDistance}cm | ${temperature}°C`, 'success');
+    setTelemetrySaved(true);
+    setTimeout(() => setTelemetrySaved(false), 2000);
   };
 
   // Handle Virtual Pushbutton 0 (Boot Button / Manual Scan)
@@ -102,7 +234,7 @@ export default function WokwiSimulationController({
         body: JSON.stringify({
           student_id: card.roll,
           rfid_uid: card.uid,
-          node_id: 'ESP32_MIT_IOT_LAB_01',
+          node_id: 'ESP32_VOLTCORE_IOT_01',
           rssi: -58
         })
       });
@@ -111,7 +243,7 @@ export default function WokwiSimulationController({
         const json = await res.json();
         appendSerialLog(`[HTTP 200] Access Granted: ${json.message || card.name} (+50 XP)`, 'success');
       } else {
-        appendSerialLog(`[HTTP 404] Access Denied: Card UID ${card.uid} unregistered in Anna University roster!`, 'error');
+        appendSerialLog(`[HTTP 404] Access Denied: Card UID ${card.uid} unregistered in laboratory access roster!`, 'error');
       }
     } catch (e) {
       appendSerialLog(`[SIMULATION] Card Tap Acknowledged: ${card.name} (${card.uid})`, 'success');
@@ -155,7 +287,7 @@ export default function WokwiSimulationController({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-[#00693E]/40 border border-[#00F0B5]/40 flex items-center justify-center text-[#00F0B5]">
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3"></circle>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -174,6 +306,18 @@ export default function WokwiSimulationController({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRecordWokwiTelemetry}
+            className={`px-3 py-1 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+              telemetrySaved
+                ? 'bg-emerald-500/30 text-emerald-300 border-emerald-400'
+                : 'bg-[#00693E]/30 text-[#00F0B5] border-[#00F0B5]/40 hover:bg-[#00693E]/50'
+            }`}
+            title="Dispatch telemetry to Student Laboratory Record & Gradebook"
+          >
+            <span>{telemetrySaved ? '✓ Recorded' : '📊 Record Telemetry'}</span>
+          </button>
           <span className="text-[11px] text-slate-400">Target Core:</span>
           <span className="px-2 py-1 rounded bg-[#020813] border border-slate-700 text-[#00F0B5] font-bold">
             Xtensa LX6 (240 MHz)
@@ -444,6 +588,27 @@ export default function WokwiSimulationController({
           })}
           <div ref={serialEndRef} />
         </div>
+
+        {/* Interactive Virtual Serial Input Bar */}
+        <form onSubmit={handleSendSerialCommand} className="p-2.5 bg-[#041026] border-t border-slate-800 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#020813] border border-slate-700 text-[10px] text-slate-400">
+            <span className={`h-2 w-2 rounded-full ${streamActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`}></span>
+            <span>{streamActive ? 'SSE LIVE' : 'LOCAL'}</span>
+          </div>
+          <input
+            type="text"
+            value={serialInputText}
+            onChange={(e) => setSerialInputText(e.target.value)}
+            placeholder="Send UART serial string to virtual silicon (e.g. AT, ADC?, STATUS)..."
+            className="flex-1 px-3 py-1.5 rounded-xl bg-[#020813] border border-slate-700 text-xs text-slate-200 focus:border-[#00F0B5] outline-none font-mono"
+          />
+          <button
+            type="submit"
+            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#00693E] to-[#00F0B5] hover:brightness-110 text-[#020813] text-xs font-bold transition-all shadow-emerald-glow cursor-pointer"
+          >
+            TX Send
+          </button>
+        </form>
 
       </div>
 

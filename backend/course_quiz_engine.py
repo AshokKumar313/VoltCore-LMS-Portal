@@ -494,13 +494,19 @@ class CourseQuizEngine:
         self.db_path = db_path or DEFAULT_DB_PATH
         self._ensure_database_schema()
 
+    def _get_connection(self) -> sqlite3.Connection:
+        """Create and return a configured SQLite connection with WAL enabled."""
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        return conn
+
     def _ensure_database_schema(self) -> None:
         """Create quiz submission gradebook table if it does not exist with SQLite WAL mode."""
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self._get_connection()
             try:
-                conn.execute("PRAGMA journal_mode=WAL;")
-                conn.execute("PRAGMA synchronous=NORMAL;")
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS course_quiz_submissions (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -671,7 +677,7 @@ class CourseQuizEngine:
 
         # Persist to SQLite WAL gradebook safely
         try:
-            conn = sqlite3.connect(self.db_path, timeout=5.0)
+            conn = self._get_connection()
             try:
                 conn.execute("""
                     INSERT INTO course_quiz_submissions
