@@ -26,6 +26,11 @@ import sqlite3
 import threading
 from typing import Dict, Any, List, Optional, Tuple, Set
 
+try:
+    from backend.safe_expression_parser import safe_eval_boolean
+except ImportError:
+    from safe_expression_parser import safe_eval_boolean
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEFAULT_DB_PATH = os.path.join(BASE_DIR, "voltcore_lms.db")
 
@@ -304,30 +309,11 @@ class DigitalElectronicsEngine:
 
     def _safe_eval_boolean(self, expression: str, var_values: Dict[str, int]) -> int:
         """
-        Safely evaluates Boolean expressions using Python AST or token substitution.
+        Safely evaluates Boolean expressions using strict whitelist AST parsing without eval/exec.
         Supports: AND (*, &, AND), OR (+, |, OR), NOT (', ~, NOT), XOR (^, XOR).
+        Neutralizes CWE-95 / CWE-94 code injection vulnerabilities.
         """
-        expr = expression.strip()
-
-        # Handle trailing quote notation for negation e.g. A' -> (not A)
-        for var in sorted(var_values.keys(), key=len, reverse=True):
-            expr = expr.replace(f"{var}'", f" (not {var}) ")
-
-        # Normalize words and operators
-        expr = expr.replace("AND", " and ").replace("&", " and ")
-        expr = expr.replace("OR", " or ").replace("|", " or ")
-        expr = expr.replace("NOT", " not ").replace("~", " not ")
-        expr = expr.replace("XOR", " ^ ")
-        expr = expr.replace("+", " or ")
-        expr = expr.replace("*", " and ")
-
-        # Create safe eval scope with ONLY 0 and 1
-        safe_env = {v: bool(val) for v, val in var_values.items()}
-        try:
-            result = eval(expr, {"__builtins__": None}, safe_env)
-            return 1 if result else 0
-        except Exception:
-            return 0
+        return safe_eval_boolean(expression, var_values)
 
     def generate_truth_table(
         self,
@@ -408,6 +394,7 @@ class DigitalElectronicsEngine:
             "expression": expression,
             "variables": variables,
             "num_variables": num_vars,
+            "variable_count": num_vars,
             "total_rows": total_rows,
             "rows": rows,
             "minterms": minterms,

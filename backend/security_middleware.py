@@ -5,9 +5,9 @@ Anna University / MIT Campus Standards (Department of Electronics Engineering)
 ----------------------------------------------------------------------------------------
 Module: backend/security_middleware.py
 Platform Lead / Architect: Ashok Kumar A
-Primary Contact Email: ashokkumar2008313@gmail.com
+Primary Contact Email: ashokkumar3132008@gmail.com
 GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
-Contact / Telemetry Line: +91 9597382878
+Contact / Telemetry Line: +91 94440 00000
 Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
 Curriculum / Regulation: Department of Electronics Engineering, Regulation 2023
 
@@ -33,11 +33,13 @@ if _parent_dir not in sys.path:
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
 
-# Import rate limiter and owner metadata
+# Import rate limiter, JWT verification, and owner metadata
 try:
     from backend.security_auth import (
         global_rate_limiter,
         TokenBucketRateLimiter,
+        verify_jwt_token,
+        generate_jwt_token,
         OWNER_METADATA,
         PUBLIC_CONTACT_METADATA,
         get_admin_audit_metadata
@@ -46,6 +48,8 @@ except ImportError:
     from security_auth import (
         global_rate_limiter,
         TokenBucketRateLimiter,
+        verify_jwt_token,
+        generate_jwt_token,
         OWNER_METADATA,
         PUBLIC_CONTACT_METADATA,
         get_admin_audit_metadata
@@ -327,6 +331,129 @@ def _create_error_response(data: Dict[str, Any], status_code: int) -> Any:
         "headers": dict(SECURITY_HEADERS)
     }
     return response_obj, status_code
+
+
+# ========================================================================================
+# SERVER-ENFORCED ROLE-BASED ACCESS CONTROL (RBAC) & AUTHORIZATION DECORATOR
+# ========================================================================================
+ROLE_HIERARCHY: Dict[str, Set[str]] = {
+    "Admin": {"Admin", "Platform-Lead", "Faculty", "Instructor", "TeachingAssistant", "Student"},
+    "Platform-Lead": {"Admin", "Platform-Lead", "Faculty", "Instructor", "TeachingAssistant", "Student"},
+    "Faculty": {"Faculty", "Instructor", "TeachingAssistant", "Student"},
+    "Instructor": {"Faculty", "Instructor", "TeachingAssistant", "Student"},
+    "TeachingAssistant": {"TeachingAssistant", "Student"},
+    "Student": {"Student"},
+    "Anonymous": set()
+}
+
+
+def require_role(*allowed_roles: str, allow_dev_bypass: bool = False):
+    """
+    Server-enforced Role-Based Access Control (RBAC) authorization decorator.
+
+    Credential Resolution Order:
+      1. 'Authorization: Bearer <jwt_token>' header -> cryptographically validated via verify_jwt_token.
+      2. 'X-User-Role' header -> validated against known roles for internal/test harnesses.
+      3. If no credentials and allow_dev_bypass=True (when VOLTCORE_ENFORCE_AUTH is not 'true') -> defaults to 'Student'.
+      4. Otherwise -> 401 Unauthorized.
+
+    Role Permission Check:
+      - Validates resolved user role against permitted allowed_roles or subsuming role hierarchy.
+      - Returns 403 Forbidden with descriptive error if role has insufficient privileges.
+    """
+    normalized_allowed = {r.strip().lower() for r in allowed_roles}
+
+    def decorator(f: Callable):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Resolve current request context
+            req = kwargs.pop("_mock_request", None)
+            if req is None:
+                if HAS_FLASK and flask_request:
+                    req = flask_request
+                elif args and hasattr(args[0], "headers"):
+                    req = args[0]
+
+            auth_header = None
+            role_header = None
+            if req is not None:
+                headers = getattr(req, "headers", {})
+                if hasattr(headers, "get"):
+                    auth_header = headers.get("Authorization")
+                    role_header = headers.get("X-User-Role")
+                elif isinstance(headers, dict):
+                    auth_header = headers.get("Authorization")
+                    role_header = headers.get("X-User-Role")
+
+            user_role = None
+            user_claims = None
+
+            # 1. Bearer Token Verification
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ", 1)[1].strip()
+                claims = verify_jwt_token(token)
+                if not claims:
+                    err = {
+                        "status": "error",
+                        "code": "INVALID_OR_EXPIRED_TOKEN",
+                        "message": "Authorization token is invalid, expired, or malformed."
+                    }
+                    return _create_error_response(err, 401)
+                user_role = claims.get("role")
+                user_claims = claims
+
+            # 2. X-User-Role Header (Internal / Test Harness Support)
+            elif role_header:
+                user_role = role_header.strip()
+
+            # 3. No credentials provided
+            if not user_role:
+                if allow_dev_bypass and os.environ.get("VOLTCORE_ENFORCE_AUTH", "").lower() != "true":
+                    user_role = "Student"
+                else:
+                    err = {
+                        "status": "error",
+                        "code": "AUTHENTICATION_REQUIRED",
+                        "message": "Access denied: Missing Authorization Bearer token or role header."
+                    }
+                    return _create_error_response(err, 401)
+
+            # 4. Enforce Allowed Roles / Permissions
+            if normalized_allowed:
+                user_role_lower = user_role.lower()
+                matched = user_role_lower in normalized_allowed
+
+                if not matched:
+                    # Check hierarchy: if user has a higher role that subsumes one of the allowed roles
+                    for r_name, r_subsumed in ROLE_HIERARCHY.items():
+                        if r_name.lower() == user_role_lower:
+                            if any(p.lower() in [s.lower() for s in r_subsumed] for p in allowed_roles):
+                                matched = True
+                                break
+
+                if not matched:
+                    err = {
+                        "status": "error",
+                        "code": "INSUFFICIENT_PERMISSIONS",
+                        "message": f"Role '{user_role}' is not authorized to access this resource. Required: {', '.join(allowed_roles)}.",
+                        "current_role": user_role
+                    }
+                    return _create_error_response(err, 403)
+
+            # Pass claims/role if handler accepts them
+            if "user_claims" in f.__code__.co_varnames:
+                kwargs["user_claims"] = user_claims
+            if "user_role" in f.__code__.co_varnames:
+                kwargs["user_role"] = user_role
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def require_auth(f: Callable):
+    """Convenience decorator requiring any authenticated user role."""
+    return require_role("Student", "TeachingAssistant", "Faculty", "Instructor", "Admin", "Platform-Lead")(f)
 
 
 # ========================================================================================

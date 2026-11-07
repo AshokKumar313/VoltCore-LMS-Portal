@@ -147,6 +147,167 @@ except ImportError:
         PoleZeroSystem = None
         FourierSeriesEngine = None
 
+# Phase 16: Concept Dependency Intelligence & Engineering Assumptions Checker
+try:
+    from backend.course_config_engine import (
+        ConceptDependencyIntelligenceEngine,
+        concept_intelligence_engine
+    )
+except ImportError:
+    try:
+        from course_config_engine import (
+            ConceptDependencyIntelligenceEngine,
+            concept_intelligence_engine
+        )
+    except Exception:
+        ConceptDependencyIntelligenceEngine = None
+        concept_intelligence_engine = None
+
+try:
+    from backend.analog_mna_engine import (
+        CircuitAssumptionsChecker,
+        CircuitMonteCarloSimulator,
+        parse_spice_netlist,
+        NonLinearMNASolver
+    )
+except ImportError:
+    try:
+        from analog_mna_engine import (
+            CircuitAssumptionsChecker,
+            CircuitMonteCarloSimulator,
+            parse_spice_netlist,
+            NonLinearMNASolver
+        )
+    except Exception:
+        CircuitAssumptionsChecker = None
+        CircuitMonteCarloSimulator = None
+        parse_spice_netlist = None
+        NonLinearMNASolver = None
+
+try:
+    from backend.math_studio_engine import (
+        MathematicalAssumptionsChecker,
+        RootLocusSolver,
+        NyquistPlotSolver
+    )
+except ImportError:
+    try:
+        from math_studio_engine import (
+            MathematicalAssumptionsChecker,
+            RootLocusSolver,
+            NyquistPlotSolver
+        )
+    except Exception:
+        MathematicalAssumptionsChecker = None
+        RootLocusSolver = None
+        NyquistPlotSolver = None
+
+# Phase 17: Semiconductor Physics & Monte Carlo Yield Engine
+try:
+    from backend.semiconductor_physics_engine import (
+        semiconductor_physics_engine,
+        SemiconductorPhysicsEngine
+    )
+except ImportError:
+    try:
+        from semiconductor_physics_engine import (
+            semiconductor_physics_engine,
+            SemiconductorPhysicsEngine
+        )
+    except Exception:
+        semiconductor_physics_engine = None
+        SemiconductorPhysicsEngine = None
+
+# Phase 18: RF Smith Chart Laboratory
+try:
+    from backend.rf_smith_chart_engine import (
+        rf_smith_chart_engine,
+        RFSmithChartEngine
+    )
+except ImportError:
+    try:
+        from rf_smith_chart_engine import (
+            rf_smith_chart_engine,
+            RFSmithChartEngine
+        )
+    except Exception:
+        rf_smith_chart_engine = None
+        RFSmithChartEngine = None
+
+# Phase 19: Multirate DSP & Fixed-Point Quantization Engine
+try:
+    from backend.multirate_dsp_engine import (
+        multirate_dsp_engine,
+        MultirateDSPEngine,
+        PolyphaseFilterbank,
+        CICFilterEngine,
+        FixedPointQuantizer,
+        SpectrumAnalyzer,
+        DSPWindowEngine
+    )
+except ImportError:
+    try:
+        from multirate_dsp_engine import (
+            multirate_dsp_engine,
+            MultirateDSPEngine,
+            PolyphaseFilterbank,
+            CICFilterEngine,
+            FixedPointQuantizer,
+            SpectrumAnalyzer,
+            DSPWindowEngine
+        )
+    except Exception:
+        multirate_dsp_engine = None
+        MultirateDSPEngine = None
+        PolyphaseFilterbank = None
+        CICFilterEngine = None
+        FixedPointQuantizer = None
+        SpectrumAnalyzer = None
+        DSPWindowEngine = None
+
+# Phase 20: SystemVerilog Verification Studio & RISC-V 5-Stage Pipelined Processor
+try:
+    from backend.vlsi_physical_design_engine import (
+        vlsi_physical_design_engine,
+        sva_assertion_analyzer,
+        SystemVerilogAssertionAnalyzer,
+        ASICPhysicalDesignEngine
+    )
+except ImportError:
+    try:
+        from vlsi_physical_design_engine import (
+            vlsi_physical_design_engine,
+            sva_assertion_analyzer,
+            SystemVerilogAssertionAnalyzer,
+            ASICPhysicalDesignEngine
+        )
+    except Exception:
+        vlsi_physical_design_engine = None
+        sva_assertion_analyzer = None
+        SystemVerilogAssertionAnalyzer = None
+        ASICPhysicalDesignEngine = None
+
+try:
+    from backend.riscv_processor_engine import (
+        riscv_processor_engine,
+        RiscV5StagePipeline,
+        RiscVProcessorEngine,
+        RiscVAssembler
+    )
+except ImportError:
+    try:
+        from riscv_processor_engine import (
+            riscv_processor_engine,
+            RiscV5StagePipeline,
+            RiscVProcessorEngine,
+            RiscVAssembler
+        )
+    except Exception:
+        riscv_processor_engine = None
+        RiscV5StagePipeline = None
+        RiscVProcessorEngine = None
+        RiscVAssembler = None
+
 try:
     from backend.autograder_engine import (
         autograder_engine,
@@ -711,6 +872,111 @@ if HAS_FLASK:
             "engine": "VoltCore Vector RAG + Embedded Code Reviewer",
             "categories": ["STM32_Academy", "Specialization_Track"]
         }), 200
+
+    @app.route("/api/ai/grounded-ask", methods=["POST", "OPTIONS"])
+    def ai_grounded_ask_endpoint():
+        """
+        Stage 5: Secure Cloud AI Grounding API.
+        Combines local vector/BM25 retrieval with secure Cloud LLM inference.
+        Includes built-in sliding window rate limiting (30 req/min) and deterministic local fallback.
+        """
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        query = payload.get("query", "").strip()
+        if not query:
+            return jsonify({"status": "error", "message": "Query parameter missing."}), 400
+
+        student_id = payload.get("student_id")
+        course_code = payload.get("course_code")
+        top_k = int(payload.get("top_k", 3))
+
+        try:
+            from backend.cloud_ai_grounding_engine import cloud_ai_grounding_engine
+            result = cloud_ai_grounding_engine.query_grounded_tutor(
+                query=query,
+                student_id=student_id,
+                course_code=course_code,
+                top_k=top_k
+            )
+            status_code = 429 if result.get("status") == "RATE_LIMITED" else 200
+            return jsonify(result), status_code
+        except Exception as e:
+            return jsonify({
+                "status": "ERROR",
+                "message": f"Grounding engine exception: {str(e)}",
+                "grounding_mode": "EXCEPTION_FALLBACK"
+            }), 500
+
+    @app.route("/api/ai/curriculum/courses", methods=["GET"])
+    def ai_curriculum_courses_endpoint():
+        """Returns the full 14-discipline ECE course registry and curriculum hierarchy."""
+        from backend.course_config_engine import CourseConfigEngine
+        engine = CourseConfigEngine()
+        courses = engine.list_all_courses()
+        return jsonify({
+            "status": "success",
+            "total_courses": len(courses),
+            "courses": courses
+        }), 200
+
+    @app.route("/api/sandbox/execute", methods=["POST", "OPTIONS"])
+    def sandbox_execute_endpoint():
+        """
+        Stage 6: Isolated Ephemeral Code Execution Endpoint.
+        Executes student code submissions (Python, C, C++, JavaScript) with strict resource quotas,
+        non-root isolation, network prohibition, and automatic workspace cleanup.
+        """
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+        language = payload.get("language", "python").strip()
+        source_code = payload.get("source_code", "").strip()
+        if not source_code:
+            return jsonify({"status": "ERROR", "message": "Source code cannot be empty."}), 400
+
+        stdin_input = payload.get("stdin", "")
+        timeout_s = float(payload.get("timeout_s", 2.0))
+        student_id = payload.get("student_id", "ANONYMOUS")
+
+        try:
+            from backend.sandbox_code_executor import ephemeral_sandbox_executor
+            result = ephemeral_sandbox_executor.execute(
+                language=language,
+                source_code=source_code,
+                stdin_input=stdin_input,
+                timeout_seconds=timeout_s,
+                student_id=student_id
+            )
+            code = 200 if result.get("status") in ("SUCCESS", "RUNTIME_ERROR", "COMPILATION_ERROR", "TIMEOUT") else 400
+            return jsonify(result), code
+        except Exception as e:
+            from backend.structured_logger import safe_error_handler
+            return jsonify(safe_error_handler.format_client_error(500, internal_exception=e)), 500
+
+    @app.route("/api/sandbox/spec", methods=["GET"])
+    def sandbox_docker_spec_endpoint():
+        """Stage 6: Docker production container execution specification."""
+        from backend.sandbox_code_executor import ephemeral_sandbox_executor
+        return jsonify(ephemeral_sandbox_executor.get_docker_production_spec()), 200
+
+    @app.route("/api/production/readiness", methods=["GET"])
+    def production_readiness_endpoint():
+        """Stage 7: Full production deployment readiness audit."""
+        from backend.production_readiness_engine import production_readiness_engine
+        report = production_readiness_engine.collect_full_readiness_audit()
+        code = 200 if report.get("status") == "READY" else 503
+        return jsonify(report), code
 
     @app.route("/api/tutor/rag_query", methods=["POST", "OPTIONS"])
     def tutor_rag_query_endpoint():
@@ -1345,6 +1611,743 @@ if HAS_FLASK:
         module_code = request.args.get("module_code", "EC8701")
         summary = autograder_engine.get_cohort_obe_summary(module_code)
         return jsonify({"status": "SUCCESS", "obe_summary": summary}), 200
+
+
+    # ========================================================================================
+    # Phase 16: Concept Dependency Intelligence & Engineering Assumptions Endpoints
+    # ========================================================================================
+    @app.route("/api/intelligence/concept_map", methods=["GET"])
+    def intelligence_concept_map_endpoint():
+        if not concept_intelligence_engine:
+            return jsonify({"status": "error", "message": "Concept Intelligence Engine unavailable"}), 503
+        cmap = concept_intelligence_engine.get_concept_dag_graph()
+        return jsonify({"status": "SUCCESS", "concept_map": cmap}), 200
+
+    @app.route("/api/intelligence/student_confidence", methods=["GET"])
+    def intelligence_student_confidence_endpoint():
+        if not concept_intelligence_engine:
+            return jsonify({"status": "error", "message": "Concept Intelligence Engine unavailable"}), 503
+        s_id = request.args.get("student_id", "2023MITEC042")
+        conf = concept_intelligence_engine.get_student_concept_confidence(s_id)
+        return jsonify({
+            "status": "SUCCESS",
+            "student_id": s_id,
+            "confidence": conf
+        }), 200
+
+    @app.route("/api/intelligence/remedial_path", methods=["POST", "OPTIONS"])
+    def intelligence_remedial_path_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not concept_intelligence_engine:
+            return jsonify({"status": "error", "message": "Concept Intelligence Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            s_id = payload.get("student_id", "2023MITEC042")
+            failed_id = payload.get("failed_concept_id", "OHMS_LAW")
+            res = concept_intelligence_engine.generate_remedial_path(s_id, failed_id)
+            return jsonify({"status": "SUCCESS", **res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/intelligence/check_assumptions", methods=["POST", "OPTIONS"])
+    def intelligence_check_assumptions_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        try:
+            payload = request.get_json(silent=True) or {}
+            check_type = payload.get("check_type", "MATH_TRANSFER")
+            if check_type == "MATH_TRANSFER":
+                if not MathematicalAssumptionsChecker:
+                    return jsonify({"status": "error", "message": "Mathematical Assumptions Checker unavailable"}), 503
+                domain = payload.get("domain", "LAPLACE")
+                raw_poles = payload.get("poles", [])
+                raw_zeros = payload.get("zeros", [])
+                poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+                zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+                res = MathematicalAssumptionsChecker.check_assumptions(domain, poles, zeros)
+                return jsonify({"status": "SUCCESS", "assumptions": res}), 200
+            elif check_type == "ANALOG_CIRCUIT":
+                if not CircuitAssumptionsChecker or not parse_spice_netlist or not NonLinearMNASolver:
+                    return jsonify({"status": "error", "message": "Circuit Assumptions Checker unavailable"}), 503
+                netlist = payload.get("netlist", "")
+                circuit, _ = parse_spice_netlist(netlist)
+                solver = NonLinearMNASolver(circuit)
+                sim_res = solver.solve_dc_operating_point()
+                res = CircuitAssumptionsChecker.check_assumptions(circuit, sim_res)
+                return jsonify({"status": "SUCCESS", "assumptions": res}), 200
+            else:
+                return jsonify({"status": "error", "message": f"Unknown check_type '{check_type}'"}), 400
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    # ========================================================================================
+    # Phase 17: Semiconductor Physics & Circuit Tolerance Monte Carlo Endpoints
+    # ========================================================================================
+    @app.route("/api/semiconductor/materials", methods=["GET"])
+    def semiconductor_materials_endpoint():
+        if not semiconductor_physics_engine:
+            return jsonify({"status": "error", "message": "Semiconductor Physics Engine unavailable"}), 503
+        mats = semiconductor_physics_engine.get_supported_materials()
+        return jsonify({"status": "SUCCESS", "materials": mats}), 200
+
+    @app.route("/api/semiconductor/bandgap", methods=["POST", "OPTIONS"])
+    def semiconductor_bandgap_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not semiconductor_physics_engine:
+            return jsonify({"status": "error", "message": "Semiconductor Physics Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            mat = payload.get("material", "SI")
+            temp = float(payload.get("temperature_k", 300.0))
+            eg = semiconductor_physics_engine.calculate_bandgap(mat, temp)
+            vt = semiconductor_physics_engine.calculate_thermal_voltage(temp)
+            nc, nv = semiconductor_physics_engine.calculate_effective_density_of_states(mat, temp)
+            ni = semiconductor_physics_engine.calculate_intrinsic_carrier_concentration(mat, temp)
+            return jsonify({
+                "status": "SUCCESS",
+                "material": mat,
+                "temperature_k": temp,
+                "bandgap_ev": round(eg, 4),
+                "thermal_voltage_v": round(vt, 5),
+                "nc_cm3": nc,
+                "nv_cm3": nv,
+                "ni_cm3": ni
+            }), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/semiconductor/fermi_dirac", methods=["POST", "OPTIONS"])
+    def semiconductor_fermi_dirac_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not semiconductor_physics_engine:
+            return jsonify({"status": "error", "message": "Semiconductor Physics Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            e_ev = float(payload.get("energy_ev", 0.55))
+            ef_ev = float(payload.get("fermi_level_ev", 0.55))
+            temp = float(payload.get("temperature_k", 300.0))
+            res = semiconductor_physics_engine.calculate_fermi_dirac_probability(e_ev, ef_ev, temp)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/semiconductor/drift_diffusion", methods=["POST", "OPTIONS"])
+    def semiconductor_drift_diffusion_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not semiconductor_physics_engine:
+            return jsonify({"status": "error", "message": "Semiconductor Physics Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            n_den = float(payload.get("carrier_density", 1e16))
+            dn_dx = float(payload.get("carrier_gradient", 1e19))
+            e_field = float(payload.get("electric_field", 1000.0))
+            mu = float(payload.get("mobility", 1350.0))
+            temp = float(payload.get("temperature_k", 300.0))
+            c_type = payload.get("carrier_type", "ELECTRON")
+            res = semiconductor_physics_engine.calculate_drift_diffusion_current_density(n_den, dn_dx, e_field, mu, temp, c_type)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/semiconductor/pn_junction", methods=["POST", "OPTIONS"])
+    def semiconductor_pn_junction_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not semiconductor_physics_engine:
+            return jsonify({"status": "error", "message": "Semiconductor Physics Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            mat = payload.get("material", "SI")
+            na = float(payload.get("na_cm3", 1e16))
+            nd = float(payload.get("nd_cm3", 1e17))
+            v_app = float(payload.get("v_applied", 0.0))
+            area = float(payload.get("area_cm2", 1e-4))
+            temp = float(payload.get("temperature_k", 300.0))
+            res = semiconductor_physics_engine.calculate_pn_junction_electrostatics(mat, na, nd, v_app, area, temp)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/mna/monte_carlo", methods=["POST", "OPTIONS"])
+    def mna_monte_carlo_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not analog_mna_engine:
+            return jsonify({"status": "error", "message": "Analog MNA Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            netlist = payload.get("netlist", "")
+            runs = int(payload.get("runs", 50))
+            target_nodes = payload.get("target_nodes", ["OUT"])
+            crit = payload.get("acceptance_criteria", {})
+            seed = payload.get("seed")
+            res = analog_mna_engine.run_monte_carlo(netlist=netlist, runs=runs, target_nodes=target_nodes, acceptance_criteria=crit, seed=seed)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/mna/monte_carlo_history", methods=["GET"])
+    def mna_monte_carlo_history_endpoint():
+        if not analog_mna_engine:
+            return jsonify({"status": "error", "message": "Analog MNA Engine unavailable"}), 503
+        limit = int(request.args.get("limit", 25))
+        hist = analog_mna_engine.get_monte_carlo_history(limit=limit)
+        return jsonify({"status": "SUCCESS", "history": hist}), 200
+
+    # ========================================================================================
+    # Phase 18: Control Systems Root Locus / Nyquist & RF Smith Chart Endpoints
+    # ========================================================================================
+    @app.route("/api/math/root_locus", methods=["POST", "OPTIONS"])
+    def math_root_locus_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not RootLocusSolver:
+            return jsonify({"status": "error", "message": "Root Locus Solver unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            raw_poles = payload.get("poles", [])
+            raw_zeros = payload.get("zeros", [])
+            k_max = float(payload.get("k_max", 50.0))
+            num_pts = int(payload.get("num_points", 50))
+            poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+            zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+            res = RootLocusSolver.solve_root_locus(poles=poles, zeros=zeros, k_max=k_max, num_points=num_pts)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/math/nyquist", methods=["POST", "OPTIONS"])
+    def math_nyquist_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not NyquistPlotSolver:
+            return jsonify({"status": "error", "message": "Nyquist Plot Solver unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            raw_poles = payload.get("poles", [])
+            raw_zeros = payload.get("zeros", [])
+            gain = float(payload.get("gain", 1.0))
+            num_pts = int(payload.get("num_points", 60))
+            poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+            zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+            res = NyquistPlotSolver.solve_nyquist(poles=poles, zeros=zeros, gain=gain, num_points=num_pts)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/rf/reflection_coefficient", methods=["POST", "OPTIONS"])
+    def rf_reflection_coefficient_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not rf_smith_chart_engine:
+            return jsonify({"status": "error", "message": "RF Smith Chart Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            zl_raw = payload.get("z_load", [50.0, 0.0])
+            zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+            z0 = float(payload.get("z0", 50.0))
+            res = rf_smith_chart_engine.calculate_reflection_coefficient(zl, z0)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/rf/admittance", methods=["POST", "OPTIONS"])
+    def rf_admittance_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not rf_smith_chart_engine:
+            return jsonify({"status": "error", "message": "RF Smith Chart Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            zl_raw = payload.get("z_load", [50.0, 0.0])
+            zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+            z0 = float(payload.get("z0", 50.0))
+            res = rf_smith_chart_engine.convert_impedance_to_admittance(zl, z0)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/rf/stub_match", methods=["POST", "OPTIONS"])
+    def rf_stub_match_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not rf_smith_chart_engine:
+            return jsonify({"status": "error", "message": "RF Smith Chart Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            zl_raw = payload.get("z_load", [25.0, -50.0])
+            zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+            z0 = float(payload.get("z0", 50.0))
+            stype = payload.get("stub_type", "SHORT")
+            freq = float(payload.get("frequency_hz", 1e9))
+            res = rf_smith_chart_engine.design_single_stub_match(zl, z0, stype, freq)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/rf/quarter_wave", methods=["POST", "OPTIONS"])
+    def rf_quarter_wave_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not rf_smith_chart_engine:
+            return jsonify({"status": "error", "message": "RF Smith Chart Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            rl = float(payload.get("r_load", 100.0))
+            z0 = float(payload.get("z0", 50.0))
+            freq = float(payload.get("frequency_hz", 1e9))
+            res = rf_smith_chart_engine.design_quarter_wave_transformer(rl, z0, freq)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/rf/smith_chart_grid", methods=["GET"])
+    def rf_smith_chart_grid_endpoint():
+        if not rf_smith_chart_engine:
+            return jsonify({"status": "error", "message": "RF Smith Chart Engine unavailable"}), 503
+        grid = rf_smith_chart_engine.generate_smith_chart_grid()
+        return jsonify({"status": "SUCCESS", "grid": grid}), 200
+
+    # ========================================================================================
+    # Phase 19: Multirate DSP Filterbanks & Fixed-Point Quantization Endpoints
+    # ========================================================================================
+    @app.route("/api/dsp/polyphase_resample", methods=["POST", "OPTIONS"])
+    def dsp_polyphase_resample_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not multirate_dsp_engine:
+            return jsonify({"status": "error", "message": "Multirate DSP Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            sig = payload.get("signal", [1.0, 0.0, -1.0, 0.0] * 8)
+            L = int(payload.get("L", 3))
+            M = int(payload.get("M", 2))
+            taps = int(payload.get("taps_per_phase", 12))
+            wname = payload.get("window_name", "KAISER")
+            res = multirate_dsp_engine.run_polyphase_resampling(signal=sig, L=L, M=M, taps_per_phase=taps, window_name=wname)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/cic_filter", methods=["POST", "OPTIONS"])
+    def dsp_cic_filter_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not multirate_dsp_engine:
+            return jsonify({"status": "error", "message": "Multirate DSP Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            sig = payload.get("signal", [1.0] * 40)
+            mode = payload.get("mode", "DECIMATE")
+            R = int(payload.get("R", 4))
+            M = int(payload.get("M", 1))
+            N = int(payload.get("N", 3))
+            res = multirate_dsp_engine.run_cic_filter(signal=sig, mode=mode, R=R, M=M, N=N)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/cic_response", methods=["POST", "OPTIONS"])
+    def dsp_cic_response_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not CICFilterEngine:
+            return jsonify({"status": "error", "message": "CIC Filter Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            R = int(payload.get("R", 4))
+            M = int(payload.get("M", 1))
+            N = int(payload.get("N", 3))
+            num_pts = int(payload.get("num_points", 50))
+            res = CICFilterEngine.compute_frequency_response(R=R, M=M, N=N, num_points=num_pts)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/spectrum", methods=["POST", "OPTIONS"])
+    def dsp_spectrum_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not SpectrumAnalyzer:
+            return jsonify({"status": "error", "message": "Spectrum Analyzer unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            sig = payload.get("signal", [0.0] * 128)
+            fs = float(payload.get("fs", 1000.0))
+            wname = payload.get("window_name", "HAMMING")
+            res = SpectrumAnalyzer.compute_fft_spectrum(signal=sig, fs=fs, window_name=wname)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/quantize_signal", methods=["POST", "OPTIONS"])
+    def dsp_quantize_signal_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not multirate_dsp_engine:
+            return jsonify({"status": "error", "message": "Multirate DSP Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            sig = payload.get("signal", [0.1, 0.25, -0.5, 0.75, 1.2])
+            m = int(payload.get("m", 1))
+            n = int(payload.get("n", 14))
+            rmode = payload.get("rounding_mode", "ROUND")
+            omode = payload.get("overflow_mode", "SATURATE")
+            res = multirate_dsp_engine.run_quantization_analysis(signal=sig, m=m, n=n, rounding_mode=rmode, overflow_mode=omode)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/quantize_coefficients", methods=["POST", "OPTIONS"])
+    def dsp_quantize_coefficients_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not FixedPointQuantizer:
+            return jsonify({"status": "error", "message": "Fixed Point Quantizer unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            b_coeffs = payload.get("b_coeffs", [1.0])
+            a_coeffs = payload.get("a_coeffs")
+            m = int(payload.get("m", 1))
+            n = int(payload.get("n", 14))
+            res = FixedPointQuantizer.quantize_filter_coefficients(b_coeffs=b_coeffs, a_coeffs=a_coeffs, m=m, n=n)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/window_analysis", methods=["GET"])
+    def dsp_window_analysis_endpoint():
+        if not DSPWindowEngine:
+            return jsonify({"status": "error", "message": "DSP Window Engine unavailable"}), 503
+        try:
+            name = request.args.get("name", "HAMMING")
+            length = int(request.args.get("length", 64))
+            beta = float(request.args.get("beta", 5.65))
+            res = DSPWindowEngine.analyze_window(name=name, length=length, beta=beta)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/dsp/history", methods=["GET"])
+    def dsp_history_endpoint():
+        if not multirate_dsp_engine:
+            return jsonify({"status": "error", "message": "Multirate DSP Engine unavailable"}), 503
+        limit = int(request.args.get("limit", 25))
+        hist = multirate_dsp_engine.get_history(limit=limit)
+        return jsonify({"status": "SUCCESS", "data": hist}), 200
+
+    # ========================================================================================
+    # Phase 20: SystemVerilog Verification Studio & RISC-V 5-Stage Pipelined Processor
+    # ========================================================================================
+    @app.route("/api/vlsi/sva_analyze", methods=["POST", "OPTIONS"])
+    def vlsi_sva_analyze_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not sva_assertion_analyzer:
+            return jsonify({"status": "error", "message": "SystemVerilog Assertion Analyzer unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            assertions = payload.get("assertions", [])
+            trace = payload.get("trace", {})
+            res = sva_assertion_analyzer.evaluate_trace(assertions=assertions, trace=trace)
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/vlsi/floorplan", methods=["POST", "OPTIONS"])
+    def vlsi_floorplan_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not vlsi_physical_design_engine:
+            return jsonify({"status": "error", "message": "VLSI Physical Design Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            gate_count = int(payload.get("gate_count", 50000))
+            tech_node = str(payload.get("tech_node", "28nm"))
+            target_util = float(payload.get("target_utilization", 0.70))
+            aspect_ratio = float(payload.get("aspect_ratio", 1.0))
+            margin = float(payload.get("core_margin_um", 20.0))
+            pitch = float(payload.get("io_pad_pitch_um", 40.0))
+            res = vlsi_physical_design_engine.calculate_floorplan_dimensions(
+                gate_count=gate_count, tech_node=tech_node, target_utilization=target_util,
+                aspect_ratio=aspect_ratio, core_margin_um=margin, io_pad_pitch_um=pitch
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/vlsi/density_heatmap", methods=["POST", "OPTIONS"])
+    def vlsi_density_heatmap_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not vlsi_physical_design_engine:
+            return jsonify({"status": "error", "message": "VLSI Physical Design Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            gate_count = int(payload.get("gate_count", 50000))
+            width = float(payload.get("core_width_um", 200.0))
+            height = float(payload.get("core_height_um", 200.0))
+            cols = int(payload.get("grid_cols", 16))
+            rows = int(payload.get("grid_rows", 16))
+            rent_exp = float(payload.get("rent_exponent", 0.65))
+            target_util = float(payload.get("target_utilization", 0.70))
+            res = vlsi_physical_design_engine.generate_placement_density_heatmap(
+                gate_count=gate_count, core_width_um=width, core_height_um=height,
+                grid_cols=cols, grid_rows=rows, rent_exponent=rent_exp, target_utilization=target_util
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/vlsi/elmore_delay", methods=["POST", "OPTIONS"])
+    def vlsi_elmore_delay_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not vlsi_physical_design_engine:
+            return jsonify({"status": "error", "message": "VLSI Physical Design Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            length = float(payload.get("wirelength_um", 500.0))
+            layer = str(payload.get("metal_layer", "intermediate"))
+            tech_node = str(payload.get("tech_node", "28nm"))
+            r_drv = payload.get("driver_resistance_ohms")
+            c_load = payload.get("load_capacitance_ff")
+            if r_drv is not None:
+                r_drv = float(r_drv)
+            if c_load is not None:
+                c_load = float(c_load)
+            res = vlsi_physical_design_engine.estimate_interconnect_elmore_delay(
+                wirelength_um=length, metal_layer=layer, tech_node=tech_node,
+                driver_resistance_ohms=r_drv, load_capacitance_ff=c_load
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/vlsi/cts_model", methods=["POST", "OPTIONS"])
+    def vlsi_cts_model_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not vlsi_physical_design_engine:
+            return jsonify({"status": "error", "message": "VLSI Physical Design Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            sinks = int(payload.get("num_sinks", 1024))
+            die_w = float(payload.get("die_width_um", 300.0))
+            die_h = float(payload.get("die_height_um", 300.0))
+            freq = float(payload.get("target_freq_mhz", 1000.0))
+            tech_node = str(payload.get("tech_node", "28nm"))
+            pvt_sigma = float(payload.get("process_variation_sigma_pct", 5.0))
+            res = vlsi_physical_design_engine.model_clock_tree_synthesis(
+                num_sinks=sinks, die_width_um=die_w, die_height_um=die_h,
+                target_freq_mhz=freq, tech_node=tech_node, process_variation_sigma_pct=pvt_sigma
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/vlsi/history", methods=["GET"])
+    def vlsi_history_endpoint():
+        if not vlsi_physical_design_engine:
+            return jsonify({"status": "error", "message": "VLSI Physical Design Engine unavailable"}), 503
+        limit = int(request.args.get("limit", 25))
+        hist = vlsi_physical_design_engine.get_history(limit=limit)
+        return jsonify({"status": "SUCCESS", "data": hist}), 200
+
+    @app.route("/api/riscv/simulate", methods=["POST", "OPTIONS"])
+    def riscv_simulate_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not riscv_processor_engine:
+            return jsonify({"status": "error", "message": "RISC-V Processor Engine unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            asm_code = payload.get("assembly_code", "ADDI x1, x0, 10")
+            pname = payload.get("program_name", "rv32i_program")
+            max_c = int(payload.get("max_cycles", 500))
+            init_mem = payload.get("initial_memory")
+            if init_mem:
+                init_mem = {int(k): int(v) for k, v in init_mem.items()}
+            res = riscv_processor_engine.simulate_assembly(
+                assembly_code=asm_code, program_name=pname, max_cycles=max_c, initial_memory=init_mem
+            )
+            return jsonify({"status": "SUCCESS", "data": res}), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/riscv/step", methods=["POST", "OPTIONS"])
+    def riscv_step_endpoint():
+        if request.method == "OPTIONS":
+            resp = make_response()
+            resp.headers.add("Access-Control-Allow-Origin", "*")
+            resp.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+            resp.headers.add("Access-Control-Allow-Methods", "POST,OPTIONS")
+            return resp
+
+        if not RiscV5StagePipeline:
+            return jsonify({"status": "error", "message": "RISC-V 5-Stage Pipeline unavailable"}), 503
+        try:
+            payload = request.get_json(silent=True) or {}
+            asm_code = payload.get("assembly_code", "NOP")
+            cycles = int(payload.get("cycles", 1))
+            init_mem = payload.get("initial_memory")
+            if init_mem:
+                init_mem = {int(k): int(v) for k, v in init_mem.items()}
+            pipeline = RiscV5StagePipeline(initial_memory=init_mem)
+            pipeline.load_program(asm_code)
+            steps = []
+            for _ in range(max(1, min(100, cycles))):
+                if pipeline.is_pipeline_empty() and pipeline.cycle_count > 0:
+                    break
+                step_res = pipeline.step()
+                steps.append(step_res)
+            return jsonify({
+                "status": "SUCCESS",
+                "steps": steps,
+                "current_cycle": pipeline.cycle_count,
+                "registers": {f"x{i}": pipeline.registers[i] for i in range(32)},
+                "memory": {str(k): v for k, v in pipeline.memory.items()},
+                "pipeline_empty": pipeline.is_pipeline_empty()
+            }), 200
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/api/riscv/history", methods=["GET"])
+    def riscv_history_endpoint():
+        if not riscv_processor_engine:
+            return jsonify({"status": "error", "message": "RISC-V Processor Engine unavailable"}), 503
+        limit = int(request.args.get("limit", 25))
+        hist = riscv_processor_engine.get_history(limit=limit)
+        return jsonify({"status": "SUCCESS", "data": hist}), 200
 
     @app.route("/api/telemetry/stream", methods=["GET"])
     def telemetry_stream_endpoint():
@@ -5878,6 +6881,26 @@ else:
                 self._set_cors_headers(200 if user else 404)
                 resp = {"status": "success", "user": user, "level": 18, "multiplier": 2.5} if user else {"error": "Not found"}
                 self.wfile.write(json.dumps(resp).encode("utf-8"))
+            elif parsed.path == "/api/ai/curriculum/courses":
+                from backend.course_config_engine import CourseConfigEngine
+                engine = CourseConfigEngine()
+                courses = engine.list_all_courses()
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps({
+                    "status": "success",
+                    "total_courses": len(courses),
+                    "courses": courses
+                }).encode("utf-8"))
+            elif parsed.path == "/api/sandbox/spec":
+                from backend.sandbox_code_executor import ephemeral_sandbox_executor
+                self._set_cors_headers(200)
+                self.wfile.write(json.dumps(ephemeral_sandbox_executor.get_docker_production_spec()).encode("utf-8"))
+            elif parsed.path == "/api/production/readiness":
+                from backend.production_readiness_engine import production_readiness_engine
+                report = production_readiness_engine.collect_full_readiness_audit()
+                code = 200 if report.get("status") == "READY" else 503
+                self._set_cors_headers(code)
+                self.wfile.write(json.dumps(report).encode("utf-8"))
             elif parsed.path == "/api/analytics/weak_topics":
                 self._set_cors_headers(200)
                 self.wfile.write(json.dumps(get_class_weak_topics()).encode("utf-8"))
@@ -6242,6 +7265,106 @@ else:
                     res = curriculum_mastery_engine.get_student_curriculum_state(s_id)
                     self._set_cors_headers(200)
                     self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+
+            # Phase 16 GET
+            elif parsed.path == "/api/intelligence/concept_map":
+                if not concept_intelligence_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Concept Intelligence Engine unavailable"}).encode("utf-8"))
+                else:
+                    cmap = concept_intelligence_engine.get_concept_dag_graph()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "concept_map": cmap}).encode("utf-8"))
+            elif parsed.path == "/api/intelligence/student_confidence":
+                if not concept_intelligence_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Concept Intelligence Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    s_id = params.get("student_id", ["2023MITEC042"])[0]
+                    conf = concept_intelligence_engine.get_student_concept_confidence(s_id)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({
+                        "status": "SUCCESS",
+                        "student_id": s_id,
+                        "confidence": conf
+                    }).encode("utf-8"))
+            # Phase 17 GET
+            elif parsed.path == "/api/semiconductor/materials":
+                if not semiconductor_physics_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Semiconductor Physics Engine unavailable"}).encode("utf-8"))
+                else:
+                    mats = semiconductor_physics_engine.get_supported_materials()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "materials": mats}).encode("utf-8"))
+            elif parsed.path == "/api/mna/monte_carlo_history":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    limit = int(params.get("limit", [25])[0])
+                    hist = analog_mna_engine.get_monte_carlo_history(limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "history": hist}).encode("utf-8"))
+            # Phase 18 GET
+            elif parsed.path == "/api/rf/smith_chart_grid":
+                if not rf_smith_chart_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RF Smith Chart Engine unavailable"}).encode("utf-8"))
+                else:
+                    grid = rf_smith_chart_engine.generate_smith_chart_grid()
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "grid": grid}).encode("utf-8"))
+            # Phase 19 GET
+            elif parsed.path == "/api/dsp/window_analysis":
+                if not DSPWindowEngine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "DSP Window Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        params = parse_qs(parsed.query)
+                        name = params.get("name", ["HAMMING"])[0]
+                        length = int(params.get("length", [64])[0])
+                        beta = float(params.get("beta", [5.65])[0])
+                        res = DSPWindowEngine.analyze_window(name=name, length=length, beta=beta)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/history":
+                if not multirate_dsp_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Multirate DSP Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    limit = int(params.get("limit", [25])[0])
+                    hist = multirate_dsp_engine.get_history(limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "data": hist}).encode("utf-8"))
+            # Phase 20 GET
+            elif parsed.path == "/api/vlsi/history":
+                if not vlsi_physical_design_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "VLSI Physical Design Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    limit = int(params.get("limit", [25])[0])
+                    hist = vlsi_physical_design_engine.get_history(limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "data": hist}).encode("utf-8"))
+            elif parsed.path == "/api/riscv/history":
+                if not riscv_processor_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RISC-V Processor Engine unavailable"}).encode("utf-8"))
+                else:
+                    params = parse_qs(parsed.query)
+                    limit = int(params.get("limit", [25])[0])
+                    hist = riscv_processor_engine.get_history(limit=limit)
+                    self._set_cors_headers(200)
+                    self.wfile.write(json.dumps({"status": "SUCCESS", "data": hist}).encode("utf-8"))
             elif parsed.path == "/api/telemetry/history":
                 params = parse_qs(parsed.query)
                 limit = int(params.get("limit", [25])[0])
@@ -6879,6 +8002,59 @@ else:
                         result = {"query": query, "answer": "RAG engine offline.", "citations": [], "confidence": 0.0}
                     self._set_cors_headers(200)
                     self.wfile.write(json.dumps({"status": "success", "data": result}).encode("utf-8"))
+            elif parsed.path == "/api/ai/grounded-ask":
+                query = payload.get("query", "").strip()
+                if not query:
+                    self._set_cors_headers(400)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Query parameter missing."}).encode("utf-8"))
+                else:
+                    student_id = payload.get("student_id")
+                    course_code = payload.get("course_code")
+                    top_k = int(payload.get("top_k", 3))
+                    try:
+                        from backend.cloud_ai_grounding_engine import cloud_ai_grounding_engine
+                        result = cloud_ai_grounding_engine.query_grounded_tutor(
+                            query=query,
+                            student_id=student_id,
+                            course_code=course_code,
+                            top_k=top_k
+                        )
+                        code = 429 if result.get("status") == "RATE_LIMITED" else 200
+                        self._set_cors_headers(code)
+                        self.wfile.write(json.dumps(result).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(500)
+                        self.wfile.write(json.dumps({
+                            "status": "ERROR",
+                            "message": f"Grounding engine exception: {str(e)}",
+                            "grounding_mode": "EXCEPTION_FALLBACK"
+                        }).encode("utf-8"))
+            elif parsed.path == "/api/sandbox/execute":
+                language = payload.get("language", "python").strip()
+                source_code = payload.get("source_code", "").strip()
+                if not source_code:
+                    self._set_cors_headers(400)
+                    self.wfile.write(json.dumps({"status": "ERROR", "message": "Source code cannot be empty."}).encode("utf-8"))
+                else:
+                    stdin_input = payload.get("stdin", "")
+                    timeout_s = float(payload.get("timeout_s", 2.0))
+                    student_id = payload.get("student_id", "ANONYMOUS")
+                    try:
+                        from backend.sandbox_code_executor import ephemeral_sandbox_executor
+                        result = ephemeral_sandbox_executor.execute(
+                            language=language,
+                            source_code=source_code,
+                            stdin_input=stdin_input,
+                            timeout_seconds=timeout_s,
+                            student_id=student_id
+                        )
+                        code = 200 if result.get("status") in ("SUCCESS", "RUNTIME_ERROR", "COMPILATION_ERROR", "TIMEOUT") else 400
+                        self._set_cors_headers(code)
+                        self.wfile.write(json.dumps(result).encode("utf-8"))
+                    except Exception as e:
+                        from backend.structured_logger import safe_error_handler
+                        self._set_cors_headers(500)
+                        self.wfile.write(json.dumps(safe_error_handler.format_client_error(500, internal_exception=e)).encode("utf-8"))
             elif parsed.path == "/api/cms/course/publish":
                 if not instructor_cms_engine:
                     self._set_cors_headers(503)
@@ -7249,6 +8425,503 @@ else:
                         )
                         self._set_cors_headers(200)
                         self.wfile.write(json.dumps(res).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+
+            # Phase 16 POST
+            elif parsed.path == "/api/intelligence/remedial_path":
+                if not concept_intelligence_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Concept Intelligence Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        s_id = payload.get("student_id", "2023MITEC042")
+                        failed_id = payload.get("failed_concept_id", "OHMS_LAW")
+                        res = concept_intelligence_engine.generate_remedial_path(s_id, failed_id)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", **res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/intelligence/check_assumptions":
+                try:
+                    check_type = payload.get("check_type", "MATH_TRANSFER")
+                    if check_type == "MATH_TRANSFER":
+                        if not MathematicalAssumptionsChecker:
+                            self._set_cors_headers(503)
+                            self.wfile.write(json.dumps({"status": "error", "message": "Mathematical Assumptions Checker unavailable"}).encode("utf-8"))
+                        else:
+                            domain = payload.get("domain", "LAPLACE")
+                            raw_poles = payload.get("poles", [])
+                            raw_zeros = payload.get("zeros", [])
+                            poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+                            zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+                            res = MathematicalAssumptionsChecker.check_assumptions(domain, poles, zeros)
+                            self._set_cors_headers(200)
+                            self.wfile.write(json.dumps({"status": "SUCCESS", "assumptions": res}).encode("utf-8"))
+                    elif check_type == "ANALOG_CIRCUIT":
+                        if not CircuitAssumptionsChecker or not parse_spice_netlist or not NonLinearMNASolver:
+                            self._set_cors_headers(503)
+                            self.wfile.write(json.dumps({"status": "error", "message": "Circuit Assumptions Checker unavailable"}).encode("utf-8"))
+                        else:
+                            netlist = payload.get("netlist", "")
+                            circuit, _ = parse_spice_netlist(netlist)
+                            solver = NonLinearMNASolver(circuit)
+                            sim_res = solver.solve_dc_operating_point()
+                            res = CircuitAssumptionsChecker.check_assumptions(circuit, sim_res)
+                            self._set_cors_headers(200)
+                            self.wfile.write(json.dumps({"status": "SUCCESS", "assumptions": res}).encode("utf-8"))
+                    else:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": f"Unknown check_type '{check_type}'"}).encode("utf-8"))
+                except Exception as e:
+                    self._set_cors_headers(400)
+                    self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            # Phase 17 POST
+            elif parsed.path == "/api/semiconductor/bandgap":
+                if not semiconductor_physics_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Semiconductor Physics Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        mat = payload.get("material", "SI")
+                        temp = float(payload.get("temperature_k", 300.0))
+                        eg = semiconductor_physics_engine.calculate_bandgap(mat, temp)
+                        vt = semiconductor_physics_engine.calculate_thermal_voltage(temp)
+                        nc, nv = semiconductor_physics_engine.calculate_effective_density_of_states(mat, temp)
+                        ni = semiconductor_physics_engine.calculate_intrinsic_carrier_concentration(mat, temp)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({
+                            "status": "SUCCESS",
+                            "material": mat,
+                            "temperature_k": temp,
+                            "bandgap_ev": round(eg, 4),
+                            "thermal_voltage_v": round(vt, 5),
+                            "nc_cm3": nc,
+                            "nv_cm3": nv,
+                            "ni_cm3": ni
+                        }).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/semiconductor/fermi_dirac":
+                if not semiconductor_physics_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Semiconductor Physics Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        e_ev = float(payload.get("energy_ev", 0.55))
+                        ef_ev = float(payload.get("fermi_level_ev", 0.55))
+                        temp = float(payload.get("temperature_k", 300.0))
+                        res = semiconductor_physics_engine.calculate_fermi_dirac_probability(e_ev, ef_ev, temp)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/semiconductor/drift_diffusion":
+                if not semiconductor_physics_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Semiconductor Physics Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        n_den = float(payload.get("carrier_density", 1e16))
+                        dn_dx = float(payload.get("carrier_gradient", 1e19))
+                        e_field = float(payload.get("electric_field", 1000.0))
+                        mu = float(payload.get("mobility", 1350.0))
+                        temp = float(payload.get("temperature_k", 300.0))
+                        c_type = payload.get("carrier_type", "ELECTRON")
+                        res = semiconductor_physics_engine.calculate_drift_diffusion_current_density(n_den, dn_dx, e_field, mu, temp, c_type)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/semiconductor/pn_junction":
+                if not semiconductor_physics_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Semiconductor Physics Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        mat = payload.get("material", "SI")
+                        na = float(payload.get("na_cm3", 1e16))
+                        nd = float(payload.get("nd_cm3", 1e17))
+                        v_app = float(payload.get("v_applied", 0.0))
+                        area = float(payload.get("area_cm2", 1e-4))
+                        temp = float(payload.get("temperature_k", 300.0))
+                        res = semiconductor_physics_engine.calculate_pn_junction_electrostatics(mat, na, nd, v_app, area, temp)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/mna/monte_carlo":
+                if not analog_mna_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Analog MNA Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        netlist = payload.get("netlist", "")
+                        runs = int(payload.get("runs", 50))
+                        target_nodes = payload.get("target_nodes", ["OUT"])
+                        crit = payload.get("acceptance_criteria", {})
+                        seed = payload.get("seed")
+                        res = analog_mna_engine.run_monte_carlo(netlist=netlist, runs=runs, target_nodes=target_nodes, acceptance_criteria=crit, seed=seed)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            # Phase 18 POST
+            elif parsed.path == "/api/math/root_locus":
+                if not RootLocusSolver:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Root Locus Solver unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        raw_poles = payload.get("poles", [])
+                        raw_zeros = payload.get("zeros", [])
+                        k_max = float(payload.get("k_max", 50.0))
+                        num_pts = int(payload.get("num_points", 50))
+                        poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+                        zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+                        res = RootLocusSolver.solve_root_locus(poles=poles, zeros=zeros, k_max=k_max, num_points=num_pts)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/math/nyquist":
+                if not NyquistPlotSolver:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Nyquist Plot Solver unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        raw_poles = payload.get("poles", [])
+                        raw_zeros = payload.get("zeros", [])
+                        gain = float(payload.get("gain", 1.0))
+                        num_pts = int(payload.get("num_points", 60))
+                        poles = [complex(p["real"], p.get("imag", 0.0)) if isinstance(p, dict) else complex(p) for p in raw_poles]
+                        zeros = [complex(z["real"], z.get("imag", 0.0)) if isinstance(z, dict) else complex(z) for z in raw_zeros]
+                        res = NyquistPlotSolver.solve_nyquist(poles=poles, zeros=zeros, gain=gain, num_points=num_pts)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/rf/reflection_coefficient":
+                if not rf_smith_chart_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RF Smith Chart Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        zl_raw = payload.get("z_load", [50.0, 0.0])
+                        zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+                        z0 = float(payload.get("z0", 50.0))
+                        res = rf_smith_chart_engine.calculate_reflection_coefficient(zl, z0)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/rf/admittance":
+                if not rf_smith_chart_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RF Smith Chart Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        zl_raw = payload.get("z_load", [50.0, 0.0])
+                        zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+                        z0 = float(payload.get("z0", 50.0))
+                        res = rf_smith_chart_engine.convert_impedance_to_admittance(zl, z0)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/rf/stub_match":
+                if not rf_smith_chart_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RF Smith Chart Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        zl_raw = payload.get("z_load", [25.0, -50.0])
+                        zl = complex(zl_raw[0], zl_raw[1]) if isinstance(zl_raw, list) else complex(zl_raw)
+                        z0 = float(payload.get("z0", 50.0))
+                        stype = payload.get("stub_type", "SHORT")
+                        freq = float(payload.get("frequency_hz", 1e9))
+                        res = rf_smith_chart_engine.design_single_stub_match(zl, z0, stype, freq)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/rf/quarter_wave":
+                if not rf_smith_chart_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RF Smith Chart Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        rl = float(payload.get("r_load", 100.0))
+                        z0 = float(payload.get("z0", 50.0))
+                        freq = float(payload.get("frequency_hz", 1e9))
+                        res = rf_smith_chart_engine.design_quarter_wave_transformer(rl, z0, freq)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            # Phase 19 POST
+            elif parsed.path == "/api/dsp/polyphase_resample":
+                if not multirate_dsp_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Multirate DSP Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        sig = payload.get("signal", [1.0, 0.0, -1.0, 0.0] * 8)
+                        L = int(payload.get("L", 3))
+                        M = int(payload.get("M", 2))
+                        taps = int(payload.get("taps_per_phase", 12))
+                        wname = payload.get("window_name", "KAISER")
+                        res = multirate_dsp_engine.run_polyphase_resampling(signal=sig, L=L, M=M, taps_per_phase=taps, window_name=wname)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/cic_filter":
+                if not multirate_dsp_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Multirate DSP Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        sig = payload.get("signal", [1.0] * 40)
+                        mode = payload.get("mode", "DECIMATE")
+                        R = int(payload.get("R", 4))
+                        M = int(payload.get("M", 1))
+                        N = int(payload.get("N", 3))
+                        res = multirate_dsp_engine.run_cic_filter(signal=sig, mode=mode, R=R, M=M, N=N)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/cic_response":
+                if not CICFilterEngine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "CIC Filter Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        R = int(payload.get("R", 4))
+                        M = int(payload.get("M", 1))
+                        N = int(payload.get("N", 3))
+                        num_pts = int(payload.get("num_points", 50))
+                        res = CICFilterEngine.compute_frequency_response(R=R, M=M, N=N, num_points=num_pts)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/spectrum":
+                if not SpectrumAnalyzer:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Spectrum Analyzer unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        sig = payload.get("signal", [0.0] * 128)
+                        fs = float(payload.get("fs", 1000.0))
+                        wname = payload.get("window_name", "HAMMING")
+                        res = SpectrumAnalyzer.compute_fft_spectrum(signal=sig, fs=fs, window_name=wname)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/quantize_signal":
+                if not multirate_dsp_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Multirate DSP Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        sig = payload.get("signal", [0.1, 0.25, -0.5, 0.75, 1.2])
+                        m = int(payload.get("m", 1))
+                        n = int(payload.get("n", 14))
+                        rmode = payload.get("rounding_mode", "ROUND")
+                        omode = payload.get("overflow_mode", "SATURATE")
+                        res = multirate_dsp_engine.run_quantization_analysis(signal=sig, m=m, n=n, rounding_mode=rmode, overflow_mode=omode)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/dsp/quantize_coefficients":
+                if not FixedPointQuantizer:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "Fixed Point Quantizer unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        b_coeffs = payload.get("b_coeffs", [1.0])
+                        a_coeffs = payload.get("a_coeffs")
+                        m = int(payload.get("m", 1))
+                        n = int(payload.get("n", 14))
+                        res = FixedPointQuantizer.quantize_filter_coefficients(b_coeffs=b_coeffs, a_coeffs=a_coeffs, m=m, n=n)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            # Phase 20 POST
+            elif parsed.path == "/api/vlsi/sva_analyze":
+                if not sva_assertion_analyzer:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "SystemVerilog Assertion Analyzer unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        assertions = payload.get("assertions", [])
+                        trace = payload.get("trace", {})
+                        res = sva_assertion_analyzer.evaluate_trace(assertions=assertions, trace=trace)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/vlsi/floorplan":
+                if not vlsi_physical_design_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "VLSI Physical Design Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        gate_count = int(payload.get("gate_count", 50000))
+                        tech_node = str(payload.get("tech_node", "28nm"))
+                        target_util = float(payload.get("target_utilization", 0.70))
+                        aspect_ratio = float(payload.get("aspect_ratio", 1.0))
+                        margin = float(payload.get("core_margin_um", 20.0))
+                        pitch = float(payload.get("io_pad_pitch_um", 40.0))
+                        res = vlsi_physical_design_engine.calculate_floorplan_dimensions(
+                            gate_count=gate_count, tech_node=tech_node, target_utilization=target_util,
+                            aspect_ratio=aspect_ratio, core_margin_um=margin, io_pad_pitch_um=pitch
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/vlsi/density_heatmap":
+                if not vlsi_physical_design_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "VLSI Physical Design Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        gate_count = int(payload.get("gate_count", 50000))
+                        width = float(payload.get("core_width_um", 200.0))
+                        height = float(payload.get("core_height_um", 200.0))
+                        cols = int(payload.get("grid_cols", 16))
+                        rows = int(payload.get("grid_rows", 16))
+                        rent_exp = float(payload.get("rent_exponent", 0.65))
+                        target_util = float(payload.get("target_utilization", 0.70))
+                        res = vlsi_physical_design_engine.generate_placement_density_heatmap(
+                            gate_count=gate_count, core_width_um=width, core_height_um=height,
+                            grid_cols=cols, grid_rows=rows, rent_exponent=rent_exp, target_utilization=target_util
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/vlsi/elmore_delay":
+                if not vlsi_physical_design_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "VLSI Physical Design Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        length = float(payload.get("wirelength_um", 500.0))
+                        layer = str(payload.get("metal_layer", "intermediate"))
+                        tech_node = str(payload.get("tech_node", "28nm"))
+                        r_drv = payload.get("driver_resistance_ohms")
+                        c_load = payload.get("load_capacitance_ff")
+                        if r_drv is not None:
+                            r_drv = float(r_drv)
+                        if c_load is not None:
+                            c_load = float(c_load)
+                        res = vlsi_physical_design_engine.estimate_interconnect_elmore_delay(
+                            wirelength_um=length, metal_layer=layer, tech_node=tech_node,
+                            driver_resistance_ohms=r_drv, load_capacitance_ff=c_load
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/vlsi/cts_model":
+                if not vlsi_physical_design_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "VLSI Physical Design Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        sinks = int(payload.get("num_sinks", 1024))
+                        die_w = float(payload.get("die_width_um", 300.0))
+                        die_h = float(payload.get("die_height_um", 300.0))
+                        freq = float(payload.get("target_freq_mhz", 1000.0))
+                        tech_node = str(payload.get("tech_node", "28nm"))
+                        pvt_sigma = float(payload.get("process_variation_sigma_pct", 5.0))
+                        res = vlsi_physical_design_engine.model_clock_tree_synthesis(
+                            num_sinks=sinks, die_width_um=die_w, die_height_um=die_h,
+                            target_freq_mhz=freq, tech_node=tech_node, process_variation_sigma_pct=pvt_sigma
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/riscv/simulate":
+                if not riscv_processor_engine:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RISC-V Processor Engine unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        asm_code = payload.get("assembly_code", "ADDI x1, x0, 10")
+                        pname = payload.get("program_name", "rv32i_program")
+                        max_c = int(payload.get("max_cycles", 500))
+                        init_mem = payload.get("initial_memory")
+                        if init_mem:
+                            init_mem = {int(k): int(v) for k, v in init_mem.items()}
+                        res = riscv_processor_engine.simulate_assembly(
+                            assembly_code=asm_code, program_name=pname, max_cycles=max_c, initial_memory=init_mem
+                        )
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({"status": "SUCCESS", "data": res}).encode("utf-8"))
+                    except Exception as e:
+                        self._set_cors_headers(400)
+                        self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))
+            elif parsed.path == "/api/riscv/step":
+                if not RiscV5StagePipeline:
+                    self._set_cors_headers(503)
+                    self.wfile.write(json.dumps({"status": "error", "message": "RISC-V 5-Stage Pipeline unavailable"}).encode("utf-8"))
+                else:
+                    try:
+                        asm_code = payload.get("assembly_code", "NOP")
+                        cycles = int(payload.get("cycles", 1))
+                        init_mem = payload.get("initial_memory")
+                        if init_mem:
+                            init_mem = {int(k): int(v) for k, v in init_mem.items()}
+                        pipeline = RiscV5StagePipeline(initial_memory=init_mem)
+                        pipeline.load_program(asm_code)
+                        steps = []
+                        for _ in range(max(1, min(100, cycles))):
+                            if pipeline.is_pipeline_empty() and pipeline.cycle_count > 0:
+                                break
+                            step_res = pipeline.step()
+                            steps.append(step_res)
+                        self._set_cors_headers(200)
+                        self.wfile.write(json.dumps({
+                            "status": "SUCCESS",
+                            "steps": steps,
+                            "current_cycle": pipeline.cycle_count,
+                            "registers": {f"x{i}": pipeline.registers[i] for i in range(32)},
+                            "memory": {str(k): v for k, v in pipeline.memory.items()},
+                            "pipeline_empty": pipeline.is_pipeline_empty()
+                        }).encode("utf-8"))
                     except Exception as e:
                         self._set_cors_headers(400)
                         self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode("utf-8"))

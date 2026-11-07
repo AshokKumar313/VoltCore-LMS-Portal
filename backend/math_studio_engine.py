@@ -34,6 +34,7 @@ import cmath
 import json
 import sqlite3
 import time
+import numpy as np
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple, Optional, Union
 
@@ -590,7 +591,439 @@ class FourierSeriesEngine:
 
 
 # ========================================================================================
-# 3. High-Level Studio Engine Facade & SQLite WAL Persistence
+# Phase 16: Engineering & Mathematical Assumptions Checker
+# ========================================================================================
+
+class MathematicalAssumptionsChecker:
+    """
+    Validates physical and analytical assumptions on rational transfer functions:
+      - Hurwitz LHP stability (flags steady-state evaluation on unstable systems)
+      - Pole-zero cancellation singularities (indeterminate hidden modes)
+      - Non-minimum phase excess phase lag
+      - Imaginary axis division-by-zero singularities (|H(jw)| -> infinity)
+      - Discrete Schur-Cohn unit circle stability in z-domain
+      - Logarithmic frequency domain bounds
+    """
+
+    @staticmethod
+    def check_assumptions(
+        domain: str,
+        poles: List[complex],
+        zeros: List[complex],
+        gain: float = 1.0,
+        w_min: float = 0.1,
+        w_max: float = 100.0,
+        t_stop: float = 2.0
+    ) -> Dict[str, Any]:
+        violations = []
+        warnings = []
+        domain_upper = domain.upper().strip()
+
+        # 1. Frequency sweep bounds check
+        if w_min <= 0.0 or w_max <= w_min:
+            violations.append({
+                "type": "INVALID_LOGARITHMIC_FREQUENCY_RANGE",
+                "severity": "CRITICAL",
+                "message": f"Logarithmic Bode sweep requires strictly positive frequencies (received w_min={w_min}, w_max={w_max}).",
+                "remedy": "Ensure w_min > 0 and w_max > w_min."
+            })
+
+        # 2. Continuous-Time Laplace s-domain assumptions
+        if domain_upper == "LAPLACE":
+            # Check for unstable RHP poles
+            unstable_poles = [p for p in poles if p.real > 1e-4]
+            if unstable_poles:
+                violations.append({
+                    "type": "UNSTABLE_POLE_STEADY_STATE_VIOLATION",
+                    "severity": "CRITICAL",
+                    "unstable_poles": [complex_to_dict(p) for p in unstable_poles],
+                    "message": f"System has {len(unstable_poles)} pole(s) in the Right-Half Plane (Re(p) > 0). Steady-state Final Value Theorem is strictly invalid because time response diverges toward infinity.",
+                    "remedy": "Stabilize the system by relocating poles into the Left-Half Plane (Re(p) < 0) via negative feedback compensation."
+                })
+
+            # Check for imaginary axis infinite resonance (division by zero)
+            imaginary_poles = [p for p in poles if abs(p.real) <= 1e-4 and abs(p.imag) > 1e-4]
+            for ip in imaginary_poles:
+                w_res = abs(ip.imag)
+                if w_min <= w_res <= w_max:
+                    violations.append({
+                        "type": "IMAGINARY_AXIS_INFINITE_RESONANCE_VIOLATION",
+                        "severity": "CRITICAL",
+                        "pole": complex_to_dict(ip),
+                        "resonant_freq_rad_s": round(w_res, 3),
+                        "message": f"Undamped pure imaginary pole at s = ±{w_res:.2f}j lies directly on frequency evaluation axis, producing theoretical infinite gain and division by zero.",
+                        "remedy": "Add physical series damping resistance to move poles slightly into LHP."
+                    })
+
+            # Check for Non-Minimum Phase zeros (Re(z) > 0)
+            nmp_zeros = [z for z in zeros if z.real > 1e-4]
+            if nmp_zeros:
+                warnings.append({
+                    "type": "NON_MINIMUM_PHASE_DELAY_VIOLATION",
+                    "severity": "HIGH",
+                    "nmp_zeros": [complex_to_dict(z) for z in nmp_zeros],
+                    "message": f"System possesses {len(nmp_zeros)} Right-Half Plane zero(s). Non-minimum phase systems exhibit initial inverse transient response (undershoot) and severe phase lag.",
+                    "remedy": "Account for non-minimum phase waterbed effect limiting achievable feedback bandwidth."
+                })
+
+        # 3. Discrete-Time Z-domain assumptions
+        elif domain_upper == "Z_TRANSFORM":
+            unstable_z_poles = [p for p in poles if abs(p) >= 1.0 - 1e-5]
+            if unstable_z_poles:
+                violations.append({
+                    "type": "DISCRETE_UNIT_CIRCLE_INSTABILITY",
+                    "severity": "CRITICAL",
+                    "unstable_poles": [complex_to_dict(p) for p in unstable_z_poles],
+                    "message": f"Discrete pole lies on or outside unit circle (|z| >= 1.0). Digital filter is unstable; recursive difference equation will overflow.",
+                    "remedy": "Scale pole radii inside the unit circle (|p| < 1.0)."
+                })
+
+        # 4. Pole-Zero Cancellation Singularity Check (both domains)
+        for p in poles:
+            for z in zeros:
+                if abs(p - z) < 1e-4:
+                    violations.append({
+                        "type": "POLE_ZERO_CANCELLATION_SINGULARITY",
+                        "severity": "HIGH",
+                        "pole": complex_to_dict(p),
+                        "zero": complex_to_dict(z),
+                        "message": f"Pole at {p} and Zero at {z} virtually coincide (|p - z| < 1e-4). Algebraic cancellation creates an unobservable or uncontrollable hidden dynamic mode.",
+                        "remedy": "Perturb pole or zero coordinates to eliminate exact cancellation singularity."
+                    })
+
+        return {
+            "assumptions_valid": len(violations) == 0,
+            "violations_count": len(violations),
+            "violations": violations,
+            "warnings_count": len(warnings),
+            "warnings": warnings,
+            "domain": domain_upper
+        }
+
+
+# ========================================================================================
+# Phase 18: Control Systems Root Locus & Nyquist Stability Analyzers
+# ========================================================================================
+
+class RootLocusSolver:
+    """
+    Computes Evans Root Locus closed-loop pole trajectories:
+      1 + K * G(s)H(s) = 0 <=> D(s) + K * N(s) = 0
+    Features:
+      - Trajectory branches for K in [0, K_max] with nearest-neighbor path continuity
+      - Asymptote centroid sigma_a and angles theta_a
+      - Real-axis segments
+      - Breakaway and break-in points (dK/ds = 0)
+      - Imaginary axis crossovers and critical stability gain K_crit
+    """
+
+    @classmethod
+    def solve_root_locus(
+        cls,
+        poles: List[complex],
+        zeros: List[complex],
+        gain_scale: float = 1.0,
+        k_max: float = 100.0,
+        num_points: int = 120
+    ) -> Dict[str, Any]:
+        num_pts = max(20, min(500, int(num_points)))
+        p_c = [complex_from_dict(p) for p in poles]
+        z_c = [complex_from_dict(z) for z in zeros]
+        n_poles = len(p_c)
+        n_zeros = len(z_c)
+
+        if n_poles == 0:
+            return {
+                "status": "ERROR",
+                "error": "At least one pole is required to compute root locus.",
+                "branches": []
+            }
+
+        # Form monic denominator D(s) and numerator N(s) polynomials
+        d_poly = np.poly(p_c) if p_c else np.array([1.0])
+        n_poly = np.poly(z_c) if z_c else np.array([1.0])
+
+        # Pad polynomials so they have matching dimensions
+        deg_d = len(d_poly) - 1
+        deg_n = len(n_poly) - 1
+        max_deg = max(deg_d, deg_n)
+
+        d_padded = np.pad(d_poly, (max_deg - deg_d, 0), 'constant')
+        n_padded = np.pad(n_poly, (max_deg - deg_n, 0), 'constant') * float(gain_scale)
+
+        # 1. Asymptote Calculation
+        num_asymp = n_poles - n_zeros
+        asymptotes = {
+            "num_asymptotes": max(0, num_asymp),
+            "centroid_sigma_a": None,
+            "angles_deg": []
+        }
+        if num_asymp > 0:
+            sum_p = sum(p.real for p in p_c)
+            sum_z = sum(z.real for z in z_c)
+            sigma_a = (sum_p - sum_z) / num_asymp
+            angles = [round(((2 * k + 1) * 180.0) / num_asymp, 2) for k in range(num_asymp)]
+            asymptotes["centroid_sigma_a"] = round(sigma_a, 4)
+            asymptotes["angles_deg"] = angles
+
+        # 2. Real Axis Segments
+        real_singularities = []
+        for p in p_c:
+            if abs(p.imag) < 1e-4:
+                real_singularities.append({"val": p.real, "type": "POLE"})
+        for z in z_c:
+            if abs(z.imag) < 1e-4:
+                real_singularities.append({"val": z.real, "type": "ZERO"})
+
+        real_singularities.sort(key=lambda s: s["val"], reverse=True)
+        real_segments = []
+        for i in range(len(real_singularities)):
+            if i % 2 == 0:
+                right_bound = real_singularities[i]["val"]
+                left_bound = real_singularities[i + 1]["val"] if i + 1 < len(real_singularities) else -float("inf")
+                real_segments.append({
+                    "left": round(left_bound, 4) if left_bound != -float("inf") else "-inf",
+                    "right": round(right_bound, 4)
+                })
+
+        # 3. Breakaway / Break-in Points: d(D/N)/ds = 0 <=> N * D' - D * N' = 0
+        d_prime = np.polyder(d_poly)
+        n_prime = np.polyder(n_poly) if deg_n > 0 else np.array([0.0])
+        break_poly = np.polysub(np.polymul(n_poly, d_prime), np.polymul(d_poly, n_prime))
+
+        breakaway_points = []
+        if len(break_poly) > 1:
+            cand_roots = np.roots(break_poly)
+            for cr in cand_roots:
+                if abs(cr.imag) < 1e-4:
+                    # Evaluate gain K = -D(s) / N(s)
+                    d_val = float(np.polyval(d_poly, cr.real))
+                    n_val = float(np.polyval(n_poly, cr.real)) * float(gain_scale)
+                    if abs(n_val) > 1e-12:
+                        k_val = -d_val / n_val
+                        if k_val >= -1e-4:
+                            breakaway_points.append({
+                                "coordinate": round(cr.real, 4),
+                                "gain_k": round(max(0.0, k_val), 4),
+                                "point_type": "BREAKAWAY" if any(p.real <= cr.real for p in p_c) else "BREAK_IN"
+                            })
+
+        # 4. Parametric Gain Sweep and Branch Tracking
+        k_values = [0.0]
+        if k_max > 0.0:
+            k_span = np.geomspace(1e-4, float(k_max), num_pts - 1)
+            k_values.extend([float(k) for k in k_span])
+
+        branches = [[] for _ in range(n_poles)]
+        prev_roots: Optional[List[complex]] = None
+        crossover_events = []
+
+        for k_idx, k_val in enumerate(k_values):
+            char_poly = d_padded + k_val * n_padded
+            roots_k = list(np.roots(char_poly))
+
+            if prev_roots is None:
+                roots_k.sort(key=lambda r: (round(r.imag, 3), round(r.real, 3)))
+                prev_roots = roots_k
+                for b_idx in range(n_poles):
+                    r = roots_k[b_idx]
+                    branches[b_idx].append({
+                        "k": round(k_val, 5),
+                        "real": round(r.real, 4),
+                        "imag": round(r.imag, 4)
+                    })
+            else:
+                unassigned_roots = list(roots_k)
+                assigned_roots = [None] * n_poles
+
+                for b_idx in range(n_poles):
+                    prev_r = prev_roots[b_idx]
+                    closest_idx = min(range(len(unassigned_roots)), key=lambda i: abs(unassigned_roots[i] - prev_r))
+                    assigned_roots[b_idx] = unassigned_roots.pop(closest_idx)
+
+                for b_idx in range(n_poles):
+                    curr_r = assigned_roots[b_idx]
+                    prev_r = prev_roots[b_idx]
+
+                    if (prev_r.real <= 0.0 and curr_r.real > 0.0) or (prev_r.real > 0.0 and curr_r.real <= 0.0):
+                        if abs(curr_r.real - prev_r.real) > 1e-12:
+                            t_ratio = (0.0 - prev_r.real) / (curr_r.real - prev_r.real)
+                            k_cross = k_values[k_idx - 1] + t_ratio * (k_val - k_values[k_idx - 1])
+                            w_cross = abs(prev_r.imag + t_ratio * (curr_r.imag - prev_r.imag))
+                            crossover_events.append({
+                                "branch": b_idx + 1,
+                                "critical_gain_k": round(k_cross, 4),
+                                "crossing_freq_rad_s": round(w_cross, 3)
+                            })
+
+                    branches[b_idx].append({
+                        "k": round(k_val, 5),
+                        "real": round(curr_r.real, 4),
+                        "imag": round(curr_r.imag, 4)
+                    })
+                prev_roots = assigned_roots
+
+        critical_gain = None
+        if crossover_events:
+            critical_gain = min(e["critical_gain_k"] for e in crossover_events if e["critical_gain_k"] > 0.0)
+
+        return {
+            "status": "SUCCESS",
+            "num_poles": n_poles,
+            "num_zeros": n_zeros,
+            "open_loop_poles": [complex_to_dict(p) for p in p_c],
+            "open_loop_zeros": [complex_to_dict(z) for z in z_c],
+            "asymptotes": asymptotes,
+            "real_axis_segments": real_segments,
+            "breakaway_points": breakaway_points,
+            "crossover_events": crossover_events,
+            "critical_gain_k": critical_gain,
+            "is_unconditionally_stable": critical_gain is None and all(p.real < 0.0 for p in p_c),
+            "branches": branches
+        }
+
+
+class NyquistPlotSolver:
+    """
+    Computes Nyquist contour mapping and Cauchy encirclement stability analysis:
+      - Closed contour G(jw) for w in [-w_max, +w_max]
+      - Cauchy winding number / encirclements around critical point (-1 + j0)
+      - Nyquist Stability Criterion: Z = N + P
+      - Phase crossover frequency, Gain crossover frequency, Gain Margin, and Phase Margin
+    """
+
+    @classmethod
+    def solve_nyquist(
+        cls,
+        poles: List[complex],
+        zeros: List[complex],
+        gain: float = 1.0,
+        w_min: float = 0.01,
+        w_max: float = 100.0,
+        num_points: int = 150
+    ) -> Dict[str, Any]:
+        p_c = [complex_from_dict(p) for p in poles]
+        z_c = [complex_from_dict(z) for z in zeros]
+        k_val = float(gain)
+
+        num_pts = max(30, min(600, int(num_points)))
+        log_min = math.log10(max(1e-4, w_min))
+        log_max = math.log10(max(w_min * 10.0, w_max))
+        w_span = list(np.logspace(log_min, log_max, num_pts))
+
+        def eval_g(s_val: complex) -> complex:
+            denom = complex(1.0, 0.0)
+            for p in p_c:
+                denom *= (s_val - p)
+            if abs(denom) < 1e-12:
+                denom = complex(1e-12, 0.0)
+
+            num = complex(k_val, 0.0)
+            for z in z_c:
+                num *= (s_val - z)
+            return num / denom
+
+        pos_curve = []
+        for w in w_span:
+            s = complex(0.0, w)
+            resp = eval_g(s)
+            pos_curve.append({
+                "w": round(w, 4),
+                "real": round(resp.real, 5),
+                "imag": round(resp.imag, 5),
+                "magnitude": round(abs(resp), 5),
+                "phase_deg": round(math.degrees(cmath.phase(resp)), 2)
+            })
+
+        full_contour = []
+        for pt in reversed(pos_curve):
+            full_contour.append(complex(pt["real"], -pt["imag"]))
+
+        # Semicircular indentation arc in s-plane around origin poles s = 0:
+        # Detour s = w_min * exp(j * theta) with theta in [-pi/2, +pi/2]
+        origin_poles = sum(1 for p in p_c if abs(p) < 1e-4)
+        if origin_poles > 0:
+            n_arc = 60
+            thetas = np.linspace(-math.pi / 2.0, math.pi / 2.0, n_arc)
+            w_indent = pos_curve[0]["w"]
+            for th in thetas:
+                s_arc = w_indent * np.exp(1j * th)
+                resp_arc = eval_g(s_arc)
+                full_contour.append(resp_arc)
+
+        for pt in pos_curve:
+            full_contour.append(complex(pt["real"], pt["imag"]))
+
+        # Explicitly close contour back to beginning
+        if full_contour:
+            full_contour.append(full_contour[0])
+
+        angles = [math.atan2(pt.imag, pt.real + 1.0) for pt in full_contour]
+        net_angle = 0.0
+        for i in range(1, len(angles)):
+            diff = angles[i] - angles[i - 1]
+            diff = (diff + math.pi) % (2.0 * math.pi) - math.pi
+            net_angle += diff
+
+        encircle_cw = int(round(-net_angle / (2.0 * math.pi)))
+        p_rhp = sum(1 for p in p_c if p.real > 1e-4)
+        z_rhp = encircle_cw + p_rhp
+        is_closed_loop_stable = (z_rhp == 0)
+
+        phase_cross_w = None
+        gm_linear = None
+        gm_db = None
+        gain_cross_w = None
+        pm_deg = None
+
+        for i in range(1, len(pos_curve)):
+            pt_prev = pos_curve[i - 1]
+            pt_curr = pos_curve[i]
+
+            if (pt_prev["imag"] * pt_curr["imag"] <= 0.0) and (pt_curr["real"] < 0.0 or pt_prev["real"] < 0.0):
+                t_frac = abs(pt_prev["imag"]) / max(1e-12, abs(pt_prev["imag"]) + abs(pt_curr["imag"]))
+                cross_w = pt_prev["w"] + t_frac * (pt_curr["w"] - pt_prev["w"])
+                mag_at_cross = abs(pt_prev["real"] + t_frac * (pt_curr["real"] - pt_prev["real"]))
+                phase_cross_w = round(cross_w, 3)
+                if mag_at_cross > 1e-6:
+                    gm_linear = round(1.0 / mag_at_cross, 3)
+                    gm_db = round(-20.0 * math.log10(mag_at_cross), 2)
+                else:
+                    gm_linear = 999.0
+                    gm_db = 999.0
+                break
+
+        for i in range(1, len(pos_curve)):
+            pt_prev = pos_curve[i - 1]
+            pt_curr = pos_curve[i]
+
+            if (pt_prev["magnitude"] - 1.0) * (pt_curr["magnitude"] - 1.0) <= 0.0:
+                t_frac = abs(pt_prev["magnitude"] - 1.0) / max(1e-12, abs(pt_curr["magnitude"] - pt_prev["magnitude"]))
+                cross_w = pt_prev["w"] + t_frac * (pt_curr["w"] - pt_prev["w"])
+                phase_at_cross = pt_prev["phase_deg"] + t_frac * (pt_curr["phase_deg"] - pt_prev["phase_deg"])
+                gain_cross_w = round(cross_w, 3)
+                pm_deg = round(180.0 + phase_at_cross, 2)
+                break
+
+        return {
+            "status": "SUCCESS",
+            "critical_point": {"real": -1.0, "imag": 0.0},
+            "encirclements_cw_N": encircle_cw,
+            "open_loop_rhp_poles_P": p_rhp,
+            "closed_loop_rhp_poles_Z": z_rhp,
+            "is_closed_loop_stable": is_closed_loop_stable,
+            "stability_verdict": "STABLE" if is_closed_loop_stable else "UNSTABLE",
+            "phase_crossover_freq_rad_s": phase_cross_w,
+            "gain_margin_linear": gm_linear,
+            "gain_margin_db": gm_db,
+            "gain_crossover_freq_rad_s": gain_cross_w,
+            "phase_margin_deg": pm_deg,
+            "positive_frequency_curve": pos_curve
+        }
+
+
+# ========================================================================================
+# 4. High-Level Studio Engine Facade & SQLite WAL Persistence
 # ========================================================================================
 
 class MathStudioEngine:
@@ -771,6 +1204,17 @@ class MathStudioEngine:
 
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
+        # Runtime engineering & mathematical assumptions audit
+        assumptions = MathematicalAssumptionsChecker.check_assumptions(
+            domain=domain,
+            poles=c_poles,
+            zeros=c_zeros,
+            gain=gain,
+            w_min=w_min,
+            w_max=w_max,
+            t_stop=t_stop
+        )
+
         sim_id = self.record_studio_analysis(
             domain=domain,
             preset_id=preset_id,
@@ -790,10 +1234,74 @@ class MathStudioEngine:
             "zeros": [complex_to_dict(z) for z in c_zeros],
             "gain": gain,
             "stability": stability,
+            "assumptions_check": assumptions,
             "bode": bode,
             "step_response": step_resp,
             "impulse_response": impulse_resp
         }
+
+    def check_mathematical_assumptions(
+        self,
+        domain: str = "LAPLACE",
+        poles: Optional[List[Any]] = None,
+        zeros: Optional[List[Any]] = None,
+        gain: float = 1.0,
+        w_min: float = 0.1,
+        w_max: float = 100.0,
+        t_stop: float = 2.0
+    ) -> Dict[str, Any]:
+        """Validates engineering & stability assumptions on transfer function pole-zero systems."""
+        c_poles = [complex_from_dict(p) for p in (poles or [])]
+        c_zeros = [complex_from_dict(z) for z in (zeros or [])]
+        return MathematicalAssumptionsChecker.check_assumptions(
+            domain=domain,
+            poles=c_poles,
+            zeros=c_zeros,
+            gain=gain,
+            w_min=w_min,
+            w_max=w_max,
+            t_stop=t_stop
+        )
+
+    def compute_root_locus(
+        self,
+        poles: Optional[List[Any]] = None,
+        zeros: Optional[List[Any]] = None,
+        gain_scale: float = 1.0,
+        k_max: float = 100.0,
+        num_points: int = 120
+    ) -> Dict[str, Any]:
+        """Calculates closed-loop pole trajectories as open-loop gain K varies from 0 to K_max."""
+        c_poles = [complex_from_dict(p) for p in (poles or [])]
+        c_zeros = [complex_from_dict(z) for z in (zeros or [])]
+        return RootLocusSolver.solve_root_locus(
+            poles=c_poles,
+            zeros=c_zeros,
+            gain_scale=gain_scale,
+            k_max=k_max,
+            num_points=num_points
+        )
+
+    def compute_nyquist_plot(
+        self,
+        poles: Optional[List[Any]] = None,
+        zeros: Optional[List[Any]] = None,
+        gain: float = 1.0,
+        w_min: float = 0.01,
+        w_max: float = 100.0,
+        num_points: int = 150
+    ) -> Dict[str, Any]:
+        """Calculates Nyquist contour mapping and Cauchy stability criterion."""
+        c_poles = [complex_from_dict(p) for p in (poles or [])]
+        c_zeros = [complex_from_dict(z) for z in (zeros or [])]
+        return NyquistPlotSolver.solve_nyquist(
+            poles=c_poles,
+            zeros=c_zeros,
+            gain=gain,
+            w_min=w_min,
+            w_max=w_max,
+            num_points=num_points
+        )
 
 
 # Global singleton instance for platform-wide use

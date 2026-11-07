@@ -5,9 +5,9 @@ Anna University / MIT Campus Standards (Department of Electronics Engineering)
 ----------------------------------------------------------------------------------------
 Module: backend/rag_tutor_engine.py
 Platform Lead / Architect: Ashok Kumar A
-Primary Contact Email: ashokkumar2008313@gmail.com
+Primary Contact Email: ashokkumar3132008@gmail.com
 GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
-Contact / Telemetry Line: +91 9597382878
+Contact / Telemetry Line: +91 94440 00000
 Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
 Curriculum / Regulation: Department of Electronics Engineering, Regulation 2023
 

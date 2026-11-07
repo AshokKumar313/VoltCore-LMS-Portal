@@ -1,0 +1,116 @@
+---
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Sovereign Institutional Brand Header Component
+ * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * ----------------------------------------------------------------------------------------
+ * Module: src/components/VoltCoreBrandHeader.astro
+ * Platform Lead & Systems Director: Ashok Kumar A (2023MITEC042)
+ *
+ * Formalizes the official VoltCore silicon emblem, institutional motto, and circuit geometry
+ * across all 18 vibrant colorful themes.
+ * ========================================================================================
+ */
+
+interface Props {
+  variant?: 'banner' | 'compact' | 'hero';
+  showSubtitle?: boolean;
+  showMotto?: boolean;
+  className?: string;
+}
+
+const {
+  variant = 'banner',
+  showSubtitle = true,
+  showMotto = true,
+  className = '',
+} = Astro.props;
+
+const INSTITUTIONAL_MOTTO = "Engineering Intelligence. Practical Innovation. Academic Excellence.";
+---
+
+<div class={`voltcore-brand-header relative overflow-hidden transition-all duration-300 ${className}`}>
+  {variant === 'hero' ? (
+    <!-- Hero Institutional Showcase -->
+    <div class="relative z-10 flex flex-col items-center text-center p-8 rounded-3xl border border-[var(--theme-border)] bg-[var(--theme-surface)] backdrop-blur-2xl shadow-2xl">
+      <!-- Silicon Circuit Trace Ambient Geometry -->
+      <div class="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" fill="none">
+          <path d="M0 100h200l30-30h100l30 30h100l30-30h210" stroke="var(--theme-primary)" stroke-width="1.5" stroke-dasharray="4 4" />
+          <circle cx="200" cy="100" r="4" fill="var(--theme-primary)" />
+          <circle cx="330" cy="70" r="4" fill="var(--theme-primary)" />
+          <circle cx="490" cy="70" r="4" fill="var(--theme-primary)" />
+        </svg>
+      </div>
+
+      <!-- Official Silicon Emblem -->
+      <div class="relative mb-5 group">
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--theme-card)] to-[var(--theme-bg)] border-2 border-[var(--theme-primary)] flex items-center justify-center p-3 shadow-lg transition-transform duration-300 group-hover:scale-105" style="box-shadow: 0 0 25px var(--theme-primary);">
+          <img src="/favicon.svg" alt="VoltCore Sovereign Silicon Emblem" class="w-full h-full drop-shadow-md" />
+        </div>
+        <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--theme-primary)] opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-[var(--theme-primary)]"></span>
+        </span>
+      </div>
+
+      <!-- Title & Academic Distinction -->
+      <div class="flex items-center gap-2.5 mb-2">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono text-[var(--theme-text)]">
+          VOLT<span class="text-[var(--theme-primary)]">CORE</span>
+        </h1>
+        <span class="text-xs uppercase px-2 py-0.5 rounded-md font-mono font-bold tracking-widest bg-[var(--theme-primary)]/15 text-[var(--theme-primary)] border border-[var(--theme-primary)]/40">
+          APEX ACADEMIA
+        </span>
+      </div>
+
+      {showSubtitle && (
+        <p class="text-xs sm:text-sm font-mono text-[var(--theme-text-muted)] tracking-wider uppercase mb-3">
+          Department of Electronics Engineering • MIT Campus, Anna University
+        </p>
+      )}
+
+      {showMotto && (
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--theme-primary)]/30 bg-[var(--theme-primary)]/10 text-xs sm:text-sm font-medium text-[var(--theme-primary)]">
+          <svg class="w-4 h-4 shrink-0 text-[var(--theme-primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+          <span class="tracking-wide font-sans">{INSTITUTIONAL_MOTTO}</span>
+        </div>
+      )}
+    </div>
+  ) : (
+    <!-- Standard Navigation & Header Banner -->
+    <div class="flex items-center gap-3.5 py-1">
+      <!-- Official Emblem Icon Box -->
+      <div class="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--theme-card)] to-[var(--theme-bg)] border border-[var(--theme-primary)]/50 flex items-center justify-center p-1.5 shrink-0 transition-transform hover:scale-105" style="box-shadow: 0 0 14px var(--theme-primary);">
+        <img src="/favicon.svg" alt="VoltCore Emblem" class="w-full h-full" />
+        <span class="absolute -top-1 -right-1 flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--theme-primary)] opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-[var(--theme-primary)]"></span>
+        </span>
+      </div>
+
+      <div class="flex flex-col">
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold tracking-tight text-base sm:text-lg text-[var(--theme-text)] font-mono">
+            VOLT<span class="text-[var(--theme-primary)]">CORE</span>
+          </span>
+          <span class="text-[9px] tracking-wider uppercase px-1.5 py-0.5 rounded bg-[var(--theme-primary)]/20 text-[var(--theme-primary)] border border-[var(--theme-primary)]/40 font-mono font-bold">
+            APEX
+          </span>
+        </div>
+
+        {showMotto ? (
+          <p class="text-[10px] font-sans text-[var(--theme-text-muted)] tracking-tight truncate max-w-xs sm:max-w-md">
+            {INSTITUTIONAL_MOTTO}
+          </p>
+        ) : showSubtitle ? (
+          <p class="text-[10px] font-mono text-[var(--theme-text-muted)] tracking-tight">
+            ELECTRONICS & EMBEDDED SYSTEMS
+          </p>
+        ) : null}
+      </div>
+    </div>
+  )}
+</div>

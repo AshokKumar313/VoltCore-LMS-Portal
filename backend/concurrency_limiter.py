@@ -151,10 +151,13 @@ def simulate_concurrent_load(
                 with pool.get_connection() as conn:
                     cur = conn.cursor()
                     if is_write:
-                        # Safe test write with immediate rollback
+                        # Safe test write with valid foreign key user and immediate rollback
+                        cur.execute("SELECT user_id FROM users LIMIT 1;")
+                        urow = cur.fetchone()
+                        valid_uid = urow[0] if urow else "2023MITEC042"
                         cur.execute(
                             "INSERT INTO attendance (user_id, rfid_uid, node_id, status) VALUES (?, ?, ?, ?)",
-                            (f"SIM_USER_{thread_id}", "AA BB CC DD", "ESP32_STAGING_TEST", "Lab-Verified")
+                            (valid_uid, f"AA BB CC {thread_id:02X}", "ESP32_STAGING_TEST", "Lab-Verified")
                         )
                         conn.rollback()  # Do not pollute database
                     else:

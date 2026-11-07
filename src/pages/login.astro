@@ -1,0 +1,49 @@
+---
+/**
+ * ========================================================================================
+ * VoltCore Apex Academia - Multi-Role Institutional Authentication Page
+ * Anna University / MIT Campus Standards (Department of Electronics Engineering)
+ * ----------------------------------------------------------------------------------------
+ * Page: src/pages/login.astro
+ * Platform Lead & Systems Director: Ashok Kumar A (2023MITEC042)
+ *
+ * Provides sovereign institutional branding, role-based login presets, and theme adaptability.
+ * ========================================================================================
+ */
+
+import MainLayout from '../layouts/MainLayout.astro';
+import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
+import MultiRoleAuthModal from '../components/MultiRoleAuthModal.jsx';
+---
+
+<MainLayout title="Institutional Authentication | VoltCore Apex Academia" activeNav="login">
+  <div class="min-h-[85vh] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+    <!-- Ambient Geometric Circuit Grids -->
+    <div class="absolute inset-0 pointer-events-none opacity-25 overflow-hidden">
+      <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" fill="none">
+        <defs>
+          <pattern id="circuit-grid" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="var(--theme-border)" stroke-width="0.8" />
+            <circle cx="0" cy="0" r="2" fill="var(--theme-primary)" />
+            <circle cx="60" cy="0" r="2" fill="var(--theme-primary)" />
+            <circle cx="0" cy="60" r="2" fill="var(--theme-primary)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#circuit-grid)" />
+      </svg>
+    </div>
+
+    <!-- Central Authentication Frame -->
+    <div class="w-full max-w-xl relative z-10">
+      <MultiRoleAuthModal client:load />
+    </div>
+
+    <!-- Institutional Footer Note -->
+    <div class="relative z-10 mt-8 text-center text-xs font-mono text-[var(--theme-text-muted)] space-y-1">
+      <p>Autonomous Engineering Cluster • IEEE Std 802.1X Hardware Protected</p>
+      <p class="text-[11px] text-[var(--theme-primary)]">
+        "Engineering Intelligence. Practical Innovation. Academic Excellence."
+      </p>
+    </div>
+  </div>
+</MainLayout>

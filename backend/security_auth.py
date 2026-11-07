@@ -5,9 +5,9 @@ Anna University / MIT Campus Standards (Department of Electronics Engineering)
 ----------------------------------------------------------------------------------------
 Module: backend/security_auth.py
 Platform Lead / Architect: Ashok Kumar A
-Primary Contact Email: ashokkumar2008313@gmail.com
+Primary Contact Email: ashokkumar3132008@gmail.com
 GitHub Profile: https://github.com/AshokKumar313 (Username: AshokKumar313)
-Contact / Telemetry Line: +91 9597382878
+Contact / Telemetry Line: +91 94440 00000
 Institution: Madras Institute of Technology (MIT) Campus, Anna University, Chromepet
 Curriculum / Regulation: Department of Electronics Engineering, Regulation 2023
 
@@ -90,10 +90,54 @@ OWNER_METADATA: Dict[str, str] = {
 PBKDF2_ITERATIONS: int = 600_000                  # Upgraded to 600,000 for OWASP compliance
 SALT_BYTE_LENGTH: int = 16                        # 128-bit cryptographic salt
 HASH_ALGORITHM: str = "sha256"
-JWT_SECRET_KEY: str = os.environ.get("VOLTCORE_JWT_SECRET", "MIT_CHROMEPET_ECE_SECURE_JWT_KEY_2026_@P3X")
 JWT_ALGORITHM: str = "HS256"
 DEFAULT_TOKEN_EXPIRY_SECONDS: int = 86400 * 7     # 7 Days for University Session
 MAX_REQUESTS_PER_MINUTE: int = 120                # Telemetry Ingestion Threshold (120 req/min)
+
+_EPHEMERAL_DEV_SECRET: Optional[str] = None
+
+
+def get_jwt_secret() -> str:
+    """
+    Resolves the cryptographic secret key for JWT signing and verification.
+    Enforces loading from environment variables: 'JWT_SECRET_KEY' or 'VOLTCORE_JWT_SECRET'.
+
+    Security Constraints:
+      - In production (VOLTCORE_ENV == 'production' or FLASK_ENV == 'production'):
+        Strictly requires JWT_SECRET_KEY or VOLTCORE_JWT_SECRET to be configured with >= 32 characters (256 bits).
+        Refuses to run with insecure defaults.
+      - In development/test mode:
+        If unconfigured, generates an ephemeral cryptographically strong 256-bit random key
+        using secrets.token_hex(32) rather than using a predictable static fallback string.
+    """
+    global _EPHEMERAL_DEV_SECRET
+    env_secret = os.environ.get("JWT_SECRET_KEY") or os.environ.get("VOLTCORE_JWT_SECRET")
+    is_prod = (
+        os.environ.get("VOLTCORE_ENV", "").lower() == "production" or
+        os.environ.get("FLASK_ENV", "").lower() == "production"
+    )
+
+    if env_secret:
+        if len(env_secret) < 32:
+            if is_prod:
+                raise RuntimeError(
+                    "CRITICAL SECURITY ERROR: JWT_SECRET_KEY must be at least 32 characters (256 bits) for HMAC-SHA256."
+                )
+        return env_secret
+
+    if is_prod:
+        raise RuntimeError(
+            "CRITICAL SECURITY ERROR: JWT_SECRET_KEY environment variable is not configured. "
+            "Server refuses to launch in production mode with missing secret key."
+        )
+
+    # In development/test: generate an ephemeral non-deterministic 256-bit secret per process
+    if _EPHEMERAL_DEV_SECRET is None:
+        _EPHEMERAL_DEV_SECRET = secrets.token_hex(32)
+    return _EPHEMERAL_DEV_SECRET
+
+
+JWT_SECRET_KEY: str = get_jwt_secret()
 
 
 # ========================================================================================
@@ -202,12 +246,13 @@ def generate_jwt_token(
     department: str = "Department of Electronics Engineering",
     campus: str = "MIT Campus, Anna University",
     expires_in: int = DEFAULT_TOKEN_EXPIRY_SECONDS,
-    secret: str = JWT_SECRET_KEY
+    secret: Optional[str] = None
 ) -> str:
     """
     Generate an enterprise-grade HMAC-SHA256 signed JSON Web Token (JWT).
     Payload includes UserID, Role, Issuer, Audience, Issued-At, and Expiry claims.
     """
+    resolved_secret = secret if secret is not None else get_jwt_secret()
     now = int(time.time())
     header = {
         "alg": JWT_ALGORITHM,
@@ -232,7 +277,7 @@ def generate_jwt_token(
 
     unsigned_token = f"{base64url_encode(header_bytes)}.{base64url_encode(payload_bytes)}"
     signature = hmac.new(
-        secret.encode('utf-8'),
+        resolved_secret.encode('utf-8'),
         unsigned_token.encode('utf-8'),
         hashlib.sha256
     ).digest()
@@ -240,13 +285,25 @@ def generate_jwt_token(
     return f"{unsigned_token}.{base64url_encode(signature)}"
 
 
-def verify_jwt_token(token: str, secret: str = JWT_SECRET_KEY) -> Optional[Dict[str, Any]]:
+def verify_jwt_token(token: str, secret: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
-    Verify and decode a JWT using constant-time signature comparison and expiry checks.
+    Verify and decode a JWT using constant-time signature comparison and strict validation.
+
+    Security Validations:
+      1. Structural integrity: Exactly 3 non-empty dot-separated segments.
+      2. Header validation: Algorithm must be explicitly 'HS256' and typ must be 'JWT'.
+         Prevents algorithm confusion ('none' or asymmetric key substitution).
+      3. Signature verification: Constant-time comparison (hmac.compare_digest) with 256-bit key.
+      4. Expiry validation: Token 'exp' claim must be in the future (exp > now).
+      5. Not-Before validation: Token 'nbf' claim (if present) must be <= now.
+      6. Issued-At validation: Token 'iat' claim must not be > now + 60s (reject future tokens).
+
     Returns decoded claims dictionary if valid, or None if invalid/expired.
     """
-    if not isinstance(token, str):
+    if not isinstance(token, str) or not token.strip():
         return None
+
+    resolved_secret = secret if secret is not None else get_jwt_secret()
 
     try:
         parts = token.strip().split('.')
@@ -254,27 +311,55 @@ def verify_jwt_token(token: str, secret: str = JWT_SECRET_KEY) -> Optional[Dict[
             return None
 
         header_b64, payload_b64, signature_b64 = parts
-        unsigned_token = f"{header_b64}.{payload_b64}"
+        if not header_b64 or not payload_b64 or not signature_b64:
+            return None
 
+        # 1. Header Validation (prevents algorithm confusion / 'none' attack)
+        header_bytes = base64url_decode(header_b64)
+        header = json.loads(header_bytes.decode('utf-8'))
+        if not isinstance(header, dict):
+            return None
+        if header.get("alg") != JWT_ALGORITHM:
+            return None
+        if header.get("typ") != "JWT":
+            return None
+
+        # 2. Cryptographic Signature Verification
+        unsigned_token = f"{header_b64}.{payload_b64}"
         expected_signature = hmac.new(
-            secret.encode('utf-8'),
+            resolved_secret.encode('utf-8'),
             unsigned_token.encode('utf-8'),
             hashlib.sha256
         ).digest()
 
         provided_signature = base64url_decode(signature_b64)
-
-        # Constant-time comparison prevents timing attacks
         if not hmac.compare_digest(expected_signature, provided_signature):
             return None
 
+        # 3. Payload Decode
         payload_bytes = base64url_decode(payload_b64)
         payload = json.loads(payload_bytes.decode('utf-8'))
+        if not isinstance(payload, dict):
+            return None
 
-        # Expiry verification
         now = int(time.time())
-        if payload.get("exp", 0) < now:
-            return None  # Token expired
+
+        # 4. Expiry Validation
+        exp = payload.get("exp")
+        if exp is None or not isinstance(exp, (int, float)) or exp < now:
+            return None  # Missing or expired token
+
+        # 5. Not-Before Validation
+        if "nbf" in payload:
+            nbf = payload["nbf"]
+            if not isinstance(nbf, (int, float)) or now < nbf:
+                return None
+
+        # 6. Issued-At Clock Skew Validation (tolerate at most 60s drift)
+        if "iat" in payload:
+            iat = payload["iat"]
+            if not isinstance(iat, (int, float)) or iat > (now + 60):
+                return None
 
         return payload
     except Exception:

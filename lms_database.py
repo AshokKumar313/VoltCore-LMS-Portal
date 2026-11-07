@@ -29,13 +29,16 @@ SALT_BYTE_LENGTH: int = 16
 
 def get_connection(db_path: str = DB_FILE) -> sqlite3.Connection:
     """
-    Establish a thread-safe connection to the SQLite database with Foreign Keys enabled.
+    Establish a thread-safe connection to the SQLite database with Foreign Keys enabled
+    and standard WAL performance configurations enforced.
     Returns sqlite3.Row mapped connection for dictionary-like column access.
     """
-    conn = sqlite3.connect(db_path, timeout=10.0, check_same_thread=False)
+    conn = sqlite3.connect(db_path, timeout=5.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
     conn.execute("PRAGMA foreign_keys = ON;")
-    conn.execute("PRAGMA journal_mode = WAL;")  # High concurrency write-ahead logging
     return conn
 
 

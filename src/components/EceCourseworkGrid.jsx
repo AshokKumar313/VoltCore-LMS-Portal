@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SubjectEmblem from './SubjectEmblem.jsx';
 
 /**
  * ========================================================================================
@@ -468,13 +469,16 @@ export default function EceCourseworkGrid() {
               <div>
                 {/* Top Row: Course Code & Progress Ring */}
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <span className={course.badgeClass}>
-                      {course.code}
-                    </span>
-                    <span className="block text-[11px] font-mono text-slate-400 mt-1">
-                      {course.semester}
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <SubjectEmblem courseCode={course.code} size="md" />
+                    <div>
+                      <span className={course.badgeClass}>
+                        {course.code}
+                      </span>
+                      <span className="block text-[11px] font-mono text-slate-400 mt-1">
+                        {course.semester}
+                      </span>
+                    </div>
                   </div>
                   {renderProgressRing(course.progress, course.accentColor)}
                 </div>

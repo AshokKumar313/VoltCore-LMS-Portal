@@ -71,11 +71,13 @@ class SQLiteConnectionPool:
         cur.execute("PRAGMA synchronous = NORMAL;")
         # 3. Busy timeout: wait up to 5,000ms if a write transaction is committing
         cur.execute("PRAGMA busy_timeout = 5000;")
-        # 4. Cache size: 8MB in-memory page cache (negative = KB)
+        # 4. Foreign Keys: enforce relational integrity across all tables
+        cur.execute("PRAGMA foreign_keys = ON;")
+        # 5. Cache size: 8MB in-memory page cache (negative = KB)
         cur.execute("PRAGMA cache_size = -8000;")
-        # 5. Memory-mapped I/O: 32MB zero-copy reads
+        # 6. Memory-mapped I/O: 32MB zero-copy reads
         cur.execute("PRAGMA mmap_size = 33554432;")
-        # 6. Store temp tables and indexes in memory
+        # 7. Store temp tables and indexes in memory
         cur.execute("PRAGMA temp_store = MEMORY;")
         cur.close()
 

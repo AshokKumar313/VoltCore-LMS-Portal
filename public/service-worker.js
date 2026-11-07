@@ -181,13 +181,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy C: Network-First for API calls with Synthetic Offline JSON Fallback
+  // Strategy C: Network-First for API calls with Synthetic Offline JSON Fallback (offline_spooled)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() => {
         return new Response(
           JSON.stringify({
             status: 'OFFLINE_SPOOLED',
+            mode: 'offline_spooled',
             message: 'Device is offline. Local IndexedDB queue is managing transactions.',
             timestamp: new Date().toISOString()
           }),

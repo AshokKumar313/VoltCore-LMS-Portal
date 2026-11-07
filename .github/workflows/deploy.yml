@@ -45,7 +45,7 @@ jobs:
         run: |
           python -m py_compile attendance_server.py lms_database.py backend/*.py
 
-      - name: Run Phase Regression Test Suite (Phases 5 through 15)
+      - name: Run Phase Regression Test Suite (Phases 5 through 20)
         run: |
           pytest tests/test_phase5_telemetry.py \
                  tests/test_phase6_ai_tutor.py \
@@ -59,6 +59,15 @@ jobs:
                  tests/test_phase13_multi_instrument_lab.py \
                  tests/test_phase14_math_studio.py \
                  tests/test_phase15_autograder.py \
+                 tests/test_phase16_intelligence.py \
+                 tests/test_phase17_semiconductor_montecarlo.py \
+                 tests/test_phase18_control_rf.py \
+                 tests/test_phase19_multirate_dsp.py \
+                 tests/test_phase20_vlsi_processor.py \
+                 tests/test_gate1_security_hardening.py \
+                 tests/test_stage4_stage5_curriculum_ai.py \
+                 tests/test_stage6_stage7_production_security.py \
+                 tests/test_phase21_branding_emblems.py \
                  tests/e2e/test_e2e_suite_integrity.py \
                  --verbose
 

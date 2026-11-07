@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { getSubjectMetadata } from '../data/subjectRegistry';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens, TIER3_SPECIALIZATION_TRACKS } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
@@ -162,18 +163,19 @@ export function ArmCortexMicrocontrollerSvg({ className = "w-6 h-6", primaryColo
 }
 
 export function DepartmentalBadgeIcon({ code, className = "w-6 h-6", primaryColor }) {
-  switch (code) {
-    case "EC23S01":
-      return <DspWaveformSvg className={className} primaryColor={primaryColor || "#00F0B5"} />;
-    case "EC23C03":
-      return <SemiconductorBandgapSvg className={className} primaryColor={primaryColor || "#F59E0B"} />;
-    case "EC23E04":
-      return <LaserResonatorSvg className={className} primaryColor={primaryColor || "#06B6D4"} />;
-    case "EC8702":
-      return <ArmCortexMicrocontrollerSvg className={className} primaryColor={primaryColor || "#6366F1"} />;
-    default:
-      return <span className={className}>⚡</span>;
-  }
+  const meta = getSubjectMetadata(code);
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label={meta.accessibleLabel}
+      style={{ color: primaryColor || meta.primaryColor }}
+      dangerouslySetInnerHTML={{ __html: meta.svgPath }}
+    />
+  );
 }
 
 // -----------------------------------------------------------------------------

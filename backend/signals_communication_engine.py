@@ -26,6 +26,21 @@ import threading
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
+from backend.rf_smith_chart_engine import (
+    RFSmithChartEngine,
+    rf_smith_chart_engine
+)
+from backend.multirate_dsp_engine import (
+    multirate_dsp_engine,
+    MultirateDSPEngine,
+    PolyphaseFilterbank,
+    CICFilterEngine,
+    FixedPointQuantizer,
+    SpectrumAnalyzer,
+    DSPWindowEngine,
+    FIRFilterDesigner
+)
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEFAULT_DB_PATH = os.path.join(BASE_DIR, "voltcore_telemetry.db")
 

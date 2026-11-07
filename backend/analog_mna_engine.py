@@ -26,11 +26,19 @@ import os
 import sys
 import math
 import cmath
+import copy
+import random
 import json
 import sqlite3
 import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple, Optional, Set
+
+from backend.semiconductor_physics_engine import (
+    SemiconductorPhysicsEngine,
+    semiconductor_physics_engine,
+    SEMICONDUCTOR_MATERIALS
+)
 
 # Physical Constants (at Room Temperature T = 300.0 Kelvin)
 Q_ELEC = 1.602176634e-19       # Electron charge (Coulombs)
@@ -1032,6 +1040,535 @@ class NonLinearMNASolver:
 
 
 # ========================================================================================
+# Phase 16: Engineering Assumptions Checker for Analog Circuits & Transistors
+# ========================================================================================
+
+class CircuitAssumptionsChecker:
+    """
+    Validates physical engineering assumptions on analog circuits and transistor operating points:
+      - BJT Active (Linear) vs Saturation vs Cutoff region violations
+      - MOSFET Saturation vs Triode vs Subthreshold region violations
+      - Diode reverse breakdown and excessive dissipation
+      - Extreme node voltage boundaries (|V| > 1000V)
+    """
+
+    @staticmethod
+    def check_assumptions(
+        circuit: Circuit,
+        simulation_results: Dict[str, Any],
+        assumed_operating_mode: str = "LINEAR_AMPLIFICATION"
+    ) -> Dict[str, Any]:
+        violations = []
+        warnings = []
+        device_operating_points = {}
+        trajectories = simulation_results.get("trajectories", {})
+        node_voltages = simulation_results.get("node_voltages") or {}
+
+        final_voltages = dict(node_voltages)
+        for n, vals in trajectories.items():
+            if vals and len(vals) > 0:
+                final_voltages[n] = vals[-1]
+
+        # 1. BJT Operating Region Validation
+        for comp in circuit.components:
+            if isinstance(comp, BJT):
+                vc = final_voltages.get(comp.n_c, 0.0)
+                vb = final_voltages.get(comp.n_b, 0.0)
+                ve = final_voltages.get(comp.n_e, 0.0)
+
+                vbe = vb - ve
+                vce = vc - ve
+                vbc = vb - vc
+
+                if comp.bjt_type == "NPN":
+                    is_active = (vbe >= 0.55) and (vce >= 0.20)
+                    is_saturated = (vbe >= 0.55) and (vce < 0.20)
+                    is_cutoff = vbe < 0.50
+                    is_reverse = (vbc >= 0.55) and (vbe < 0.50)
+                else:  # PNP
+                    vbe = -vbe
+                    vce = -vce
+                    vbc = -vbc
+                    is_active = (vbe >= 0.55) and (vce >= 0.20)
+                    is_saturated = (vbe >= 0.55) and (vce < 0.20)
+                    is_cutoff = vbe < 0.50
+                    is_reverse = (vbc >= 0.55) and (vbe < 0.50)
+
+                op_region = "ACTIVE" if is_active else "SATURATION" if is_saturated else "CUTOFF" if is_cutoff else "REVERSE_ACTIVE"
+
+                device_operating_points[comp.name] = {
+                    "device": "BJT",
+                    "type": comp.bjt_type,
+                    "region": op_region,
+                    "vbe": round(vbe, 3),
+                    "vce": round(vce, 3),
+                    "vbc": round(vbc, 3)
+                }
+
+                if assumed_operating_mode.upper() == "LINEAR_AMPLIFICATION" and is_saturated:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "BJT_SATURATION_REGION_VIOLATION",
+                        "severity": "CRITICAL",
+                        "message": f"BJT '{comp.name}' entered Saturation region (Vce = {vce:.3f}V < 0.20V, Vbe = {vbe:.3f}V). Linear amplification is compromised; collector current is limited by external load Rc."
+                    })
+                elif assumed_operating_mode.upper() == "LINEAR_AMPLIFICATION" and is_cutoff:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "BJT_CUTOFF_REGION_VIOLATION",
+                        "severity": "HIGH",
+                        "message": f"BJT '{comp.name}' is in Cutoff region (Vbe = {vbe:.3f}V < 0.50V). Base-emitter junction lacks forward bias; no amplification occurs."
+                    })
+
+                if abs(vce) > 50.0:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "BJT_BREAKDOWN_VOLTAGE_EXCEEDED",
+                        "severity": "CRITICAL",
+                        "message": f"BJT '{comp.name}' Collector-Emitter voltage (Vce = {vce:.2f}V) exceeds maximum Vceo rating (50V)."
+                    })
+
+            # 2. MOSFET Operating Region Validation
+            elif isinstance(comp, MOSFET):
+                vd = final_voltages.get(comp.n_d, 0.0)
+                vg = final_voltages.get(comp.n_g, 0.0)
+                vs = final_voltages.get(comp.n_s, 0.0)
+
+                vgs = vg - vs
+                vds = vd - vs
+                vth = comp.vth
+                vov = vgs - vth
+
+                if comp.mos_type == "NMOS":
+                    is_sat = (vgs > vth) and (vds >= vov)
+                    is_triode = (vgs > vth) and (vds < vov)
+                    is_cutoff = vgs <= vth
+                else:  # PMOS
+                    vgs = -vgs
+                    vds = -vds
+                    vth = -vth
+                    vov = vgs - vth
+                    is_sat = (vgs > vth) and (vds >= vov)
+                    is_triode = (vgs > vth) and (vds < vov)
+                    is_cutoff = vgs <= vth
+
+                op_region = "SATURATION" if is_sat else "TRIODE" if is_triode else "CUTOFF"
+                device_operating_points[comp.name] = {
+                    "device": "MOSFET",
+                    "type": comp.mos_type,
+                    "region": op_region,
+                    "vgs": round(vgs, 3),
+                    "vds": round(vds, 3),
+                    "vov": round(vov, 3)
+                }
+
+                if assumed_operating_mode.upper() == "LINEAR_AMPLIFICATION" and is_triode:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "MOSFET_TRIODE_REGION_VIOLATION",
+                        "severity": "CRITICAL",
+                        "message": f"MOSFET '{comp.name}' entered Triode (Ohmic) region (Vds = {vds:.3f}V < Vov = {vov:.3f}V). Channel pinch-off is lost; transconductance gm drops."
+                    })
+                elif assumed_operating_mode.upper() == "LINEAR_AMPLIFICATION" and is_cutoff:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "MOSFET_SUBTHRESHOLD_CUTOFF_VIOLATION",
+                        "severity": "HIGH",
+                        "message": f"MOSFET '{comp.name}' is in Cutoff (Vgs = {vgs:.3f}V <= Vth = {vth:.3f}V). Inversion channel has not formed."
+                    })
+
+            # 3. Diode Breakdown Validation
+            elif isinstance(comp, Diode):
+                v1 = final_voltages.get(comp.n_anode, 0.0)
+                v2 = final_voltages.get(comp.n_cathode, 0.0)
+                vd = v1 - v2
+                device_operating_points[comp.name] = {
+                    "device": "DIODE",
+                    "vd": round(vd, 3),
+                    "state": "FORWARD" if vd >= 0.55 else "REVERSE" if vd >= -50.0 else "BREAKDOWN"
+                }
+                if vd < -50.0:
+                    violations.append({
+                        "device": comp.name,
+                        "type": "DIODE_REVERSE_BREAKDOWN_EXCEEDED",
+                        "severity": "CRITICAL",
+                        "message": f"Diode '{comp.name}' reverse voltage (Vd = {vd:.2f}V) exceeds peak inverse voltage (PIV 50V)."
+                    })
+
+        # 4. Extreme Node Voltages Check
+        for n, v in final_voltages.items():
+            if math.isnan(v) or math.isinf(v) or abs(v) > 1000.0:
+                violations.append({
+                    "node": n,
+                    "type": "EXTREME_VOLTAGE_NUMERICAL_DIVERGENCE",
+                    "severity": "CRITICAL",
+                    "message": f"Node '{n}' voltage reached unphysical extreme ({v}V), indicating numerical instability or floating node."
+                })
+
+        return {
+            "assumptions_valid": len(violations) == 0,
+            "violations_count": len(violations),
+            "violations": violations,
+            "warnings_count": len(warnings),
+            "warnings": warnings,
+            "device_operating_points": device_operating_points,
+            "operating_points": device_operating_points
+        }
+
+
+# ========================================================================================
+# Phase 17: Circuit Tolerance Monte Carlo Yield Analysis Engine
+# ========================================================================================
+
+class CircuitMonteCarloSimulator:
+    """
+    High-Performance Circuit Tolerance & Monte Carlo Yield Analysis Engine.
+    Executes Gaussian variation sweeps over passive (R, C, L) and active (BJT, MOSFET, Diode)
+    component parameters, computing yield, mean, standard deviation, confidence intervals,
+    parameter sensitivity rankings, and histogram distributions.
+    """
+
+    @staticmethod
+    def calculate_distribution_statistics(values: List[float]) -> Dict[str, Any]:
+        """Calculates comprehensive descriptive statistics and percentiles."""
+        if not values:
+            return {"mean": 0.0, "std_dev": 0.0, "min": 0.0, "max": 0.0, "median_p50": 0.0}
+
+        n = len(values)
+        mean_val = sum(values) / n
+        if n > 1:
+            variance = sum((x - mean_val) ** 2 for x in values) / (n - 1)
+            std_dev = math.sqrt(variance)
+        else:
+            variance = 0.0
+            std_dev = 0.0
+
+        sorted_vals = sorted(values)
+        def percentile(p: float) -> float:
+            k = (n - 1) * p
+            f = math.floor(k)
+            c = math.ceil(k)
+            if f == c:
+                return sorted_vals[int(k)]
+            d0 = sorted_vals[int(f)] * (c - k)
+            d1 = sorted_vals[int(c)] * (k - f)
+            return d0 + d1
+
+        min_val = sorted_vals[0]
+        max_val = sorted_vals[-1]
+        p10 = percentile(0.10)
+        p25 = percentile(0.25)
+        p50 = percentile(0.50)  # median
+        p75 = percentile(0.75)
+        p90 = percentile(0.90)
+        iqr = p75 - p25
+
+        # Higher statistical moments: skewness & kurtosis
+        if std_dev > 1e-12 and n >= 3:
+            skewness = (sum(((x - mean_val) / std_dev) ** 3 for x in values) * n) / ((n - 1) * (n - 2))
+            kurtosis = (sum(((x - mean_val) / std_dev) ** 4 for x in values) / n) - 3.0
+        else:
+            skewness = 0.0
+            kurtosis = 0.0
+
+        return {
+            "count": n,
+            "mean": round(mean_val, 5),
+            "std_dev": round(std_dev, 5),
+            "variance": round(variance, 6),
+            "min": round(min_val, 5),
+            "max": round(max_val, 5),
+            "range": round(max_val - min_val, 5),
+            "median_p50": round(p50, 5),
+            "p10": round(p10, 5),
+            "p25": round(p25, 5),
+            "p75": round(p75, 5),
+            "p90": round(p90, 5),
+            "iqr": round(iqr, 5),
+            "skewness": round(skewness, 4),
+            "kurtosis": round(kurtosis, 4)
+        }
+
+    @staticmethod
+    def compute_wilson_score_interval(p_hat: float, n: int, confidence: float = 0.95) -> Tuple[float, float]:
+        """
+        Computes Wilson score confidence interval for sample proportion p_hat.
+        Guaranteed to lie within [0.0, 100.0]% and mathematically robust across all n.
+        """
+        if n <= 0:
+            return 0.0, 100.0
+        z = 1.95996  # 95% confidence level
+        denom = 1.0 + (z ** 2) / n
+        center = (p_hat + (z ** 2) / (2.0 * n)) / denom
+        half_width = (z / denom) * math.sqrt((p_hat * (1.0 - p_hat) / n) + ((z ** 2) / (4.0 * (n ** 2))))
+        lower = max(0.0, center - half_width)
+        upper = min(1.0, center + half_width)
+        return round(lower * 100.0, 2), round(upper * 100.0, 2)
+
+    @staticmethod
+    def generate_histogram(values: List[float], num_bins: int = 15) -> Dict[str, Any]:
+        """Generates histogram bin boundaries, midpoints, frequencies, and counts."""
+        if not values:
+            return {"bin_edges": [], "bin_midpoints": [], "counts": [], "frequencies": []}
+        min_v = min(values)
+        max_v = max(values)
+        n = len(values)
+
+        if abs(max_v - min_v) < 1e-12:
+            return {
+                "bin_edges": [round(min_v - 0.1, 4), round(max_v + 0.1, 4)],
+                "bin_midpoints": [round(min_v, 4)],
+                "counts": [n],
+                "frequencies": [1.0]
+            }
+
+        bin_w = (max_v - min_v) / num_bins
+        edges = [min_v + i * bin_w for i in range(num_bins + 1)]
+        midpoints = [0.5 * (edges[i] + edges[i + 1]) for i in range(num_bins)]
+        counts = [0] * num_bins
+
+        for val in values:
+            idx = int((val - min_v) / bin_w)
+            if idx >= num_bins:
+                idx = num_bins - 1
+            counts[idx] += 1
+
+        freqs = [c / n for c in counts]
+        return {
+            "bin_edges": [round(e, 4) for e in edges],
+            "bin_midpoints": [round(m, 4) for m in midpoints],
+            "counts": counts,
+            "frequencies": [round(f, 4) for f in freqs]
+        }
+
+    @staticmethod
+    def compute_parameter_sensitivities(
+        param_variations: Dict[str, List[float]],
+        output_values: List[float]
+    ) -> List[Dict[str, Any]]:
+        """
+        Computes Pearson correlation coefficient r(param, V_out) across Monte Carlo samples
+        to isolate components dominating output variance.
+        """
+        n = len(output_values)
+        if n < 3:
+            return []
+
+        mean_out = sum(output_values) / n
+        denom_out = math.sqrt(sum((v - mean_out) ** 2 for v in output_values))
+        if denom_out < 1e-12:
+            return []
+
+        sensitivities = []
+        for p_name, p_vals in param_variations.items():
+            if len(p_vals) != n:
+                continue
+            mean_p = sum(p_vals) / n
+            denom_p = math.sqrt(sum((p - mean_p) ** 2 for p in p_vals))
+            if denom_p < 1e-12:
+                r = 0.0
+            else:
+                cov = sum((p_vals[i] - mean_p) * (output_values[i] - mean_out) for i in range(n))
+                r = cov / (denom_p * denom_out)
+
+            abs_r = abs(r)
+            if abs_r >= 0.6:
+                impact = "DOMINANT"
+            elif abs_r >= 0.3:
+                impact = "HIGH"
+            elif abs_r >= 0.1:
+                impact = "MODERATE"
+            else:
+                impact = "NEGLIGIBLE"
+
+            sensitivities.append({
+                "parameter": p_name,
+                "correlation_r": round(r, 4),
+                "absolute_r": round(abs_r, 4),
+                "mean_value": round(mean_p, 4),
+                "impact_level": impact
+            })
+
+        sensitivities.sort(key=lambda s: s["absolute_r"], reverse=True)
+        for idx, item in enumerate(sensitivities, 1):
+            item["ranking"] = idx
+        return sensitivities
+
+    @classmethod
+    def run_monte_carlo(
+        cls,
+        circuit: Circuit,
+        runs: int = 200,
+        tolerances: Optional[Dict[str, float]] = None,
+        target_nodes: Optional[List[str]] = None,
+        acceptance_criteria: Optional[Dict[str, Tuple[float, float]]] = None,
+        analysis_type: str = "DC_OP",
+        t_stop: float = 3e-3,
+        t_step: float = 20e-6,
+        seed: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes a statistical Monte Carlo variation sweep over component tolerances.
+        """
+        rng = random.Random(seed) if seed is not None else random.Random()
+        runs_count = max(5, min(1000, int(runs)))
+        tol_map = dict(tolerances or {})
+
+        # Identify target nodes
+        if not target_nodes:
+            if acceptance_criteria:
+                target_nodes = list(acceptance_criteria.keys())
+            else:
+                target_nodes = [n for n in circuit.idx_to_node.values() if n not in ("0", "GND", "GROUND")]
+                if not target_nodes:
+                    target_nodes = ["1"]
+
+        node_trajectories: Dict[str, List[float]] = {n: [] for n in target_nodes}
+        param_variations: Dict[str, List[float]] = {}
+        passed_runs = 0
+        failed_runs = 0
+        run_samples = []
+
+        for k in range(runs_count):
+            sim_circ = copy.deepcopy(circuit)
+
+            # Perturb component parameters with Gaussian variations
+            for comp in sim_circ.components:
+                if isinstance(comp, Resistor):
+                    tol = tol_map.get(comp.name, tol_map.get("R", 0.05))
+                    sigma = (tol / 3.0) * comp.resistance
+                    r_val = max(1e-4, rng.gauss(comp.resistance, sigma))
+                    comp.resistance = r_val
+                    comp.conductance = 1.0 / r_val
+                    param_variations.setdefault(f"{comp.name}_R", []).append(r_val)
+
+                elif isinstance(comp, Capacitor):
+                    tol = tol_map.get(comp.name, tol_map.get("C", 0.10))
+                    sigma = (tol / 3.0) * comp.capacitance
+                    c_val = max(1e-15, rng.gauss(comp.capacitance, sigma))
+                    comp.capacitance = c_val
+                    param_variations.setdefault(f"{comp.name}_C", []).append(c_val)
+
+                elif isinstance(comp, Inductor):
+                    tol = tol_map.get(comp.name, tol_map.get("L", 0.05))
+                    sigma = (tol / 3.0) * comp.inductance
+                    l_val = max(1e-15, rng.gauss(comp.inductance, sigma))
+                    comp.inductance = l_val
+                    param_variations.setdefault(f"{comp.name}_L", []).append(l_val)
+
+                elif isinstance(comp, VoltageSource):
+                    tol = tol_map.get(comp.name, tol_map.get("V", 0.02))
+                    sigma = (tol / 3.0) * max(0.1, abs(comp.dc_val))
+                    v_val = rng.gauss(comp.dc_val, sigma)
+                    comp.dc_val = v_val
+                    param_variations.setdefault(f"{comp.name}_V", []).append(v_val)
+
+                elif isinstance(comp, BJT):
+                    b_tol = tol_map.get(f"{comp.name}_BETA", tol_map.get("BJT_BETA", 0.20))
+                    sigma_b = (b_tol / 3.0) * comp.beta_f
+                    beta_val = max(5.0, rng.gauss(comp.beta_f, sigma_b))
+                    comp.beta_f = beta_val
+                    param_variations.setdefault(f"{comp.name}_BETA", []).append(beta_val)
+
+                    is_tol = tol_map.get(f"{comp.name}_IS", 0.15)
+                    sigma_is = (is_tol / 3.0) * comp.is_sat
+                    is_val = max(1e-20, rng.gauss(comp.is_sat, sigma_is))
+                    comp.is_sat = is_val
+                    param_variations.setdefault(f"{comp.name}_IS", []).append(is_val)
+
+                elif isinstance(comp, MOSFET):
+                    vth_tol = tol_map.get(f"{comp.name}_VTH", tol_map.get("MOS_VTH", 0.10))
+                    sigma_vth = (vth_tol / 3.0) * max(0.2, abs(comp.vth))
+                    vth_val = rng.gauss(comp.vth, sigma_vth)
+                    comp.vth = vth_val
+                    param_variations.setdefault(f"{comp.name}_VTH", []).append(vth_val)
+
+                    kn_tol = tol_map.get(f"{comp.name}_KN", 0.15)
+                    sigma_kn = (kn_tol / 3.0) * comp.kn
+                    kn_val = max(1e-6, rng.gauss(comp.kn, sigma_kn))
+                    comp.kn = kn_val
+                    param_variations.setdefault(f"{comp.name}_KN", []).append(kn_val)
+
+                elif isinstance(comp, Diode):
+                    is_tol = tol_map.get(f"{comp.name}_IS", tol_map.get("DIODE_IS", 0.15))
+                    sigma_is = (is_tol / 3.0) * comp.is_sat
+                    is_val = max(1e-20, rng.gauss(comp.is_sat, sigma_is))
+                    comp.is_sat = is_val
+                    param_variations.setdefault(f"{comp.name}_IS", []).append(is_val)
+
+            # Solve perturbed circuit
+            solver = NonLinearMNASolver(sim_circ)
+            if analysis_type.upper() in ("DC_OP", "DC_OPERATING_POINT"):
+                sol = solver.solve_dc_operating_point()
+                node_v = sol.get("node_voltages", {})
+            else:
+                sol = solver.solve_transient(t_stop=t_stop, t_step=t_step)
+                node_v = {n: vals[-1] for n, vals in sol.get("trajectories", {}).items() if vals}
+
+            # Evaluate acceptance criteria
+            run_passed = True
+            run_snapshot = {}
+            for n in target_nodes:
+                val = float(node_v.get(n, 0.0))
+                node_trajectories[n].append(val)
+                run_snapshot[n] = round(val, 4)
+                if acceptance_criteria and n in acceptance_criteria:
+                    min_v, max_v = acceptance_criteria[n]
+                    if not (min_v <= val <= max_v):
+                        run_passed = False
+
+            if run_passed:
+                passed_runs += 1
+            else:
+                failed_runs += 1
+
+            if k < 25:
+                run_samples.append({
+                    "run": k + 1,
+                    "passed": run_passed,
+                    "voltages": run_snapshot
+                })
+
+        # Calculate statistics
+        yield_pct = round((passed_runs / runs_count) * 100.0, 2)
+        p_hat = passed_runs / runs_count
+        ci_lower, ci_upper = cls.compute_wilson_score_interval(p_hat, runs_count)
+
+        node_statistics = {}
+        histograms = {}
+        for n in target_nodes:
+            vals = node_trajectories[n]
+            node_statistics[n] = cls.calculate_distribution_statistics(vals)
+            histograms[n] = cls.generate_histogram(vals, num_bins=15)
+
+        primary_target = target_nodes[0]
+        sensitivities = cls.compute_parameter_sensitivities(
+            param_variations,
+            node_trajectories.get(primary_target, [])
+        )
+
+        return {
+            "status": "SUCCESS",
+            "circuit_title": circuit.title,
+            "total_runs": runs_count,
+            "passed_runs": passed_runs,
+            "failed_runs": failed_runs,
+            "yield_pct": yield_pct,
+            "wilson_ci_95": {
+                "lower_pct": ci_lower,
+                "upper_pct": ci_upper
+            },
+            "acceptance_criteria": acceptance_criteria or {},
+            "monitored_nodes": target_nodes,
+            "primary_target_node": primary_target,
+            "node_statistics": node_statistics,
+            "histograms": histograms,
+            "parameter_sensitivities": sensitivities,
+            "sample_runs": run_samples
+        }
+
+
+# ========================================================================================
 # 4. Curated Academic Circuit Presets & Simulation Engine Facade
 # ========================================================================================
 
@@ -1066,6 +1603,23 @@ class AnalogMNAEngine:
                     total_steps INTEGER,
                     cpu_time_ms REAL,
                     timestamp TEXT
+                );
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS circuit_monte_carlo_history (
+                    mc_id TEXT PRIMARY KEY,
+                    circuit_title TEXT NOT NULL,
+                    total_runs INTEGER NOT NULL,
+                    passed_runs INTEGER NOT NULL,
+                    yield_pct REAL NOT NULL,
+                    target_node TEXT,
+                    mean_val REAL,
+                    std_dev_val REAL,
+                    ci_lower REAL,
+                    ci_upper REAL,
+                    cpu_time_ms REAL,
+                    timestamp TEXT,
+                    summary_json TEXT
                 );
             """)
             conn.commit()
@@ -1274,7 +1828,19 @@ class AnalogMNAEngine:
         res["component_count"] = len(circuit.components)
         res["topology_warnings"] = topology_report["warnings"]
 
+        # Run engineering assumptions audit
+        res["assumptions_check"] = CircuitAssumptionsChecker.check_assumptions(circuit, res)
+
         return res
+
+    def check_circuit_assumptions(
+        self,
+        circuit: Circuit,
+        simulation_results: Dict[str, Any],
+        assumed_operating_mode: str = "LINEAR_AMPLIFICATION"
+    ) -> Dict[str, Any]:
+        """Validates engineering assumptions on circuit operating point and device regions."""
+        return CircuitAssumptionsChecker.check_assumptions(circuit, simulation_results, assumed_operating_mode)
 
     def simulate_spice_netlist(
         self,
@@ -1301,6 +1867,146 @@ class AnalogMNAEngine:
         )
         res["meta"] = meta
         res["netlist"] = netlist_text
+        return res
+
+    def record_monte_carlo_run(
+        self,
+        circuit_title: str,
+        total_runs: int,
+        passed_runs: int,
+        yield_pct: float,
+        target_node: str,
+        mean_val: float,
+        std_dev_val: float,
+        ci_lower: float,
+        ci_upper: float,
+        cpu_ms: float,
+        summary: Dict[str, Any]
+    ) -> str:
+        mc_id = f"MC_{int(time.time() * 1000)}_{os.urandom(2).hex()}"
+        now_str = datetime.now(timezone.utc).isoformat()
+        conn = self._get_connection()
+        try:
+            conn.execute("""
+                INSERT INTO circuit_monte_carlo_history (
+                    mc_id, circuit_title, total_runs, passed_runs, yield_pct,
+                    target_node, mean_val, std_dev_val, ci_lower, ci_upper,
+                    cpu_time_ms, timestamp, summary_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (
+                mc_id, circuit_title, total_runs, passed_runs, yield_pct,
+                target_node, mean_val, std_dev_val, ci_lower, ci_upper,
+                cpu_ms, now_str, json.dumps(summary)
+            ))
+            conn.commit()
+        finally:
+            conn.close()
+        return mc_id
+
+    def get_monte_carlo_history(self, limit: int = 25) -> List[Dict[str, Any]]:
+        conn = self._get_connection()
+        history = []
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT mc_id, circuit_title, total_runs, passed_runs, yield_pct,
+                       target_node, mean_val, std_dev_val, ci_lower, ci_upper,
+                       cpu_time_ms, timestamp
+                FROM circuit_monte_carlo_history
+                ORDER BY timestamp DESC
+                LIMIT ?;
+            """, (int(limit),))
+            for r in cur.fetchall():
+                history.append({
+                    "mc_id": r[0],
+                    "circuit_title": r[1],
+                    "total_runs": r[2],
+                    "passed_runs": r[3],
+                    "yield_pct": r[4],
+                    "target_node": r[5],
+                    "mean_val": r[6],
+                    "std_dev_val": r[7],
+                    "ci_lower": r[8],
+                    "ci_upper": r[9],
+                    "cpu_time_ms": r[10],
+                    "timestamp": r[11]
+                })
+        finally:
+            conn.close()
+        return history
+
+    def run_monte_carlo(
+        self,
+        circuit: Optional[Circuit] = None,
+        netlist: Optional[str] = None,
+        preset_id: Optional[str] = None,
+        preset_params: Optional[Dict[str, Any]] = None,
+        runs: int = 200,
+        tolerances: Optional[Dict[str, float]] = None,
+        target_nodes: Optional[List[str]] = None,
+        acceptance_criteria: Optional[Dict[str, Tuple[float, float]]] = None,
+        analysis_type: str = "DC_OP",
+        t_stop: float = 3e-3,
+        t_step: float = 20e-6,
+        seed: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Executes a Monte Carlo tolerance analysis on a Circuit, Netlist, or Preset.
+        Persists results into SQLite WAL table 'circuit_monte_carlo_history'.
+        """
+        start_time = time.perf_counter()
+
+        if circuit is None:
+            if netlist:
+                circuit, _ = parse_spice_netlist(netlist)
+            elif preset_id:
+                circuit = self.get_preset_circuit(preset_id, preset_params)
+            else:
+                circuit = self.get_preset_circuit("rc_transient", preset_params)
+
+        res = CircuitMonteCarloSimulator.run_monte_carlo(
+            circuit=circuit,
+            runs=runs,
+            tolerances=tolerances,
+            target_nodes=target_nodes,
+            acceptance_criteria=acceptance_criteria,
+            analysis_type=analysis_type,
+            t_stop=t_stop,
+            t_step=t_step,
+            seed=seed
+        )
+
+        elapsed_ms = (time.perf_counter() - start_time) * 1000.0
+        res["cpu_time_ms"] = round(elapsed_ms, 2)
+
+        target_node = res.get("primary_target_node", "OUT")
+        stats = res.get("node_statistics", {}).get(target_node, {})
+        mean_v = stats.get("mean", 0.0)
+        std_v = stats.get("std_dev", 0.0)
+        ci = res.get("wilson_ci_95", {})
+        ci_low = ci.get("lower_pct", 0.0)
+        ci_high = ci.get("upper_pct", 100.0)
+
+        mc_id = self.record_monte_carlo_run(
+            circuit_title=circuit.title,
+            total_runs=res["total_runs"],
+            passed_runs=res["passed_runs"],
+            yield_pct=res["yield_pct"],
+            target_node=target_node,
+            mean_val=mean_v,
+            std_dev_val=std_v,
+            ci_lower=ci_low,
+            ci_upper=ci_high,
+            cpu_ms=round(elapsed_ms, 2),
+            summary={
+                "monitored_nodes": res["monitored_nodes"],
+                "acceptance_criteria": res["acceptance_criteria"],
+                "primary_target_node": target_node,
+                "node_statistics": res["node_statistics"],
+                "parameter_sensitivities": res["parameter_sensitivities"][:5]
+            }
+        )
+        res["mc_id"] = mc_id
         return res
 
     def export_preset_spice(self, preset_id: str, params: Optional[Dict[str, Any]] = None) -> str:

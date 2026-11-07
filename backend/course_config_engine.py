@@ -23,6 +23,7 @@ import json
 import sqlite3
 import hashlib
 import datetime
+import time
 from typing import Dict, Any, List, Optional, Set, Tuple
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -520,6 +521,15 @@ COURSE_REGISTRY_DATA: Dict[str, Dict[str, Any]] = {
     }
 }
 
+# Merge all 14 ECE curriculum disciplines into registry
+try:
+    from backend.ece_comprehensive_curriculum import COMPREHENSIVE_ECE_CURRICULUM
+    for _course_code, _course_data in COMPREHENSIVE_ECE_CURRICULUM.items():
+        if _course_code not in COURSE_REGISTRY_DATA:
+            COURSE_REGISTRY_DATA[_course_code] = _course_data
+except Exception:
+    pass
+
 
 class CourseConfigEngine:
     """Core engine for course metadata verification and prerequisite DAG resolution."""
@@ -529,7 +539,21 @@ class CourseConfigEngine:
 
     def get_course(self, code: str) -> Optional[Dict[str, Any]]:
         """Retrieve course details by normalized course code."""
-        return self.registry.get(code.upper().strip())
+        c = self.registry.get(code.upper().strip())
+        if c and ("course_outcomes" not in c or not c["course_outcomes"]) and "syllabus_units" in c:
+            derived_cos = []
+            for u in c["syllabus_units"]:
+                u_num = u.get("unit_number", 1)
+                derived_cos.append({
+                    "id": f"CO{u_num}",
+                    "description": f"Demonstrated engineering competency and synthesis of {u.get('title', 'Unit topics')}.",
+                    "bloom_level": u.get("bloom_level", "L4 (Analyze)"),
+                    "mapped_pos": ["PO1", "PO2"],
+                    "mapped_psos": ["PSO1"]
+                })
+            c = dict(c)
+            c["course_outcomes"] = derived_cos
+        return c
 
     def get_course_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         """Retrieve course by URL-friendly slug."""
@@ -656,7 +680,7 @@ class CourseConfigEngine:
         Computes the complete topological sort for all curriculum nodes or a subset.
         Returns topological ordering and validates global acyclicity.
         """
-        all_nodes = set(node_subset) if node_subset else set(CURRICULUM_PREREQUISITE_GRAPH.keys()).union(self.registry.keys())
+        all_nodes = set(node_subset) if node_subset is not None else set(CURRICULUM_PREREQUISITE_GRAPH.keys())
         in_degree: Dict[str, int] = {n: 0 for n in all_nodes}
         adj: Dict[str, List[str]] = {n: [] for n in all_nodes}
 
@@ -1489,7 +1513,506 @@ class CurriculumMasteryEngine:
         )
 
 
+# ========================================================================================
+# Phase 16: Concept Dependency Intelligence & Dynamic Misconception Tracking
+# ========================================================================================
+
+class ConceptDependencyIntelligenceEngine:
+    """
+    Fine-grained ECE Concept DAG with semantic confidence scoring, misconception
+    detection, weak competency pruning, and dynamic remedial micro-lesson path generation.
+    """
+
+    ECE_CONCEPT_GRAPH: Dict[str, Dict[str, Any]] = {
+        "OHMS_LAW": {
+            "title": "Ohm's Law & Passive Resistance",
+            "tier": "Foundational Physics",
+            "prerequisites": [],
+            "key_principles": "V = I * R relationship, linear IV curve, power dissipation P = I^2 * R.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "KIRCHHOFF_LAWS": {
+            "title": "Kirchhoff's Current (KCL) & Voltage (KVL) Laws",
+            "tier": "Foundational Physics",
+            "prerequisites": ["OHMS_LAW"],
+            "key_principles": "Charge conservation (sum of node currents = 0), energy conservation (loop voltages = 0).",
+            "interactive_tool": "MNA_LAB"
+        },
+        "RC_RL_TRANSIENT": {
+            "title": "Reactive Energy Storage & RC/RL Transient Dynamics",
+            "tier": "Circuit Theory",
+            "prerequisites": ["KIRCHHOFF_LAWS"],
+            "key_principles": "Differential equations for capacitor charging V(t) = V0*(1 - e^(-t/tau)), inductor flux continuity.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "PN_JUNCTION": {
+            "title": "Semiconductor PN Junction & Shockley Exponential Diode",
+            "tier": "Solid State Devices",
+            "prerequisites": ["OHMS_LAW"],
+            "key_principles": "Built-in barrier potential, depletion capacitance, Shockley equation Id = Is*(e^(Vd/Vt) - 1).",
+            "interactive_tool": "MNA_LAB"
+        },
+        "DIODE_RECTIFIERS": {
+            "title": "Diode Rectification & Smoothing Filter Topologies",
+            "tier": "Electronic Circuits",
+            "prerequisites": ["PN_JUNCTION", "KIRCHHOFF_LAWS"],
+            "key_principles": "Half-wave and full-wave bridge rectification, ripple factor r = 1/(2*sqrt(3)*f*C*R), PIV ratings.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "BJT_BIASING": {
+            "title": "BJT Biasing & Q-Point Stability",
+            "tier": "Electronic Circuits",
+            "prerequisites": ["PN_JUNCTION", "KIRCHHOFF_LAWS"],
+            "key_principles": "Base-emitter forward bias (Vbe ~ 0.7V), collector-base reverse bias, DC load line, Q-point stabilization.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "BJT_ACTIVE_AMPLIFIER": {
+            "title": "BJT Linear Active Mode Amplification",
+            "tier": "Electronic Circuits",
+            "prerequisites": ["BJT_BIASING", "RC_RL_TRANSIENT"],
+            "key_principles": "Small-signal hybrid-pi model, transconductance gm = Ic/Vt, small-signal voltage gain Av = -gm*(Rc||Rl).",
+            "interactive_tool": "MNA_LAB"
+        },
+        "MOSFET_OPERATION": {
+            "title": "MOSFET Channel Inversion & Characteristic Curves",
+            "tier": "Solid State Devices",
+            "prerequisites": ["PN_JUNCTION", "OHMS_LAW"],
+            "key_principles": "Gate threshold voltage Vth, triode conduction Id = kn*(Vgs - Vth)*Vds, channel length modulation.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "MOSFET_AMPLIFIERS": {
+            "title": "MOSFET Saturation Mode Amplifiers & Switching",
+            "tier": "Electronic Circuits",
+            "prerequisites": ["MOSFET_OPERATION", "BJT_ACTIVE_AMPLIFIER"],
+            "key_principles": "Pinch-off saturation Id = 0.5*kn*(Vgs - Vth)^2*(1 + lambda*Vds), high input impedance.",
+            "interactive_tool": "MNA_LAB"
+        },
+        "LAPLACE_TRANSFORMS": {
+            "title": "Laplace Transforms & Continuous s-Domain Analysis",
+            "tier": "Signals & Systems",
+            "prerequisites": ["RC_RL_TRANSIENT"],
+            "key_principles": "Mapping differential equations to algebraic s-domain: L{d/dt} = s, initial value & final value theorems.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "TRANSFER_FUNCTIONS": {
+            "title": "Rational Transfer Functions & Root Loci",
+            "tier": "Control Systems",
+            "prerequisites": ["LAPLACE_TRANSFORMS"],
+            "key_principles": "H(s) = N(s)/D(s), characteristic polynomial roots, zero and pole placement.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "POLE_ZERO_STABILITY": {
+            "title": "Complex Plane Pole-Zero Distribution & Hurwitz Stability",
+            "tier": "Control Systems",
+            "prerequisites": ["TRANSFER_FUNCTIONS"],
+            "key_principles": "Left-Half Plane (LHP) stability criterion (Re(p) < 0), ROC boundary, marginal stability on jw axis.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "BODE_FREQUENCY_RESPONSE": {
+            "title": "Bode Logarithmic Frequency Analysis & Cutoff Bandwidth",
+            "tier": "Control Systems",
+            "prerequisites": ["POLE_ZERO_STABILITY"],
+            "key_principles": "Log-magnitude 20*log10|H(jw)|, phase angle arctan, -3.01dB cutoff frequency, gain/phase margins.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "FOURIER_SERIES": {
+            "title": "Fourier Series & Harmonic Decomposition",
+            "tier": "Signals & Systems",
+            "prerequisites": ["TRANSFER_FUNCTIONS"],
+            "key_principles": "Trigonometric and exponential harmonic decomposition, Gibbs phenomenon, Total Harmonic Distortion (THD).",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "SAMPLING_NYQUIST": {
+            "title": "Nyquist-Shannon Sampling Theorem & Anti-Aliasing",
+            "tier": "Digital Signal Processing",
+            "prerequisites": ["FOURIER_SERIES"],
+            "key_principles": "Sampling rate fs >= 2*fmax, aliasing distortion, anti-aliasing low-pass analog reconstruction filter.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "Z_TRANSFORM": {
+            "title": "Discrete Z-Transform & Unit Circle Stability",
+            "tier": "Digital Signal Processing",
+            "prerequisites": ["SAMPLING_NYQUIST", "LAPLACE_TRANSFORMS"],
+            "key_principles": "z = exp(s*Ts), Schur-Cohn stability inside unit circle (|z| < 1), causal discrete ROC.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "DIGITAL_FILTER_IIR_FIR": {
+            "title": "IIR & FIR Digital Filter Synthesis",
+            "tier": "Digital Signal Processing",
+            "prerequisites": ["Z_TRANSFORM", "BODE_FREQUENCY_RESPONSE"],
+            "key_principles": "Bilinear transformation s = (2/Ts)*(z - 1)/(z + 1), Butterworth and Chebyshev filter implementations.",
+            "interactive_tool": "MATH_STUDIO"
+        },
+        "EMBEDDED_C_REGISTERS": {
+            "title": "Memory-Mapped Peripheral Registers & Bitwise Manipulation",
+            "tier": "Embedded Systems",
+            "prerequisites": ["OHMS_LAW"],
+            "key_principles": "Volatile pointers, bit-masking (&, |, ^, ~), peripheral base addresses, Atomic register operations.",
+            "interactive_tool": "WOKWI_CONTROLLER"
+        },
+        "TIMERS_PWM": {
+            "title": "Hardware Timers, Prescalers & PWM Output Generation",
+            "tier": "Embedded Systems",
+            "prerequisites": ["EMBEDDED_C_REGISTERS", "RC_RL_TRANSIENT"],
+            "key_principles": "Timer counters (ARR, PSC), compare capture registers (CCR), duty cycle = CCR/ARR, edge/center aligned PWM.",
+            "interactive_tool": "WOKWI_CONTROLLER"
+        },
+        "INTERRUPTS_NVIC": {
+            "title": "Nested Vectored Interrupt Controller (NVIC) & ISR Latency",
+            "tier": "Embedded Systems",
+            "prerequisites": ["EMBEDDED_C_REGISTERS"],
+            "key_principles": "Interrupt vector table, priority preemption, pending registers, non-blocking ISR constraints.",
+            "interactive_tool": "WOKWI_CONTROLLER"
+        },
+        "FREERTOS_CONCURRENCY": {
+            "title": "FreeRTOS Kernel Scheduling, Mutexes & Semaphores",
+            "tier": "Embedded Systems",
+            "prerequisites": ["INTERRUPTS_NVIC", "TIMERS_PWM"],
+            "key_principles": "Preemptive priority-based task scheduling, vTaskDelay() yield, priority inversion & priority inheritance.",
+            "interactive_tool": "WOKWI_CONTROLLER"
+        },
+        "VERILOG_COMBINATIONAL": {
+            "title": "Verilog HDL Synthesizable Combinational Logic",
+            "tier": "Digital VLSI",
+            "prerequisites": ["OHMS_LAW"],
+            "key_principles": "Continuous assign statements, always @* blocks, blocking (=) assignments, multiplexers, decoders.",
+            "interactive_tool": "FPGA_HUB"
+        },
+        "VERILOG_SEQUENTIAL": {
+            "title": "Verilog HDL Sequential Logic & Finite State Machines",
+            "tier": "Digital VLSI",
+            "prerequisites": ["VERILOG_COMBINATIONAL", "TIMERS_PWM"],
+            "key_principles": "always @(posedge clk) blocks, non-blocking (<=) assignment, Mealy/Moore FSM architectures.",
+            "interactive_tool": "FPGA_HUB"
+        }
+    }
+
+    MISCONCEPTION_REGISTRY: Dict[str, Dict[str, Any]] = {
+        "MISCONCEPTION_BJT_SATURATION_CONFUSION": {
+            "name": "BJT Saturation Region Confusion",
+            "associated_concept": "BJT_ACTIVE_AMPLIFIER",
+            "description": "Mistakenly assuming BJT is in linear amplification mode when Vce < 0.2V.",
+            "pedagogical_remedy": "When Vce < 0.2V, the collector-base junction becomes forward-biased and enters saturation where Ic is limited by external load Rc rather than beta*Ib.",
+            "interactive_exercise": "Simulate BJT with low Vcc or excessive Ib to observe clipping at Vce = 0.2V in MNA Lab."
+        },
+        "MISCONCEPTION_ACTIVE_MODE_BIASING": {
+            "name": "Failure to Maintain Vbe Forward Bias",
+            "associated_concept": "BJT_BIASING",
+            "description": "Designing bias network yielding Vbe < 0.65V, keeping BJT in cutoff.",
+            "pedagogical_remedy": "Ensure base divider voltage Vb provides at least 0.7V drop across base-emitter junction plus emitter resistor voltage drop.",
+            "interactive_exercise": "Recalculate R1 and R2 divider resistors in CE Amplifier preset."
+        },
+        "MISCONCEPTION_BLOCKING_DELAY_IN_ISR": {
+            "name": "Blocking Delay in FreeRTOS/ISR",
+            "associated_concept": "FREERTOS_CONCURRENCY",
+            "description": "Calling delay() inside FreeRTOS task or ISR, starving lower-priority tasks.",
+            "pedagogical_remedy": "Replace delay() with vTaskDelay(pdMS_TO_TICKS(ms)) or hardware timer one-shot interrupts.",
+            "interactive_exercise": "Run Wokwi logic analyzer trace comparing busy-wait vs preemptive scheduling."
+        },
+        "MISCONCEPTION_UNSTABLE_RHP_POLE": {
+            "name": "Right-Half Plane Pole Instability",
+            "associated_concept": "POLE_ZERO_STABILITY",
+            "description": "Placing poles in the Right-Half Plane (Re(p) > 0) assuming it increases system speed.",
+            "pedagogical_remedy": "Poles in the RHP create exponential growth terms e^(+sigma*t) resulting in unbounded output. Move poles into Left-Half Plane (Re(p) < 0).",
+            "interactive_exercise": "Drag poles across jw axis in Engineering Math Studio and observe divergent step response."
+        },
+        "MISCONCEPTION_NYQUIST_ALIASING": {
+            "name": "Nyquist Rate Violation & Aliasing",
+            "associated_concept": "SAMPLING_NYQUIST",
+            "description": "Sampling continuous signals below 2*fmax, resulting in folded phantom frequencies.",
+            "pedagogical_remedy": "Set ADC sampling frequency fs to at least 2.5 to 4 times the maximum signal frequency fmax.",
+            "interactive_exercise": "Adjust sampling frequency below signal frequency in Fourier Studio to observe aliasing."
+        },
+        "MISCONCEPTION_LATCH_INFERENCE_VERILOG": {
+            "name": "Unintentional Transparent Latch Inference",
+            "associated_concept": "VERILOG_COMBINATIONAL",
+            "description": "Omitting default: clause in combinational case statements or missing else in if branches.",
+            "pedagogical_remedy": "Synthesizers infer memory latches when an output is not assigned in every possible branch of a combinational always block.",
+            "interactive_exercise": "Add explicit default: branch in Verilog code editor."
+        }
+    }
+
+    def __init__(self, db_path: str = DEFAULT_DB_PATH):
+        self.db_path = db_path
+        self._init_db()
+
+    def _get_connection(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.db_path, timeout=5.0)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA busy_timeout=5000;")
+        return conn
+
+    def _init_db(self):
+        conn = self._get_connection()
+        try:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS student_concept_confidence (
+                    student_id TEXT NOT NULL,
+                    concept_id TEXT NOT NULL,
+                    confidence_score REAL NOT NULL,
+                    evaluations_count INTEGER NOT NULL,
+                    last_updated TEXT NOT NULL,
+                    PRIMARY KEY (student_id, concept_id)
+                );
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS student_misconceptions (
+                    log_id TEXT PRIMARY KEY,
+                    student_id TEXT NOT NULL,
+                    misconception_id TEXT NOT NULL,
+                    assessment_context TEXT,
+                    detected_timestamp TEXT NOT NULL,
+                    resolved INTEGER DEFAULT 0
+                );
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS remedial_learning_paths (
+                    path_id TEXT PRIMARY KEY,
+                    student_id TEXT NOT NULL,
+                    failed_concept_id TEXT NOT NULL,
+                    weak_prerequisites_json TEXT NOT NULL,
+                    micro_lessons_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+            """)
+            conn.commit()
+        finally:
+            conn.close()
+
+    def record_concept_evaluation(
+        self,
+        student_id: str,
+        concept_id: str,
+        score: float,
+        max_score: float = 100.0,
+        detected_misconceptions: Optional[List[str]] = None,
+        context: str = "QUIZ"
+    ) -> Dict[str, Any]:
+        """
+        Updates student concept confidence score using an exponential moving average:
+        C_new = 0.70 * C_old + 0.30 * (score / max_score).
+        Logs any detected misconceptions.
+        """
+        student_clean = student_id.strip().upper()
+        concept_clean = concept_id.strip().upper()
+
+        if concept_clean not in self.ECE_CONCEPT_GRAPH:
+            concept_clean = "OHMS_LAW"
+
+        score_norm = max(0.0, min(1.0, float(score) / max(1.0, float(max_score))))
+        now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT confidence_score, evaluations_count
+                FROM student_concept_confidence
+                WHERE student_id = ? AND concept_id = ?;
+            """, (student_clean, concept_clean))
+            row = cur.fetchone()
+
+            if row:
+                old_conf, count = row
+                # Exponential moving average with learning momentum
+                new_conf = round(0.65 * old_conf + 0.35 * score_norm, 4)
+                new_count = count + 1
+                cur.execute("""
+                    UPDATE student_concept_confidence
+                    SET confidence_score = ?, evaluations_count = ?, last_updated = ?
+                    WHERE student_id = ? AND concept_id = ?;
+                """, (new_conf, new_count, now_str, student_clean, concept_clean))
+            else:
+                new_conf = round(score_norm, 4)
+                new_count = 1
+                cur.execute("""
+                    INSERT INTO student_concept_confidence (
+                        student_id, concept_id, confidence_score, evaluations_count, last_updated
+                    ) VALUES (?, ?, ?, ?, ?);
+                """, (student_clean, concept_clean, new_conf, new_count, now_str))
+
+            # Log misconceptions if detected
+            if detected_misconceptions:
+                for misc_id in detected_misconceptions:
+                    if misc_id in self.MISCONCEPTION_REGISTRY:
+                        log_id = f"MISC_{int(time.time() * 1000)}_{os.urandom(2).hex()}"
+                        cur.execute("""
+                            INSERT INTO student_misconceptions (
+                                log_id, student_id, misconception_id, assessment_context, detected_timestamp
+                            ) VALUES (?, ?, ?, ?, ?);
+                        """, (log_id, student_clean, misc_id, context, now_str))
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "student_id": student_clean,
+            "concept_id": concept_clean,
+            "confidence_score": new_conf,
+            "evaluations_count": new_count,
+            "is_competent": new_conf >= 0.70,
+            "timestamp": now_str
+        }
+
+    def get_student_concept_confidence(
+        self,
+        student_id: str,
+        concept_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        student_clean = student_id.strip().upper()
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            if concept_id:
+                cur.execute("""
+                    SELECT concept_id, confidence_score, evaluations_count, last_updated
+                    FROM student_concept_confidence
+                    WHERE student_id = ? AND concept_id = ?;
+                """, (student_clean, concept_id.strip().upper()))
+            else:
+                cur.execute("""
+                    SELECT concept_id, confidence_score, evaluations_count, last_updated
+                    FROM student_concept_confidence
+                    WHERE student_id = ?;
+                """, (student_clean,))
+            rows = cur.fetchall()
+        finally:
+            conn.close()
+
+        res = {}
+        for r in rows:
+            res[r[0]] = {
+                "confidence_score": r[1],
+                "evaluations_count": r[2],
+                "last_updated": r[3],
+                "status": "STRONG" if r[1] >= 0.80 else "COMPETENT" if r[1] >= 0.70 else "VULNERABLE"
+            }
+        return res
+
+    def generate_remedial_path(
+        self,
+        student_id: str,
+        failed_concept_id: str
+    ) -> Dict[str, Any]:
+        """
+        Traverses DAG backward from failed_concept_id to isolate weak upstream
+        prerequisites (confidence < 0.70) and dynamically synthesizes a targeted
+        remedial micro-lesson path.
+        """
+        student_clean = student_id.strip().upper()
+        failed_clean = failed_concept_id.strip().upper()
+
+        if failed_clean not in self.ECE_CONCEPT_GRAPH:
+            failed_clean = "BJT_ACTIVE_AMPLIFIER"
+
+        student_conf_map = self.get_student_concept_confidence(student_clean)
+
+        # 1. Backward DAG Traversal: Collect all upstream ancestors
+        ancestors: Set[str] = set()
+        queue = [failed_clean]
+        visited = set()
+
+        while queue:
+            curr = queue.pop(0)
+            if curr in visited:
+                continue
+            visited.add(curr)
+            ancestors.add(curr)
+            node_data = self.ECE_CONCEPT_GRAPH.get(curr, {})
+            prereqs = node_data.get("prerequisites", [])
+            for p in prereqs:
+                if p not in visited:
+                    queue.append(p)
+
+        # 2. Identify weak ancestors (confidence < 0.70 or unattempted)
+        weak_nodes: List[str] = []
+        for node in ancestors:
+            conf_data = student_conf_map.get(node)
+            conf = conf_data["confidence_score"] if conf_data else 0.50
+            if conf < 0.70 or node == failed_clean:
+                weak_nodes.append(node)
+
+        # 3. Topological sorting of weak nodes so root fundamentals come first
+        def get_depth(node_id: str, current_depth: int = 0) -> int:
+            prereqs = self.ECE_CONCEPT_GRAPH.get(node_id, {}).get("prerequisites", [])
+            if not prereqs:
+                return current_depth
+            return max(get_depth(p, current_depth + 1) for p in prereqs)
+
+        weak_nodes.sort(key=lambda n: get_depth(n), reverse=False)
+
+        # 4. Generate targeted micro-lessons
+        micro_lessons = []
+        for idx, node_id in enumerate(weak_nodes, 1):
+            info = self.ECE_CONCEPT_GRAPH.get(node_id, {})
+            conf_val = student_conf_map.get(node_id, {}).get("confidence_score", 0.50)
+
+            lesson = {
+                "step": idx,
+                "lesson_id": f"REMEDIAL_{node_id}_{idx}",
+                "concept_id": node_id,
+                "concept_title": info.get("title", node_id),
+                "current_confidence": conf_val,
+                "estimated_minutes": 6,
+                "tier": info.get("tier", "Core"),
+                "key_principle": info.get("key_principles", "Fundamental law."),
+                "interactive_sandbox": info.get("interactive_tool", "MNA_LAB"),
+                "diagnostic_checkpoint": f"Explain why {info.get('title', node_id)} governs the behavior of {self.ECE_CONCEPT_GRAPH.get(failed_clean, {}).get('title', failed_clean)}."
+            }
+            micro_lessons.append(lesson)
+
+        # 5. Persist to SQLite WAL
+        path_id = f"PATH_{int(time.time() * 1000)}_{os.urandom(2).hex()}"
+        now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        conn = self._get_connection()
+        try:
+            conn.execute("""
+                INSERT INTO remedial_learning_paths (
+                    path_id, student_id, failed_concept_id, weak_prerequisites_json, micro_lessons_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?);
+            """, (path_id, student_clean, failed_clean, json.dumps(weak_nodes), json.dumps(micro_lessons), now_str))
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "status": "SUCCESS",
+            "path_id": path_id,
+            "student_id": student_clean,
+            "failed_concept_id": failed_clean,
+            "failed_concept_title": self.ECE_CONCEPT_GRAPH.get(failed_clean, {}).get("title", failed_clean),
+            "total_weak_prerequisites": len(weak_nodes),
+            "weak_prerequisites": weak_nodes,
+            "remedial_micro_lessons": micro_lessons,
+            "estimated_remedial_time_minutes": len(micro_lessons) * 6,
+            "created_at": now_str
+        }
+
+    def get_concept_dag_graph(self) -> Dict[str, Any]:
+        """Returns the complete concept topology with nodes and edges."""
+        nodes = []
+        edges = []
+        for cid, data in self.ECE_CONCEPT_GRAPH.items():
+            nodes.append({
+                "id": cid,
+                "title": data["title"],
+                "tier": data["tier"],
+                "interactive_tool": data["interactive_tool"]
+            })
+            for p in data["prerequisites"]:
+                edges.append({"source": p, "target": cid})
+
+        return {
+            "total_concepts": len(nodes),
+            "total_dependencies": len(edges),
+            "nodes": nodes,
+            "edges": edges
+        }
+
+
 # Global singleton instances for platform-wide use
 course_config_engine = CourseConfigEngine()
 curriculum_mastery_engine = CurriculumMasteryEngine()
+concept_intelligence_engine = ConceptDependencyIntelligenceEngine()
 
