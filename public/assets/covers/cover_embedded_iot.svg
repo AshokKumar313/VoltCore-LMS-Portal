@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="embGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020813" />
+      <stop offset="50%" stop-color="#032624" />
+      <stop offset="100%" stop-color="#020813" />
+    </linearGradient>
+    <pattern id="embGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#06B6D4" stroke-width="0.5" stroke-opacity="0.08" />
+    </pattern>
+    <filter id="embGlow">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="400" fill="url(#embGrad)" />
+  <rect width="800" height="400" fill="url(#embGrid)" />
+
+  <circle cx="220" cy="190" r="150" fill="#06B6D4" opacity="0.05" filter="url(#embGlow)" />
+  <circle cx="600" cy="180" r="160" fill="#10B981" opacity="0.06" filter="url(#embGlow)" />
+
+  <!-- Microcontroller QFP Silicon IC Package Overlay -->
+  <g transform="translate(140, 100)" stroke="#06B6D4" stroke-width="2" fill="none" opacity="0.85" filter="url(#embGlow)">
+    <!-- IC Body -->
+    <rect x="50" y="40" width="120" height="120" rx="8" fill="#041026" stroke="#06B6D4" stroke-width="2.5" />
+    <circle cx="65" cy="55" r="4" fill="#06B6D4" />
+    <text x="75" y="105" fill="#FFFFFF" font-family="monospace" font-size="11" font-weight="bold">ARM Cortex-M4</text>
+    <text x="88" y="125" fill="#00F0B5" font-family="monospace" font-size="9">168 MHz / FPU</text>
+
+    <!-- Top & Bottom Pins -->
+    <g stroke="#06B6D4" stroke-width="2">
+      <line x1="70" y1="40" x2="70" y2="20" /><line x1="90" y1="40" x2="90" y2="20" /><line x1="110" y1="40" x2="110" y2="20" /><line x1="130" y1="40" x2="130" y2="20" /><line x1="150" y1="40" x2="150" y2="20" />
+      <line x1="70" y1="160" x2="70" y2="180" /><line x1="90" y1="160" x2="90" y2="180" /><line x1="110" y1="160" x2="110" y2="180" /><line x1="130" y1="160" x2="130" y2="180" /><line x1="150" y1="160" x2="150" y2="180" />
+      <!-- Left & Right Pins -->
+      <line x1="50" y1="60" x2="30" y2="60" /><line x1="50" y1="80" x2="30" y2="80" /><line x1="50" y1="100" x2="30" y2="100" /><line x1="50" y1="120" x2="30" y2="120" /><line x1="50" y1="140" x2="30" y2="140" />
+      <line x1="170" y1="60" x2="190" y2="60" /><line x1="170" y1="80" x2="190" y2="80" /><line x1="170" y1="100" x2="190" y2="100" /><line x1="170" y1="120" x2="190" y2="120" /><line x1="170" y1="140" x2="190" y2="140" />
+    </g>
+  </g>
+
+  <!-- Bus Traces & RTOS Task Gantt Lines -->
+  <g transform="translate(420, 80)" stroke="#10B981" stroke-width="2" fill="none" opacity="0.8">
+    <text x="0" y="30" fill="#06B6D4" font-family="monospace" font-size="11" font-weight="bold">Task_Sensor (Prio 3)</text>
+    <rect x="160" y="18" width="60" height="16" rx="4" fill="#06B6D4" opacity="0.7" />
+    <rect x="260" y="18" width="50" height="16" rx="4" fill="#06B6D4" opacity="0.7" />
+
+    <text x="0" y="75" fill="#10B981" font-family="monospace" font-size="11" font-weight="bold">Task_MQTT (Prio 2)</text>
+    <rect x="220" y="63" width="40" height="16" rx="4" fill="#10B981" opacity="0.7" />
+    <rect x="310" y="63" width="50" height="16" rx="4" fill="#10B981" opacity="0.7" />
+
+    <text x="0" y="120" fill="#F59E0B" font-family="monospace" font-size="11" font-weight="bold">Task_Idle (Prio 0)</text>
+    <rect x="130" y="108" width="30" height="16" rx="4" fill="#F59E0B" opacity="0.4" />
+    <rect x="360" y="108" width="40" height="16" rx="4" fill="#F59E0B" opacity="0.4" />
+
+    <!-- SPI Bus Waveform -->
+    <path d="M 0 170 L 40 170 L 40 150 L 80 150 L 80 170 L 120 170 L 120 150 L 160 150 L 160 170 L 200 170 L 240 170 L 280 170 L 320 170 L 360 170 L 400 170" stroke="#00F0B5" stroke-width="1.5" />
+    <text x="0" y="195" fill="#00F0B5" font-family="monospace" font-size="10">SPI_SCK (10 MHz)</text>
+  </g>
+
+  <!-- Firmware Formulations -->
+  <g opacity="0.5" font-family="monospace" font-size="11" fill="#94A3B8">
+    <text x="60" y="315">xTaskCreate(vTask, "Sens", 256, NULL, 3, &amp;xHandle);</text>
+    <text x="60" y="335">xSemaphoreTake(xMutex, portMAX_DELAY);</text>
+  </g>
+
+  <!-- Editorial Domain Badge -->
+  <g transform="translate(60, 350)">
+    <rect width="250" height="36" rx="10" fill="#041026" stroke="#06B6D4" stroke-width="1" stroke-opacity="0.3" />
+    <circle cx="22" cy="18" r="6" fill="#06B6D4" opacity="0.8" />
+    <text x="38" y="22" fill="#FFFFFF" font-family="sans-serif" font-weight="700" font-size="11" letter-spacing="1">EMBEDDED &amp; IOT STUDIO</text>
+  </g>
+</svg>

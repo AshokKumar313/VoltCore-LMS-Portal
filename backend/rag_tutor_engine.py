@@ -24,6 +24,8 @@ import re
 import sys
 import math
 import glob
+import json
+import urllib.request
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Tuple, Optional
 
@@ -268,10 +270,19 @@ def query_rag_knowledge_base(
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-    # Standard RAG Query Synthesis
+    # Standard Local BM25 Synthesis
     synthesis = _synthesize_expert_response(query, results)
+    active_provider = "bm25_local"
 
-    # Optional Ollama augmentation if service is active and requested
+    # Cloud Gemini RAG Augmentation (if GEMINI_API_KEY is configured in os.environ)
+    gemini_meta = None
+    if os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
+        gemini_meta = query_gemini_engine(query, context="\n".join(retrieved_contexts[:3]))
+        if gemini_meta and gemini_meta.get("response"):
+            synthesis = gemini_meta["response"]
+            active_provider = "gemini_cloud"
+
+    # Optional Local Ollama augmentation if service is active and requested
     ollama_meta = None
     if kwargs.get("use_ollama", False):
         ollama_meta = query_ollama_engine(query, context="\n".join(retrieved_contexts[:2]))
@@ -283,11 +294,88 @@ def query_rag_knowledge_base(
         "student_id": student_id,
         "response": synthesis,
         "citations": citations,
+        "provider": active_provider,
+        "gemini": bool(gemini_meta),
         "ollama": ollama_meta,
         "xp_awarded": 25,
         "architect": OWNER_METADATA["platform_lead"],
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
+
+
+def query_gemini_engine(
+    prompt: str,
+    context: str = "",
+    api_key: Optional[str] = None,
+    timeout_sec: float = 8.0
+) -> Optional[Dict[str, Any]]:
+    """
+    Queries Google Gemini API when GEMINI_API_KEY environment variable is configured.
+    Grounds response in retrieved Anna University ECE curriculum context.
+    Returns None on network timeout or when key is unconfigured, allowing seamless BM25 fallback.
+    Never exposes API keys in return structures or client-facing responses.
+    """
+    key = api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not key or key.strip() == "":
+        return None
+
+    endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key.strip()}"
+
+    system_instruction = (
+        "You are VoltCore Apex Academia AI Tutor at the Department of Electronics Engineering, "
+        "Madras Institute of Technology (MIT) Campus, Anna University (Regulation 2023). "
+        "Strictly adhere to the provided curriculum ground truth. Provide rigorous mathematical derivations "
+        "using LaTeX syntax, IEEE circuit conventions, and verified engineering explanations. "
+        "CRITICAL RULE: Do NOT display raw alphanumeric course codes (like EC23C01, EC8702) in your text. "
+        "Always use clean, professional subject and discipline names."
+    )
+
+    contents = []
+    if context:
+        contents.append({
+            "role": "user",
+            "parts": [{"text": f"Grounded Anna University Curriculum Context:\n{context}\n\nStudent Engineering Query: {prompt}"}]
+        })
+    else:
+        contents.append({
+            "role": "user",
+            "parts": [{"text": f"Student Engineering Query: {prompt}"}]
+        })
+
+    payload = json.dumps({
+        "contents": contents,
+        "systemInstruction": {"parts": [{"text": system_instruction}]},
+        "generationConfig": {
+            "temperature": 0.2,
+            "topP": 0.9,
+            "maxOutputTokens": 1024
+        }
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        endpoint,
+        data=payload,
+        headers={"Content-Type": "application/json"}
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            candidates = data.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if parts:
+                    return {
+                        "model": "gemini-1.5-flash",
+                        "response": parts[0].get("text", ""),
+                        "provider": "gemini_cloud",
+                        "status": "connected"
+                    }
+    except Exception:
+        # Gracefully handle network timeouts or rate limits with passive fallback
+        return None
+
+    return None
 
 
 def query_ollama_engine(
@@ -342,7 +430,7 @@ def _synthesize_expert_response(query: str, top_results: List[Tuple[CurriculumDo
             f"**VoltCore Gemini RAG Telemetry:**\n\n"
             f"No direct curriculum module match was retrieved for query: *'{query}'*. "
             f"Verified against Anna University MIT Campus Regulation 2023 syllabi. "
-            f"Please refine your query or consult the EC8702/EC8708 course repositories."
+            f"Please refine your query or consult the relevant curriculum repositories."
         )
 
     primary_chunk, _ = top_results[0]
@@ -350,7 +438,7 @@ def _synthesize_expert_response(query: str, top_results: List[Tuple[CurriculumDo
 
     # Domain-specific synthesis enriched with retrieved citations
     header = (
-        f"### {primary_chunk.module_code}: {primary_chunk.module_title}\n"
+        f"### {primary_chunk.module_title}\n"
         f"**Curriculum Reference:** Madras Institute of Technology (MIT) Campus, Anna University (R2023)\n\n"
     )
 
@@ -401,7 +489,7 @@ def _synthesize_expert_response(query: str, top_results: List[Tuple[CurriculumDo
 
 def _generate_viva_challenge(query: str, citations: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Generates rigorous Anna University viva voce questions based on retrieved topics."""
-    source = citations[0]["module_code"] if citations else "EC8702"
+    source = citations[0].get("module_title", "Electronics & Communication Engineering") if citations else "Electronics & Communication Engineering"
     return {
         "topic": query,
         "regulation": "Anna University R2023",

@@ -15,6 +15,13 @@
     --theme-text: #F1F5F9;
     --theme-text-muted: #94A3B8;
     --theme-glow: 0 0 25px rgba(0, 240, 181, 0.25);
+    /* Premium Academic Engineering Studio Tokens */
+    --radius-card: 1.25rem;
+    --radius-button: 0.75rem;
+    --elevation-surface: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+    --elevation-hover: 0 16px 40px -10px rgba(0, 0, 0, 0.65);
+    --reading-measure: 72ch;
+    --editorial-line-height: 1.72;
   }
 
   html {
@@ -346,14 +353,16 @@
 
   /* Universal Dynamic Glass Card Adaptable to Active Theme */
   .glass-card {
+    border-radius: var(--radius-card);
     background: var(--theme-surface);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--theme-border);
-    box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.35);
+    box-shadow: var(--elevation-surface);
   }
 
   .glass-card-accent {
+    border-radius: var(--radius-card);
     background: linear-gradient(135deg, var(--theme-surface) 0%, var(--theme-card) 100%);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -366,8 +375,28 @@
   }
   .glass-card-hover:hover {
     border-color: var(--theme-primary);
-    box-shadow: var(--theme-glow);
+    box-shadow: var(--elevation-hover);
     transform: translateY(-2px);
+  }
+
+  /* Academic Lesson Prose & Technical Editorial Typography */
+  .academic-lesson-prose {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.09375rem; /* 17.5px */
+    line-height: var(--editorial-line-height);
+    max-width: var(--reading-measure);
+    color: var(--theme-text);
+  }
+
+  .academic-lesson-prose h1,
+  .academic-lesson-prose h2,
+  .academic-lesson-prose h3 {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--theme-text);
+    margin-top: 1.85rem;
+    margin-bottom: 0.75rem;
   }
 
   .progress-ring-circle {

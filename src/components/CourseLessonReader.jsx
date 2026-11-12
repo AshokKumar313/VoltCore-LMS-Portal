@@ -3,6 +3,10 @@ import { getLessonsByCourse, getLessonsByUnit } from '../data/course_lessons_dat
 import KatexFormulaCard from './KatexFormulaCard';
 import { DepartmentalBadgeIcon } from './CourseShellHub';
 import CourseSimulationIsland from './CourseSimulationIsland';
+import IeeeEngineeringVisualizer from './IeeeEngineeringVisualizer';
+import { ECE_SUBJECT_REGISTRY } from '../data/subjectRegistry';
+import AcademicResourceVault from './AcademicResourceVault';
+import { getCoverSvgForCourse } from './CourseCoverArtwork';
 
 /**
  * ========================================================================================
@@ -24,6 +28,14 @@ import CourseSimulationIsland from './CourseSimulationIsland';
 const STORAGE_KEY_BOOKMARKS = "voltcore_lesson_bookmarks";
 const STORAGE_KEY_COMPLETED = "voltcore_lesson_completed";
 const STORAGE_KEY_NOTES = "voltcore_student_study_notes";
+
+export function getCourseVisualizerMode(code) {
+  if (['EC23S01', 'EC23C07'].includes(code)) return 'dsp';
+  if (['EC23C04', 'EC23C06', 'HDL6001', 'VLSI7001'].includes(code)) return 'digital';
+  if (['EC23C08', 'EC23E04'].includes(code)) return 'comm';
+  if (['EC23C03', 'EC23C05', 'EC23C01', 'EC23C02'].includes(code)) return 'bjt';
+  return 'bjt';
+}
 
 export default function CourseLessonReader({
   courseCode = "EC23S01",
@@ -136,16 +148,97 @@ export default function CourseLessonReader({
     });
   };
 
-  // Toggle Complete
+  // Toggle Complete & Sync Last Opened Lesson
   const toggleComplete = (lessonId, e) => {
     if (e) e.stopPropagation();
     setCompletedLessons((prev) => {
       const updated = { ...prev, [lessonId]: !prev[lessonId] };
       try {
         localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify(updated));
+        const target = lessons.find(l => l.id === lessonId);
+        if (target) {
+          const payload = {
+            id: target.id,
+            courseCode: target.courseCode,
+            courseName: target.courseCode === 'EC23S01' ? 'Signal Processing Practice (Python)' : target.courseCode,
+            title: target.title,
+            unit: `Unit ${target.unitRoman}: ${target.shortTitle || target.title}`,
+            duration: `~${target.estimatedMinutes} mins`,
+            path: `/course-hub?course=${target.courseCode}&lesson=${target.id}`,
+            progress: updated[lessonId] ? 100 : 50,
+            type: 'Lesson'
+          };
+          localStorage.setItem('voltcore_last_opened_lesson', JSON.stringify(payload));
+        }
       } catch (err) {}
       return updated;
     });
+  };
+
+  // Copy code snippet helper
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
+  const handleCopySnippet = (code) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      setCopiedSnippet(true);
+      setTimeout(() => setCopiedSnippet(false), 2000);
+    }
+  };
+
+  // Export Markdown Study Note Helper
+  const handleExportMarkdown = (lesson) => {
+    if (!lesson) return;
+    let md = `# Unit ${lesson.unitRoman}: ${lesson.title}\n\n`;
+    md += `**Academic Level:** ${lesson.difficulty} | **Est. Study Time:** ~${lesson.estimatedMinutes} mins\n\n`;
+    if (lesson.learningObjectives?.length) {
+      md += `## 1. Learning Deliverables\n`;
+      lesson.learningObjectives.forEach(obj => { md += `- ${obj}\n`; });
+      md += `\n`;
+    }
+    if (lesson.prerequisites?.length) {
+      md += `## 2. Prerequisites & Key Definitions\n`;
+      lesson.prerequisites.forEach(p => { md += `- ${p}\n`; });
+      md += `\n`;
+    }
+    md += `## 3. Academic Lecture Notes\n\n${lesson.markdownNotes}\n\n`;
+    if (lesson.formulas?.length) {
+      md += `## 4. Key Mathematical Formulations\n\n`;
+      lesson.formulas.forEach(f => {
+        md += `### ${f.name}\n$$${f.latex}$$\n${f.description}\n\n`;
+      });
+    }
+    if (lesson.workedExample) {
+      md += `## 5. Worked Numerical Example\n\n`;
+      md += `**Problem Statement:** ${lesson.workedExample.problemStatement}\n\n`;
+      lesson.workedExample.steps.forEach(s => {
+        md += `#### ${s.stepTitle}\n${s.explanation}\n\n\`\`\`\n${s.calculation}\n\`\`\`\n\n`;
+      });
+      md += `**Final Answer:** ${lesson.workedExample.finalAnswer}\n\n`;
+    }
+    if (lesson.comparisonTable) {
+      md += `## 6. Comparative Analysis\n\n| ${lesson.comparisonTable.headers.join(' | ')} |\n`;
+      md += `| ${lesson.comparisonTable.headers.map(() => '---').join(' | ')} |\n`;
+      lesson.comparisonTable.rows.forEach(r => {
+        md += `| ${r.join(' | ')} |\n`;
+      });
+      md += `\n`;
+    }
+    if (studyNotes[lesson.id]) {
+      md += `## Personal Student Study Notes\n\n${studyNotes[lesson.id]}\n\n`;
+    }
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${lesson.id}_lecture_notes.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
   };
 
   // Save Student Study Note
@@ -178,7 +271,7 @@ export default function CourseLessonReader({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-              {courseCode} Study Progress &amp; Syllabus Coverage
+              {ECE_SUBJECT_REGISTRY[courseCode]?.disciplineName || 'Curriculum'} Study Progress &amp; Syllabus Coverage
             </div>
             <div className="text-lg font-extrabold text-white font-sans mt-0.5 flex items-center gap-2">
               <span>{completionStats.completedCount} of {completionStats.total} Lessons Completed</span>
@@ -293,7 +386,17 @@ export default function CourseLessonReader({
                 onClick={() => handleOpenLesson(lesson)}
                 className="p-5 rounded-2xl bg-[#041026] border border-slate-800 hover:border-slate-700 transition-all cursor-pointer shadow-lg space-y-4 flex flex-col justify-between group relative overflow-hidden"
               >
-                <div>
+                {/* Compact Unit-Level Cover Strip Background */}
+                <div
+                  className="absolute inset-0 pointer-events-none opacity-5 group-hover:opacity-15 transition-opacity"
+                  style={{
+                    backgroundImage: `url(${getCoverSvgForCourse(lesson.courseCode)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+
+                <div className="relative z-10 space-y-3">
                   <div className="flex items-center justify-between text-xs font-mono">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded-full bg-[#020813] border border-slate-800 font-bold" style={{ color: themeColor }}>
@@ -393,84 +496,195 @@ export default function CourseLessonReader({
       )}
 
       {/* ------------------------------------------------------------------- */}
-      {/* 4. ACTIVE LECTURE NOTES & KATEX READER (MODAL / OVERLAY) */}
+      {/* 3B. INTERACTIVE IEEE-STANDARD ENGINEERING VISUALIZER STUDIO        */}
+      {/* ------------------------------------------------------------------- */}
+      <section className="space-y-4 pt-4 border-t border-slate-800/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚡</span>
+            <h3 className="font-heading font-bold text-lg text-white">
+              IEEE-Standard Interactive Engineering Visualizer Studio
+            </h3>
+          </div>
+          <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-[#00693E]/20 text-[#00F0B5] border border-[#00F0B5]/30 uppercase self-start sm:self-auto">
+            Live Parameter Simulation Deck
+          </span>
+        </div>
+        <IeeeEngineeringVisualizer
+          courseCode={courseCode}
+          initialMode={getCourseVisualizerMode(courseCode)}
+          themeColor={themeColor}
+        />
+      </section>
+
+      {/* ------------------------------------------------------------------- */}
+      {/* 4. ACTIVE LECTURE NOTES & ACADEMIC STUDIO READER (15-SECTION MODAL)  */}
       {/* ------------------------------------------------------------------- */}
       {activeLesson && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-[#041026] border border-slate-700 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 max-h-[92vh] overflow-y-auto font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div
+            className="w-full max-w-5xl bg-[#041026] border border-slate-700/80 rounded-3xl shadow-2xl p-5 sm:p-8 space-y-8 max-h-[94vh] overflow-y-auto font-sans text-slate-200"
+            style={{
+              borderColor: 'var(--theme-border, rgba(0, 240, 181, 0.3))'
+            }}
+          >
             
-            {/* Header Strip */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-mono">
-                  <span className="px-2.5 py-0.5 rounded-full font-bold" style={{ backgroundColor: `${themeColor}20`, color: themeColor }}>
-                    {activeLesson.courseCode} • UNIT {activeLesson.unitRoman}
+            {/* ===============================================================
+                SECTION 1: COURSE IDENTITY, TITLE & ACTION TOOLBAR
+                =============================================================== */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span
+                    className="px-2.5 py-0.5 rounded-full font-bold border"
+                    style={{
+                      backgroundColor: `${themeColor}15`,
+                      color: themeColor,
+                      borderColor: `${themeColor}40`
+                    }}
+                  >
+                    UNIT {activeLesson.unitRoman} • {activeLesson.unitTitle || 'Curriculum Studio'}
                   </span>
                   <span className="text-slate-400">Lesson {activeLesson.lessonNumber}</span>
                   <span className="text-slate-600">•</span>
                   <span className="text-slate-400">~{activeLesson.estimatedMinutes} mins study</span>
+                  <span className="text-slate-600">•</span>
+                  <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800 text-[10px]">
+                    {activeLesson.difficulty}
+                  </span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight">
                   {activeLesson.title}
                 </h2>
+                <div className="text-xs text-slate-400 font-mono">
+                  Anna University Regulation 2023 • MIT Campus • Department of Electronics Engineering
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2">
+              {/* Action Toolbar */}
+              <div className="flex flex-wrap items-center gap-2 flex-shrink-0 font-mono text-xs">
                 <button
+                  type="button"
                   onClick={() => toggleBookmark(activeLesson.id)}
-                  className={`px-3 py-1.5 rounded-xl border font-mono text-xs transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
                     bookmarks[activeLesson.id]
-                      ? "bg-amber-950 text-amber-300 border-amber-500/60 font-bold"
+                      ? "bg-amber-950/80 text-amber-300 border-amber-500/60 font-bold"
                       : "bg-[#020813] text-slate-300 border-slate-800 hover:text-white"
                   }`}
+                  title="Bookmark this lesson for rapid resume"
                 >
                   <span>{bookmarks[activeLesson.id] ? "⭐ Bookmarked" : "☆ Bookmark"}</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => toggleComplete(activeLesson.id)}
-                  className={`px-3 py-1.5 rounded-xl border font-mono text-xs transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
                     completedLessons[activeLesson.id]
-                      ? "bg-emerald-950 text-emerald-300 border-emerald-500/60 font-bold"
+                      ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/60 font-bold"
                       : "bg-[#020813] text-slate-300 border-slate-800 hover:text-white"
                   }`}
+                  title="Mark lesson as complete in student record"
                 >
-                  <span>{completedLessons[activeLesson.id] ? "✓ Completed" : "○ Mark Complete"}</span>
+                  <span>{completedLessons[activeLesson.id] ? "✓ Finished" : "○ Mark Complete"}</span>
                 </button>
 
                 <button
+                  type="button"
+                  onClick={() => handleExportMarkdown(activeLesson)}
+                  className="px-3 py-1.5 rounded-xl bg-[#020813] hover:bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+                  title="Download clean Markdown revision sheet"
+                >
+                  <span>📥</span>
+                  <span>Export .MD</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="px-2.5 py-1.5 rounded-xl bg-[#020813] hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                  title="Print this lesson"
+                >
+                  <span>🖨️</span>
+                </button>
+
+                <a
+                  href="/math-studio"
+                  className="px-3 py-1.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/40 text-cyan-300 border border-cyan-500/30 transition-all flex items-center gap-1"
+                  title="Open KaTeX formula studio and scratchpad"
+                >
+                  <span>📐</span>
+                  <span>Math Studio</span>
+                </a>
+
+                <button
+                  type="button"
                   onClick={() => setActiveLesson(null)}
-                  className="p-2 rounded-xl bg-[#020813] border border-slate-800 text-slate-400 hover:text-white text-sm"
-                  title="Close Reader"
+                  className="p-2 rounded-xl bg-[#020813] border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                  title="Close Reader [ESC]"
                 >
                   ✕
                 </button>
               </div>
             </div>
 
-            {/* Learning Objectives */}
-            <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
-              <div className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">
-                Modular Curriculum Learning Deliverables:
+            {/* ===============================================================
+                SECTION 2: MODULAR LEARNING OBJECTIVES & PREREQUISITES
+                =============================================================== */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
+                <div className="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <span className="text-emerald-400">🎯</span>
+                  <span>Modular Curriculum Learning Objectives:</span>
+                </div>
+                <ul className="space-y-1.5 text-slate-300">
+                  {activeLesson.learningObjectives.map((obj, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-emerald-400 font-bold">✓</span>
+                      <span>{obj}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-1 text-slate-300 list-disc list-inside">
-                {activeLesson.learningObjectives.map((obj, i) => (
-                  <li key={i}>{obj}</li>
-                ))}
-              </ul>
+
+              {activeLesson.prerequisites && activeLesson.prerequisites.length > 0 && (
+                <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
+                  <div className="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <span className="text-cyan-400">🔗</span>
+                    <span>Prerequisites &amp; Prior Knowledge:</span>
+                  </div>
+                  <ul className="space-y-1.5 text-slate-400">
+                    {activeLesson.prerequisites.map((p, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-cyan-400 font-bold">&bull;</span>
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {/* Markdown Lecture Content */}
-            <div className="prose prose-invert max-w-none text-slate-300 text-sm leading-relaxed space-y-4">
-              <div className="whitespace-pre-line p-5 rounded-2xl bg-[#020813]/60 border border-slate-800/80 font-sans">
-                {activeLesson.markdownNotes}
+            {/* ===============================================================
+                SECTION 3: IN-DEPTH ACADEMIC LECTURE EXPOSITION (72ch MEASURE)
+                =============================================================== */}
+            <section className="space-y-3">
+              <div className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <span>📖</span>
+                <span>In-Depth Academic Engineering Exposition:</span>
               </div>
-            </div>
+              <div className="academic-lesson-prose p-6 rounded-2xl bg-[#020813]/70 border border-slate-800/80 text-slate-200">
+                <div className="whitespace-pre-line leading-relaxed">
+                  {activeLesson.markdownNotes}
+                </div>
+              </div>
+            </section>
 
-            {/* KaTeX Mathematical Formulations */}
+            {/* ===============================================================
+                SECTION 4: EXAM-FOCUSED KATEX FORMULATIONS
+                =============================================================== */}
             {activeLesson.formulas.length > 0 && (
-              <div className="space-y-3">
+              <section className="space-y-3">
                 <div className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: themeColor }}>
                   <span>📐</span>
                   <span>Exam-Focused KaTeX Formulations ({activeLesson.formulas.length}):</span>
@@ -485,10 +699,303 @@ export default function CourseLessonReader({
                     />
                   ))}
                 </div>
-              </div>
+              </section>
             )}
 
-            {/* Simulation Bridge Banner (If available) */}
+
+            {/* ===============================================================
+                SECTION 4B: INTERACTIVE IEEE-STANDARD ENGINEERING VISUALIZER
+                =============================================================== */}
+            <section className="space-y-3">
+              <div className="text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-between" style={{ color: themeColor }}>
+                <div className="flex items-center gap-2">
+                  <span>⚡</span>
+                  <span>Interactive IEEE Engineering Visualizer &amp; Dynamic Q-Point:</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-normal">
+                  Live Mathematical Computation Deck
+                </span>
+              </div>
+              <IeeeEngineeringVisualizer
+                courseCode={activeLesson.courseCode}
+                initialMode={getCourseVisualizerMode(activeLesson.courseCode)}
+                themeColor={themeColor}
+              />
+            </section>
+
+            {/* ===============================================================
+                SECTION 5: STEP-BY-STEP WORKED NUMERICAL EXAMPLE
+                =============================================================== */}
+            {activeLesson.workedExample && (
+              <section className="p-5 sm:p-6 rounded-2xl bg-[#020813] border border-slate-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 font-mono">
+                    <span className="text-lg">🧮</span>
+                    <h4 className="font-heading font-bold text-base text-white">
+                      Step-by-Step Worked Numerical Example
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                    Anna University Style Numerical
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
+                  <strong>Problem:</strong> {activeLesson.workedExample.problemStatement}
+                </div>
+
+                {/* Given Data Chips */}
+                <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                  <span className="text-slate-500 font-bold">Given Parameters:</span>
+                  {Object.entries(activeLesson.workedExample.givenData).map(([k, v]) => (
+                    <span key={k} className="px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 border border-slate-800">
+                      <strong>{k}:</strong> {v}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Calculation Steps */}
+                <div className="space-y-3 font-mono text-xs">
+                  {activeLesson.workedExample.steps.map((st, i) => (
+                    <div key={i} className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                      <div className="font-bold text-emerald-400">{st.stepTitle}</div>
+                      <p className="text-slate-400 font-sans">{st.explanation}</p>
+                      <pre className="p-2.5 rounded-lg bg-[#020813] border border-slate-800 text-slate-200 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">
+                        {st.calculation}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Final Answer */}
+                <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 font-mono text-xs text-emerald-300 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-white uppercase text-[10px] block">Final Calculated Value:</span>
+                    <span className="text-emerald-200 font-bold">{activeLesson.workedExample.finalAnswer}</span>
+                  </div>
+                  <span className="text-lg">✓</span>
+                </div>
+
+                {/* Python Verification Snippet */}
+                {activeLesson.workedExample.pythonVerificationCode && (
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between font-mono text-xs">
+                      <span className="text-slate-400 font-bold flex items-center gap-1.5">
+                        <span>🐍</span>
+                        <span>Python / SciPy Verification Snippet:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopySnippet(activeLesson.workedExample.pythonVerificationCode)}
+                        className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] transition-colors"
+                      >
+                        {copiedSnippet ? "✓ Copied" : "Copy Code"}
+                      </button>
+                    </div>
+                    <pre className="p-3.5 rounded-xl bg-[#020813] border border-slate-800 font-mono text-xs text-cyan-300 overflow-x-auto">
+                      <code>{activeLesson.workedExample.pythonVerificationCode}</code>
+                    </pre>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ===============================================================
+                SECTION 6: COMPARATIVE ANALYSIS & TRADE-OFF MATRIX
+                =============================================================== */}
+            {activeLesson.comparisonTable && (
+              <section className="space-y-3 font-sans">
+                <div className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <span>📊</span>
+                  <span>{activeLesson.comparisonTable.title}</span>
+                </div>
+                <div className="overflow-x-auto rounded-2xl border border-slate-800">
+                  <table className="w-full text-left font-mono text-xs">
+                    <thead className="bg-[#020813] border-b border-slate-800 text-slate-300">
+                      <tr>
+                        {activeLesson.comparisonTable.headers.map((h, i) => (
+                          <th key={i} className="p-3 font-bold">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80 bg-[#041026]">
+                      {activeLesson.comparisonTable.rows.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-slate-900/50 transition-colors">
+                          {row.map((cell, cIdx) => (
+                            <td key={cIdx} className={`p-3 ${cIdx === 0 ? "font-bold text-white" : "text-slate-300"}`}>
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {/* ===============================================================
+                SECTION 7: ENGINEERING APPLICATIONS, ADVANTAGES & LIMITATIONS
+                =============================================================== */}
+            {activeLesson.applicationsAndTradeoffs && (
+              <section className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+                {/* Applications */}
+                <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2">
+                  <div className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <span>🚀</span>
+                    <span>Industry Applications</span>
+                  </div>
+                  <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                    {activeLesson.applicationsAndTradeoffs.applications.map((app, i) => (
+                      <li key={i}>{app}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Advantages */}
+                <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2">
+                  <div className="font-bold text-cyan-400 flex items-center gap-1.5">
+                    <span>✅</span>
+                    <span>Engineering Advantages</span>
+                  </div>
+                  <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                    {activeLesson.applicationsAndTradeoffs.advantages.map((adv, i) => (
+                      <li key={i}>{adv}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Limitations */}
+                <div className="p-4 rounded-2xl bg-[#020813] border border-slate-800 space-y-2">
+                  <div className="font-bold text-amber-400 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Hardware Trade-offs</span>
+                  </div>
+                  <ul className="space-y-1 text-slate-300 text-[11px] list-disc list-inside">
+                    {activeLesson.applicationsAndTradeoffs.limitations.map((lim, i) => (
+                      <li key={i}>{lim}</li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            )}
+
+            {/* ===============================================================
+                SECTION 8: ANNA UNIVERSITY EXAMINATION QUESTIONS
+                =============================================================== */}
+            {activeLesson.examQuestions && (
+              <section className="p-5 sm:p-6 rounded-2xl bg-[#020813] border border-slate-800 space-y-4 font-mono text-xs">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏛️</span>
+                    <h4 className="font-heading font-bold text-base text-white">
+                      Anna University Examination Question Bank
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">
+                    AU Reg 2023 Blueprint
+                  </span>
+                </div>
+
+                {/* Part A (2-Mark Questions) */}
+                <div className="space-y-2.5">
+                  <div className="font-bold text-cyan-300 uppercase text-[11px]">
+                    Part A: Short Conceptual Questions (2 Marks)
+                  </div>
+                  {activeLesson.examQuestions.partA.map((q, i) => (
+                    <div key={i} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                      <div className="font-bold text-white">
+                        Q{i + 1}. {q.question} <span className="text-slate-500 font-normal">[{q.marks} Marks]</span>
+                      </div>
+                      <div className="text-slate-300 text-[11px] pl-3 border-l-2 border-cyan-500/50">
+                        <strong className="text-cyan-400">Answer Key:</strong> {q.answerKey}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Part B (16-Mark University Exam Derivations) */}
+                <div className="space-y-2.5 pt-2">
+                  <div className="font-bold text-purple-300 uppercase text-[11px]">
+                    Part B / C: Analytical &amp; Derivation Questions (13/15/16 Marks)
+                  </div>
+                  {activeLesson.examQuestions.partB.map((q, i) => (
+                    <div key={i} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                      <div className="font-bold text-white">
+                        Q{i + 1}. {q.question} <span className="text-slate-500 font-normal">[{q.marks} Marks]</span>
+                      </div>
+                      <div className="text-slate-300 text-[11px] space-y-1 pl-3 border-l-2 border-purple-500/50">
+                        <div className="font-bold text-purple-400">Key Evaluation Steps:</div>
+                        <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                          {q.keySteps.map((ks, kIdx) => (
+                            <li key={kIdx}>{ks}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+
+            {/* ===============================================================
+                SECTION 9: FURTHER LEARNING & VERIFIED OPEN ACADEMIC RESOURCES
+                =============================================================== */}
+            {activeLesson.furtherLearning && activeLesson.furtherLearning.length > 0 && (
+              <section className="space-y-3 font-sans">
+                <div className="flex items-center justify-between font-mono text-xs">
+                  <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-slate-400">
+                    <span>🌐</span>
+                    <span>Further Learning: Verified Open Academic Resources</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-mono">
+                    Legally Free Open Access
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {activeLesson.furtherLearning.map((res, i) => (
+                    <a
+                      key={i}
+                      href={res.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-4 rounded-2xl bg-[#020813] border border-slate-800 hover:border-emerald-500/40 transition-all group flex flex-col justify-between space-y-3 shadow-md"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-mono">
+                          <span className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-bold border border-emerald-500/30">
+                            {res.provider}
+                          </span>
+                          <span className="text-slate-500">{res.license}</span>
+                        </div>
+                        <div className="font-heading font-bold text-xs sm:text-sm text-white group-hover:text-emerald-300 transition-colors">
+                          {res.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-sans line-clamp-2">
+                          {res.recommendedTopics}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 group-hover:text-emerald-400 transition-colors pt-2 border-t border-slate-800/80">
+                        <span>{res.type}</span>
+                        <span>Open Resource &rarr;</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Academic Open Resource & Google Drive Vault */}
+            <section className="pt-2">
+              <AcademicResourceVault embedded={true} />
+            </section>
+
+            {/* ===============================================================
+                SECTION 10: SIMULATION BRIDGE BANNER (IF AVAILABLE)
+                =============================================================== */}
             {activeLesson.simulationBridge && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-cyan-950/40 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
                 <div className="space-y-0.5">
@@ -512,6 +1019,7 @@ export default function CourseLessonReader({
                   </button>
                   {onLaunchSimulator && (
                     <button
+                      type="button"
                       onClick={() => {
                         setActiveLesson(null);
                         onLaunchSimulator();
@@ -519,14 +1027,16 @@ export default function CourseLessonReader({
                       className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-md flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
                     >
                       <span>Launch Simulator</span>
-                      <span>→</span>
+                      <span>&rarr;</span>
                     </button>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Dedicated Interactive Course Simulation Island */}
+            {/* ===============================================================
+                SECTION 11: DEDICATED INTERACTIVE COURSE SIMULATION ISLAND
+                =============================================================== */}
             <div className="space-y-2">
               <div className="text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: themeColor }}>
                 <span>⚡</span>
@@ -540,12 +1050,14 @@ export default function CourseLessonReader({
               />
             </div>
 
-            {/* Student Personal Study Notes */}
+            {/* ===============================================================
+                SECTION 12: STUDENT PERSONAL STUDY NOTES STUDIO
+                =============================================================== */}
             <div className="p-5 rounded-2xl bg-[#020813] border border-slate-800 space-y-3 font-mono text-xs">
               <div className="flex items-center justify-between">
                 <div className="font-bold text-white flex items-center gap-1.5">
                   <span>📝</span>
-                  <span>Personal Study & Revision Notes:</span>
+                  <span>Personal Study &amp; Revision Notes Studio:</span>
                 </div>
                 {noteSavedFeedback && (
                   <span className="text-emerald-400 font-bold animate-pulse text-[11px]">
@@ -562,22 +1074,29 @@ export default function CourseLessonReader({
                 className="w-full p-3 rounded-xl bg-[#041026] border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
               />
 
-              <div className="flex justify-end">
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-[10px] text-slate-500">
+                  Persisted automatically across 18 themes in browser localStorage.
+                </span>
                 <button
+                  type="button"
                   onClick={handleSaveNote}
-                  className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold transition-all text-xs"
+                  className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold transition-all text-xs cursor-pointer"
                 >
                   Save Study Notes
                 </button>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-xs font-mono text-slate-500">
-              <span>Modular Engineering Study Series</span>
+            {/* ===============================================================
+                SECTION 13: MODAL FOOTER & KEYBOARD SHORTCUTS
+                =============================================================== */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-800 text-xs font-mono text-slate-500">
+              <span>VoltCore Apex Academia • Flagship Course Studio</span>
               <button
+                type="button"
                 onClick={() => setActiveLesson(null)}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer self-start sm:self-auto"
               >
                 Close Reader [ESC]
               </button>

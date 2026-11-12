@@ -374,7 +374,7 @@ void configure_brownout_protection(void) {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <a
-                  href={`/modules/${SEED_RECOMMENDATION.next_best_module.id}`}
+                  href={`/course-hub?module=${SEED_RECOMMENDATION.next_best_module.id}`}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00693E] to-[#00F0B5] text-[#020813] font-bold text-xs hover:shadow-emerald-glow transition-all"
                 >
                   Launch Module Workspace →
@@ -409,7 +409,7 @@ void configure_brownout_protection(void) {
                   <div className="text-sm font-bold text-white">{m.title}</div>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80">
                     <span className="text-[#00F0B5]">+{m.xp_reward} XP</span>
-                    <a href={`/modules/${m.id}`} className="text-slate-400 hover:text-white text-[11px] underline">
+                    <a href={`/course-hub?module=${m.id}`} className="text-slate-400 hover:text-white text-[11px] underline">
                       Explore →
                     </a>
                   </div>

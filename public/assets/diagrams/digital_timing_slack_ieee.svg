@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #020813; }
+      .grid { stroke: #1e293b; stroke-width: 0.8; stroke-dasharray: 3 3; }
+      .axis { stroke: #475569; stroke-width: 1.5; }
+      .clk-wave { stroke: #00F0B5; stroke-width: 2.2; fill: none; }
+      .data-wave { stroke: #38bdf8; stroke-width: 2.2; fill: none; }
+      .setup-zone { fill: #f43f5e; fill-opacity: 0.22; stroke: #f43f5e; stroke-width: 1; stroke-dasharray: 2 2; }
+      .hold-zone { fill: #f59e0b; fill-opacity: 0.22; stroke: #f59e0b; stroke-width: 1; stroke-dasharray: 2 2; }
+      .slack-arrow { stroke: #10b981; stroke-width: 1.8; marker-end: url(#arrowGreen); marker-start: url(#arrowGreenRev); }
+      .tcq-arrow { stroke: #a855f7; stroke-width: 1.5; marker-end: url(#arrowPurple); }
+      .label-title { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: bold; fill: #ffffff; }
+      .label-sub { font-family: 'Inter', sans-serif; font-size: 10px; fill: #94a3b8; }
+      .label-sig { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: bold; }
+      .label-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; fill: #cbd5e1; }
+    </style>
+    <marker id="arrowGreen" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
+    </marker>
+    <marker id="arrowGreenRev" markerWidth="6" markerHeight="6" refX="1" refY="3" orient="auto">
+      <polygon points="6 0, 0 3, 6 6" fill="#10b981" />
+    </marker>
+    <marker id="arrowPurple" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <polygon points="0 0, 6 3, 0 6" fill="#a855f7" />
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="720" height="360" rx="16" class="bg" stroke="#1e293b" stroke-width="1.5" />
+
+  <!-- Header Banner -->
+  <rect x="24" y="16" width="672" height="42" rx="8" fill="#041026" stroke="#00F0B5" stroke-width="0.8" stroke-opacity="0.3" />
+  <circle cx="44" cy="37" r="5" fill="#00F0B5" />
+  <text x="58" y="41" class="label-title">IEEE Std 1076 / Static Timing Analysis: Setup &amp; Hold Slack Formulation</text>
+  <text x="670" y="41" text-anchor="end" class="label-sub" fill="#00F0B5">Anna University AU-R2023 • HDL &amp; VLSI</text>
+
+  <!-- Vertical Timing Grid Reference Lines -->
+  <!-- t=0: x=140 (Launch Edge), t=Tclk: x=540 (Capture Edge) -->
+  <line x1="140" y1="70" x2="140" y2="310" class="grid" stroke="#00F0B5" stroke-opacity="0.4" stroke-width="1.2" />
+  <line x1="540" y1="70" x2="540" y2="310" class="grid" stroke="#00F0B5" stroke-opacity="0.4" stroke-width="1.2" />
+
+  <!-- Setup & Hold Windows around Capture Edge (x=540) -->
+  <!-- Setup: x=460 to 540 (width 80) -->
+  <rect x="460" y="70" width="80" height="240" class="setup-zone" />
+  <!-- Hold: x=540 to 600 (width 60) -->
+  <rect x="540" y="70" width="60" height="240" class="hold-zone" />
+
+  <!-- 1. CLOCK WAVEFORM (CLK) -->
+  <text x="40" y="115" class="label-sig" fill="#00F0B5">CLK_launch</text>
+  <path d="M 100 120 L 140 120 L 140 85 L 240 85 L 240 120 L 340 120 L 340 85 L 440 85 L 440 120 L 540 120 L 540 85 L 640 85 L 640 120 L 680 120" class="clk-wave" />
+
+  <!-- Clock Period Arrow T_clk -->
+  <line x1="140" y1="72" x2="540" y2="72" stroke="#00F0B5" stroke-width="1.5" marker-end="url(#arrowGreen)" marker-start="url(#arrowGreenRev)" />
+  <text x="340" y="66" text-anchor="middle" class="label-time" fill="#00F0B5" font-weight="bold">Clock Period T_clk = 1 / f_clk</text>
+
+  <!-- 2. LAUNCH REGISTER OUTPUT (Q_launch) -->
+  <text x="40" y="175" class="label-sig" fill="#a855f7">Q_launch</text>
+  <!-- Stable until 140 + t_cq (x=190) -->
+  <path d="M 100 185 L 140 185 L 140 165 L 180 165 L 195 185 L 680 185" stroke="#a855f7" stroke-width="2" fill="none" />
+  <path d="M 100 165 L 140 165 L 140 185 L 180 185 L 195 165 L 680 165" stroke="#a855f7" stroke-width="2" fill="none" stroke-dasharray="2 2" />
+
+  <!-- t_cq annotation -->
+  <line x1="140" y1="150" x2="190" y2="150" class="tcq-arrow" />
+  <text x="165" y="145" text-anchor="middle" class="label-time" fill="#c084fc">t_cq</text>
+
+  <!-- 3. CAPTURE DATA BUS INPUT (D_capture) -->
+  <text x="40" y="245" class="label-sig" fill="#38bdf8">D_capture</text>
+  <!-- Combinational logic delay t_comb: from 190 to 410 -->
+  <path d="M 100 240 L 190 240 L 210 260 L 410 260 L 425 240 L 680 240" class="data-wave" />
+  <path d="M 100 260 L 190 260 L 210 240 L 410 240 L 425 260 L 680 260" class="data-wave" stroke-dasharray="2 2" />
+  <text x="300" y="253" text-anchor="middle" class="label-time" fill="#7dd3fc">Combinational Path Delay: t_comb</text>
+
+  <!-- Setup Slack Indicator Arrow (from 425 to 460) -->
+  <line x1="425" y1="215" x2="460" y2="215" class="slack-arrow" />
+  <text x="442" y="208" text-anchor="middle" class="label-time" fill="#10b981" font-weight="bold">Setup Slack &gt; 0</text>
+
+  <!-- Annotations on Setup & Hold Windows -->
+  <text x="500" y="135" text-anchor="middle" class="label-time" fill="#f43f5e" font-weight="bold">t_setup</text>
+  <text x="570" y="135" text-anchor="middle" class="label-time" fill="#f59e0b" font-weight="bold">t_hold</text>
+
+  <!-- Capture Clock Edge Label -->
+  <text x="540" y="325" text-anchor="middle" class="label-time" fill="#00F0B5" font-weight="bold">Capture Clock Edge (T_clk)</text>
+  <text x="140" y="325" text-anchor="middle" class="label-time" fill="#00F0B5" font-weight="bold">Launch Clock Edge (t = 0)</text>
+
+  <!-- Footer Equation Strip -->
+  <rect x="24" y="315" width="672" height="30" rx="6" fill="#041026" stroke="#334155" stroke-width="0.8" />
+  <text x="360" y="334" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="11" fill="#cbd5e1">
+    <tspan fill="#10b981" font-weight="bold">Setup Condition:</tspan> T_clk &ge; t_cq + t_comb + t_setup &nbsp;|&nbsp;
+    <tspan fill="#f59e0b" font-weight="bold">Hold Condition:</tspan> t_cq + t_comb(min) &ge; t_hold
+  </text>
+</svg>

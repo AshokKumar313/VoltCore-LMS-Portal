@@ -200,7 +200,7 @@ export default function InstitutionalProfileTab({
               <table className="w-full text-left text-[11px]">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400">
-                    <th className="py-2 px-2">Syllabus Code</th>
+                    <th className="py-2 px-2">Discipline Category</th>
                     <th className="py-2 px-2">Course Title</th>
                     <th className="py-2 px-2">Regulation Alignment</th>
                     <th className="py-2 px-2">Credits</th>
@@ -209,7 +209,7 @@ export default function InstitutionalProfileTab({
                 <tbody className="divide-y divide-slate-850">
                   {INSTITUTIONAL_DATA.courseCodeMapping.map((c) => (
                     <tr key={c.code} className="text-slate-300">
-                      <td className="py-2 px-2 font-bold text-[#00F0B5]">{c.code}</td>
+                      <td className="py-2 px-2 font-bold text-[#00F0B5]">Core Discipline</td>
                       <td className="py-2 px-2 text-white">{c.title}</td>
                       <td className="py-2 px-2 text-slate-400">{c.reg}</td>
                       <td className="py-2 px-2 text-emerald-400">{c.credits} Credits</td>

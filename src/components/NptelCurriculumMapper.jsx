@@ -104,7 +104,7 @@ export default function NptelCurriculumMapper() {
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
             }`}
           >
-            <span>{m.module_code}</span>
+            <span>{m.module_title ? (m.module_title.length > 22 ? m.module_title.substring(0, 20) + '...' : m.module_title) : `Unit ${m.curriculum_unit}`}</span>
             <span className="text-[10px] text-slate-400">Unit {m.curriculum_unit}</span>
           </button>
         ))}
@@ -126,7 +126,7 @@ export default function NptelCurriculumMapper() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
                 <div className="flex flex-wrap items-center gap-2.5">
                   <span className="px-2.5 py-1 rounded-lg bg-[#00693E]/40 text-[#00F0B5] border border-[#00F0B5]/30 text-xs font-bold">
-                    {mod.module_code}
+                    Unit {mod.curriculum_unit}
                   </span>
                   <h3 className="font-bold text-slate-100 text-sm sm:text-base">
                     {mod.module_title}
@@ -184,7 +184,11 @@ export default function NptelCurriculumMapper() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {mod.nptel_course.lectures.map((lec, idx) => {
-                    const videoUrlWithTime = `${lec.youtube_url}&t=${lec.timestamp_start_sec}s`;
+                    const isFallback = lec.verification_status === 'PORTAL_FALLBACK' || !lec.youtube_url;
+                    const targetUrl = isFallback 
+                      ? (lec.portal_url || mod.nptel_course.portal_url || 'https://nptel.ac.in')
+                      : `${lec.youtube_url}&t=${lec.timestamp_start_sec}s`;
+
                     return (
                       <div
                         key={idx}
@@ -195,9 +199,20 @@ export default function NptelCurriculumMapper() {
                             <span className="text-[11px] font-bold text-emerald-400">
                               Lecture {lec.lecture_number}
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/30">
-                              {formatTimestamp(lec.timestamp_start_sec)} - {formatTimestamp(lec.timestamp_end_sec)}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {isFallback ? (
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-amber-950/40 text-amber-300 border border-amber-500/30 uppercase font-mono">
+                                  Official Portal
+                                </span>
+                              ) : (
+                                <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 uppercase font-mono">
+                                  Stream Active
+                                </span>
+                              )}
+                              <span className="text-[10px] px-2 py-0.5 rounded bg-[#020813] text-[#00F0B5] border border-[#00F0B5]/30">
+                                {formatTimestamp(lec.timestamp_start_sec)} - {formatTimestamp(lec.timestamp_end_sec)}
+                              </span>
+                            </div>
                           </div>
                           <div className="font-semibold text-slate-100 text-xs mt-1 leading-snug">
                             {lec.lecture_title}
@@ -214,15 +229,15 @@ export default function NptelCurriculumMapper() {
 
                         <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
                           <span className="text-[10px] text-slate-500 font-mono">
-                            Video ID: {lec.youtube_video_id}
+                            {isFallback ? 'Verification: Official Portal' : `Video ID: ${lec.youtube_video_id}`}
                           </span>
                           <a
-                            href={videoUrlWithTime}
+                            href={targetUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#00693E]/30 text-[#00F0B5] border border-[#00F0B5]/30 hover:bg-[#00F0B5] hover:text-[#020813] text-xs font-bold transition-all"
                           >
-                            <span>Open at Timestamp</span>
+                            <span>{isFallback ? 'Open NPTEL Portal' : 'Open at Timestamp'}</span>
                             <span>↗</span>
                           </a>
                         </div>

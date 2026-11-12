@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TIER3_SPECIALIZATION_TRACKS } from '../data/course_config_schema';
+import { NAVIGATION_CATEGORIES } from '../data/navigationRegistry';
 export { TIER3_SPECIALIZATION_TRACKS };
 
 /**
@@ -290,7 +291,8 @@ export default function CourseNavigationSidebar({
 }) {
   const [expandedTrackId, setExpandedTrackId] = useState(activeTrackId);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTabMode, setActiveTabMode] = useState("core"); // "core" | "tier3"
+  const [activeTabMode, setActiveTabMode] = useState("core"); // "core" | "tier3" | "categories"
+  const [expandedCategoryId, setExpandedCategoryId] = useState(null);
   const [lockAlert, setLockAlert] = useState(null);
 
   // Student Mastery Progression Tokens (defaults with foundational competencies)
@@ -370,7 +372,7 @@ export default function CourseNavigationSidebar({
           <button
             type="button"
             onClick={() => setActiveTabMode("core")}
-            className={`flex-1 py-1 text-[10px] rounded-md transition-all font-bold ${
+            className={`flex-1 py-1 text-[9px] rounded-md transition-all font-bold ${
               activeTabMode === "core"
                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white"
@@ -381,13 +383,24 @@ export default function CourseNavigationSidebar({
           <button
             type="button"
             onClick={() => setActiveTabMode("tier3")}
-            className={`flex-1 py-1 text-[10px] rounded-md transition-all font-bold ${
+            className={`flex-1 py-1 text-[9px] rounded-md transition-all font-bold ${
               activeTabMode === "tier3"
                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
                 : "text-slate-400 hover:text-white"
             }`}
           >
-            Specializations (10)
+            Spec (10)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTabMode("categories")}
+            className={`flex-1 py-1 text-[9px] rounded-md transition-all font-bold ${
+              activeTabMode === "categories"
+                ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            14 Nav
           </button>
         </div>
       )}
@@ -397,7 +410,13 @@ export default function CourseNavigationSidebar({
         <div className="mb-3 w-full">
           <input
             type="text"
-            placeholder={activeTabMode === "core" ? "Search syllabus sections..." : "Search 10 specialization tracks..."}
+            placeholder={
+              activeTabMode === "core"
+                ? "Search syllabus sections..."
+                : activeTabMode === "tier3"
+                ? "Search 10 specialization tracks..."
+                : "Search 14 categories & 86 routes..."
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-200 placeholder-slate-500 text-[11px] focus:outline-none focus:border-emerald-400"
@@ -415,7 +434,7 @@ export default function CourseNavigationSidebar({
                 <div className="flex items-center justify-between text-amber-300 font-bold">
                   <span className="flex items-center gap-1.5">
                     <span>🔒</span>
-                    <span>Locked: {lockAlert.track} ({lockAlert.code})</span>
+                    <span>Locked: {lockAlert.track}</span>
                   </span>
                   <button 
                     type="button"
@@ -427,7 +446,7 @@ export default function CourseNavigationSidebar({
                   </button>
                 </div>
                 <p className="text-slate-300 text-[10px] leading-tight">
-                  Requires ≥ 70% mastery in: <span className="font-mono text-amber-200 font-bold">{lockAlert.missing.join(', ')}</span>.
+                  Requires ≥ 70% mastery in foundational engineering prerequisites.
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {lockAlert.missing.map(m => (
@@ -471,16 +490,16 @@ export default function CourseNavigationSidebar({
                       {!isUnlocked ? (
                         <span 
                           className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                          title={`Locked: Requires >= 70% in ${lockStatus.missing.join(', ')}`}
+                          title="Locked: Requires foundational prerequisites"
                         >
-                          🔒 {spec.code}
+                          🔒 Locked
                         </span>
                       ) : isMastered ? (
                         <span 
                           className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                           title="Competency Mastered (>= 70%)"
                         >
-                          ⚡ {spec.code}
+                          ⚡ Mastered
                         </span>
                       ) : (
                         <span
@@ -491,7 +510,7 @@ export default function CourseNavigationSidebar({
                             border: `1px solid ${spec.themeColor}40`
                           }}
                         >
-                          {spec.code}
+                          {spec.track}
                         </span>
                       )}
                     </div>
@@ -513,7 +532,7 @@ export default function CourseNavigationSidebar({
                               : "text-amber-400 bg-amber-950/40 font-bold"
                           }`}
                         >
-                          {p} {masteredModules[p] && masteredModules[p] >= 70.0 ? "✓" : "🔒"}
+                          Foundations {masteredModules[p] && masteredModules[p] >= 70.0 ? "✓" : "🔒"}
                         </span>
                       ))}
                     </div>
@@ -528,10 +547,10 @@ export default function CourseNavigationSidebar({
                         type="button"
                         onClick={() => setLockAlert({ track: spec.track, code: spec.code, missing: lockStatus.missing })}
                         className="text-[9px] px-2 py-0.5 rounded font-bold transition-all bg-amber-500/10 text-amber-300 border border-amber-500/40 hover:bg-amber-500/20 inline-flex items-center gap-1 flex-shrink-0"
-                        title={`Locked: Requires >= 70% in ${lockStatus.missing.join(', ')}`}
+                        title="Locked: Requires foundational prerequisites"
                       >
                         <span>🔒</span>
-                        <span>Requires {lockStatus.missing[0]}</span>
+                        <span>Requires Prerequisite</span>
                       </button>
                     ) : (
                       <a
@@ -549,6 +568,90 @@ export default function CourseNavigationSidebar({
                       </a>
                     )}
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 14 Unified Categories Navigation Mode */}
+        {activeTabMode === "categories" && (
+          <div className="space-y-2">
+            {NAVIGATION_CATEGORIES.map((cat) => {
+              const isCatExpanded = expandedCategoryId === cat.id || searchQuery.length > 0;
+              const filteredItems = searchQuery
+                ? cat.items.filter(
+                    (it) =>
+                      it.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      it.shortTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      it.description.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                : cat.items;
+
+              if (searchQuery && filteredItems.length === 0) return null;
+
+              return (
+                <div
+                  key={cat.id}
+                  className="rounded-xl border border-slate-800/80 bg-slate-900/40 overflow-hidden"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCollapsed) onToggleCollapse();
+                      setExpandedCategoryId((prev) => (prev === cat.id ? null : cat.id));
+                    }}
+                    className="w-full flex items-center justify-between p-2 text-left hover:bg-slate-800/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm flex-shrink-0">{cat.icon}</span>
+                      {!isCollapsed && (
+                        <div className="min-w-0">
+                          <div className="font-bold text-white text-[11px] truncate">
+                            {cat.number}. {cat.name}
+                          </div>
+                          <div className="text-[9px] text-slate-400">
+                            {cat.items.length} routes
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!isCollapsed && (
+                      <span className={`text-[10px] text-slate-400 transition-transform ${isCatExpanded ? 'rotate-90' : ''}`}>
+                        ▶
+                      </span>
+                    )}
+                  </button>
+
+                  {isCatExpanded && !isCollapsed && (
+                    <div className="p-1.5 space-y-1 bg-slate-950/40 border-t border-slate-800/60">
+                      {filteredItems.map((item) => (
+                        <a
+                          key={item.path}
+                          href={item.path}
+                          className="flex items-center justify-between p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-emerald-500/15 hover:border-emerald-500/30 border border-transparent transition-all group"
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="text-xs">{item.icon}</span>
+                            <span className="text-[10px] font-semibold truncate group-hover:text-emerald-300">
+                              {item.shortTitle || item.title}
+                            </span>
+                          </div>
+                          {item.badge && (
+                            <span
+                              className="text-[8px] px-1 py-0.2 rounded font-mono font-bold flex-shrink-0 ml-1"
+                              style={{
+                                color: item.badgeColor || '#00F0B5',
+                                backgroundColor: `${item.badgeColor || '#00F0B5'}20`,
+                              }}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -620,7 +723,16 @@ export default function CourseNavigationSidebar({
                       <button
                         key={sec.id}
                         type="button"
-                        onClick={() => onSelectSection(track, sec)}
+                        onClick={() => {
+                          const enrichedSec = {
+                            ...sec,
+                            verification_status: (sec.videoId?.startsWith('embed_') || sec.videoId?.startsWith('ai_') || sec.videoId?.startsWith('found_'))
+                              ? 'PORTAL_FALLBACK'
+                              : 'VERIFIED_ACTIVE',
+                            portal_url: 'https://nptel.ac.in'
+                          };
+                          onSelectSection(track, enrichedSec);
+                        }}
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-all ${
                           isSelected
                             ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-sm'

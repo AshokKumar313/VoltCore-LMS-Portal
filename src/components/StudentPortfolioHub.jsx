@@ -363,7 +363,7 @@ export default function StudentPortfolioHub() {
           <div className="text-2xl font-black text-white mt-1">
             {studyGroups.reduce((acc, g) => acc + g.member_count, 0)} <span className="text-xs text-slate-400 font-normal">Students</span>
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">EC8702 & GATE ECE Sprints</div>
+          <div className="text-[10px] text-slate-400 mt-1">Embedded Systems &amp; GATE ECE Sprints</div>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#041026]/90 border border-[#00F0B5]/30">

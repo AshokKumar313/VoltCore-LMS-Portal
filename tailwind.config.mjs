@@ -57,6 +57,7 @@ export default {
         }
       },
       fontFamily: {
+        heading: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
         academic: ['Computer Modern', 'Latin Modern Roman', 'STIX Two Text', 'Georgia', 'serif'],

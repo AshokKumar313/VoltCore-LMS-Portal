@@ -43,7 +43,7 @@ const student = {
             </span>
           </div>
 
-          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          <h1 class="font-heading text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
             VoltCore <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00F0B5] via-emerald-400 to-cyan-300">Apex Academia</span>
           </h1>
 
@@ -233,7 +233,7 @@ const student = {
               href="/course-hub"
               class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 hover:from-emerald-500/30 hover:to-cyan-500/30 text-[#00F0B5] hover:text-white border border-[#00F0B5]/50 font-bold font-mono text-xs transition-all shadow-md flex items-center gap-2 group"
             >
-              <span>🎓 Course Shell: 4 Priority Courses (EC23S01, EC23C03, EC23E04, EC8702)</span>
+              <span>🎓 Modular Course Shell: 14 Regulation 2023 ECE Disciplines</span>
               <span class="group-hover:translate-x-1 transition-transform">→</span>
             </a>
           </div>
@@ -282,17 +282,17 @@ const student = {
     </div>
   </section>
 
-  <!-- Section: ECE Coursework Grid & Live Assessment Center (Phase 31) -->
+  <!-- Section: ECE Coursework Grid & Live Assessment Center (Phase 31 - PERF-001 Lazy Hydration) -->
   <section class="mb-12">
-    <EceCourseworkGrid client:load />
+    <EceCourseworkGrid client:visible />
   </section>
 
-  <!-- Section: Real-Time XP & Curriculum Modules Progression Widget -->
+  <!-- Section: Real-Time XP & Curriculum Modules Progression Widget (PERF-001 Lazy Hydration) -->
   <section class="mb-12">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
-        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+        <h2 class="font-heading text-xl font-bold text-white tracking-tight">
           Gamified XP Progression & Modular Curriculum Hub
         </h2>
       </div>
@@ -300,7 +300,7 @@ const student = {
         ⚡ 2.5x Boost Active • SQLite Real-Time Sync
       </span>
     </div>
-    <XPProgressionWidget client:load />
+    <XPProgressionWidget client:visible />
   </section>
 
   <!-- Section 1: Zero-Latency Hardware Sandbox -->
@@ -308,7 +308,7 @@ const student = {
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
-        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+        <h2 class="font-heading text-xl font-bold text-white tracking-tight">
           Interactive Hardware Simulation Sandbox
         </h2>
       </div>
@@ -403,7 +403,7 @@ const student = {
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
         <div class="w-2.5 h-6 bg-gradient-to-b from-[#00693E] to-[#00F0B5] rounded-full"></div>
-        <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+        <h2 class="font-heading text-xl font-bold text-white tracking-tight">
           Modular Engineering Tiered Curriculum & IEEE Capstones
         </h2>
       </div>

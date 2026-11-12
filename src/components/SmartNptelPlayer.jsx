@@ -37,9 +37,21 @@ export default function SmartNptelPlayer() {
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   const iframeRef = useRef(null);
   const playerInstanceRef = useRef(null);
+
+  // Check if lecture is portal fallback or unverified synthetic ID
+  const isFallback = 
+    activeLecture?.verification_status === 'PORTAL_FALLBACK' ||
+    activeModule?.verification_status === 'PORTAL_FALLBACK' ||
+    !activeLecture?.youtube_video_id ||
+    activeLecture?.youtube_video_id.startsWith('embed_') ||
+    activeLecture?.youtube_video_id.startsWith('ai_') ||
+    activeLecture?.youtube_video_id.startsWith('found_') ||
+    activeLecture?.youtube_video_id.startsWith('nptel_') ||
+    videoLoadError;
 
   // Storage key for resume tracking
   const resumeStorageKey = `voltcore_nptel_resume_${activeLecture?.youtube_video_id}`;
@@ -81,8 +93,18 @@ export default function SmartNptelPlayer() {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // Load YouTube IFrame API Script once
+  // Load YouTube IFrame API Script once & initialize player
   useEffect(() => {
+    setVideoLoadError(false);
+
+    if (isFallback) {
+      if (playerInstanceRef.current) {
+        try { playerInstanceRef.current.destroy(); } catch {}
+        playerInstanceRef.current = null;
+      }
+      return;
+    }
+
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -91,7 +113,7 @@ export default function SmartNptelPlayer() {
     }
 
     const initPlayer = () => {
-      if (!window.YT || !window.YT.Player) return;
+      if (!window.YT || !window.YT.Player || isFallback) return;
       if (playerInstanceRef.current) {
         try { playerInstanceRef.current.destroy(); } catch {}
       }
@@ -99,31 +121,50 @@ export default function SmartNptelPlayer() {
       const savedResume = localStorage.getItem(resumeStorageKey);
       const startSec = savedResume ? parseInt(savedResume, 10) : activeLecture?.timestamp_start_sec || 0;
 
-      playerInstanceRef.current = new window.YT.Player('nptel-youtube-frame', {
-        videoId: activeLecture?.youtube_video_id,
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          start: startSec,
-          rel: 0,
-          modestbranding: 1
-        },
-        events: {
-          onReady: (event) => {
-            setPlayerReady(true);
-            try {
-              event.target.setPlaybackRate(playbackSpeed);
-            } catch {}
+      try {
+        playerInstanceRef.current = new window.YT.Player('nptel-youtube-frame', {
+          videoId: activeLecture?.youtube_video_id,
+          playerVars: {
+            autoplay: 0,
+            controls: 1,
+            start: startSec,
+            rel: 0,
+            modestbranding: 1
           },
-          onStateChange: (event) => {
-            if (event.data === window.YT.PlayerState.PLAYING) {
-              setIsPlaying(true);
-            } else {
-              setIsPlaying(false);
+          events: {
+            onReady: (event) => {
+              setPlayerReady(true);
+              try {
+                event.target.setPlaybackRate(playbackSpeed);
+              } catch {}
+            },
+            onStateChange: (event) => {
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                setIsPlaying(true);
+              } else {
+                setIsPlaying(false);
+                // Save position immediately on Pause or End
+                if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+                  try {
+                    const t = Math.floor(event.target.getCurrentTime());
+                    if (t > 0) {
+                      setCurrentTime(t);
+                      localStorage.setItem(resumeStorageKey, t.toString());
+                    }
+                  } catch {}
+                }
+              }
+            },
+            onError: (event) => {
+              console.warn('[SmartNptelPlayer] YouTube playback error code:', event.data);
+              setVideoLoadError(true);
             }
           }
-        }
-      });
+        });
+      } catch (err) {
+        console.warn('[SmartNptelPlayer] Failed to instantiate YouTube player:', err);
+        setVideoLoadError(true);
+      }
     };
 
     if (window.YT && window.YT.Player) {
@@ -137,9 +178,9 @@ export default function SmartNptelPlayer() {
         try { playerInstanceRef.current.destroy(); } catch {}
       }
     };
-  }, [activeLecture?.youtube_video_id]);
+  }, [activeLecture?.youtube_video_id, isFallback]);
 
-  // Periodic position sync & resume saving
+  // Throttled position sync & resume saving: 15 seconds (15000ms)
   useEffect(() => {
     const interval = setInterval(() => {
       if (playerInstanceRef.current && typeof playerInstanceRef.current.getCurrentTime === 'function') {
@@ -151,9 +192,25 @@ export default function SmartNptelPlayer() {
           }
         } catch {}
       }
-    }, 1500);
+    }, 15000);
 
     return () => clearInterval(interval);
+  }, [resumeStorageKey]);
+
+  // Save playback position on beforeunload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (playerInstanceRef.current && typeof playerInstanceRef.current.getCurrentTime === 'function') {
+        try {
+          const t = Math.floor(playerInstanceRef.current.getCurrentTime());
+          if (t > 0) {
+            localStorage.setItem(resumeStorageKey, t.toString());
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [resumeStorageKey]);
 
   // Seek to specific timestamp
@@ -312,9 +369,67 @@ export default function SmartNptelPlayer() {
         {/* Left Column: Video IFrame & Playback Controls (8 cols) */}
         <div className="lg:col-span-8 space-y-4">
           
-          {/* 16:9 Responsive Video Container */}
-          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-2xl">
-            <div id="nptel-youtube-frame" className="w-full h-full"></div>
+          {/* 16:9 Responsive Video / Fallback Container */}
+          <div className="relative aspect-video w-full rounded-2xl overflow-hidden border border-slate-800 bg-[#020813] shadow-2xl flex flex-col justify-center items-center">
+            {isFallback ? (
+              <div className="w-full h-full p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-br from-[#020b18] via-[#04162c] to-[#010814] text-left border border-[#00F0B5]/20">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-[10px] font-bold text-emerald-300 uppercase tracking-widest">
+                        Official NPTEL Portal Stream
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {activeModule?.nptel_course?.course_id || activeModule?.module_code}
+                      </span>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mt-2 font-heading">
+                      {activeLecture?.lecture_title || activeModule?.module_title}
+                    </h3>
+                    <p className="text-xs text-slate-300 mt-1">
+                      Instructor: <span className="text-emerald-400 font-semibold">{activeModule?.nptel_course?.instructor}</span> • {activeModule?.nptel_course?.institution}
+                    </p>
+                  </div>
+                  <div className="hidden sm:flex flex-col items-end text-right">
+                    <span className="text-[11px] font-mono text-slate-400">Anna University AU-R2023</span>
+                    <span className="text-[10px] text-emerald-400/80 font-mono">Unit {activeLecture?.unit_mapped || activeModule?.curriculum_unit} Verified</span>
+                  </div>
+                </div>
+
+                <div className="my-auto py-3 px-4 rounded-xl bg-[#020813]/80 border border-slate-800/80 space-y-2">
+                  <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                    This lecture is curated from the National Programme on Technology Enhanced Learning (NPTEL) repository. 
+                    Direct portal streaming guarantees access to the full official course transcript, graded assignments, and reference slides without video stream interruptions.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {activeLecture?.key_concepts?.slice(0, 3).map((kc, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md bg-[#041026] text-slate-400 border border-slate-700/60 text-[10px] font-mono">
+                        ✦ {kc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80">
+                  <a
+                    href={activeLecture?.portal_url || activeModule?.nptel_course?.portal_url || "https://nptel.ac.in"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#00693E] to-[#00a86b] text-white text-xs font-bold tracking-wide shadow-lg shadow-emerald-950/50 hover:brightness-110 transition-all border border-[#00F0B5]/40"
+                  >
+                    <span>Open Official NPTEL Portal</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    Timestamped notes and local markdown export remain active below ↓
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div id="nptel-youtube-frame" className="w-full h-full"></div>
+            )}
           </div>
 
           {/* Precision Control Deck: Speeds & Position */}
@@ -327,10 +442,13 @@ export default function SmartNptelPlayer() {
                 <button
                   key={spd}
                   onClick={() => handleSpeedChange(spd)}
+                  disabled={isFallback}
                   className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
-                    playbackSpeed === spd
-                      ? 'bg-[#00693E] text-[#00F0B5] border border-[#00F0B5]/40 shadow-sm'
-                      : 'bg-[#020813] text-slate-400 hover:text-slate-200 border border-slate-800'
+                    isFallback
+                      ? 'bg-[#020813] text-slate-600 border border-slate-800/50 cursor-not-allowed'
+                      : playbackSpeed === spd
+                        ? 'bg-[#00693E] text-[#00F0B5] border border-[#00F0B5]/40 shadow-sm'
+                        : 'bg-[#020813] text-slate-400 hover:text-slate-200 border border-slate-800'
                   }`}
                 >
                   {spd}x

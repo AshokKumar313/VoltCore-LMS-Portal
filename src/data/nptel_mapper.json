@@ -7,7 +7,7 @@
   "platform_lead": "Ashok Kumar A",
   "public_contact": "ashokkumar3132008@gmail.com",
   "github_repository": "https://github.com/AshokKumar313",
-  "total_mapped_modules": 9,
+  "total_mapped_modules": 20,
   "modules": [
     {
       "module_code": "EC8701",
@@ -15,8 +15,15 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 1,
-      "mapped_cos": ["CO1", "CO2"],
-      "mapped_pos": ["PO1", "PO2", "PO5"],
+      "mapped_cos": [
+        "CO1",
+        "CO2"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO5"
+      ],
       "prerequisites": [
         "Digital Electronics & Logic Design",
         "Microprocessor 8086 / Microcontroller 8051",
@@ -42,7 +49,8 @@
               "Direct Memory-Mapped Register Control (W1TS / W1TC)",
               "SAR ADC Quantization Noise & Internal Attenuation",
               "Passive Infrared Sensor Fresnel Lens Optics"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           },
           {
             "lecture_number": 8,
@@ -56,10 +64,13 @@
               "GPIO Pin Muxing & Pull-Up/Pull-Down Resistance",
               "External Interrupt Controller (EXTI) Latency",
               "Microcontroller Low-Power Sleep States"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8702",
@@ -67,8 +78,15 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 1,
-      "mapped_cos": ["CO1", "CO3"],
-      "mapped_pos": ["PO1", "PO3", "PO4"],
+      "mapped_cos": [
+        "CO1",
+        "CO3"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO3",
+        "PO4"
+      ],
       "prerequisites": [
         "Computer Organization & Architecture",
         "Linear Integrated Circuits"
@@ -93,10 +111,13 @@
               "ARM Cortex-M4 Harvard Bus Architecture (ICode, DCode, System Bus)",
               "Nested Vectored Interrupt Controller (NVIC) Tail-Chaining",
               "Memory Protection Unit (MPU) Region Configuration"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8704",
@@ -104,8 +125,14 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 2,
-      "mapped_cos": ["CO2", "CO4"],
-      "mapped_pos": ["PO3", "PO5"],
+      "mapped_cos": [
+        "CO2",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO3",
+        "PO5"
+      ],
       "prerequisites": [
         "Signals and Systems",
         "Transmission Lines and Waveguides",
@@ -131,7 +158,8 @@
               "Wired-AND Non-Destructive Bitwise Arbitration",
               "Dominant vs Recessive Differential Voltage Encoding",
               "15-bit CRC Calculation and Bit-Stuffing Error Flags"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           },
           {
             "lecture_number": 21,
@@ -145,10 +173,13 @@
               "Speed of Sound Temperature Compensation Equation",
               "Timer Input Capture Edge Stamping with Pre-Scalers",
               "Specular Reflection & Multi-Path Ultrasonic Blind Spots"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8703",
@@ -156,8 +187,15 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 3,
-      "mapped_cos": ["CO3", "CO5"],
-      "mapped_pos": ["PO1", "PO3", "PO12"],
+      "mapped_cos": [
+        "CO3",
+        "CO5"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO3",
+        "PO12"
+      ],
       "prerequisites": [
         "Digital Communication Systems",
         "Antennas and Microwave Engineering"
@@ -182,10 +220,13 @@
               "Pseudorandom Noise (PN) Sequence Generator Polynomials",
               "LoRa Chirp Spread Spectrum (CSS) Modulation Indices",
               "Multipath Urban Canyon Doppler Shift Tracking (delta_f = f_c * v / c)"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8705",
@@ -193,8 +234,15 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 3,
-      "mapped_cos": ["CO3", "CO4"],
-      "mapped_pos": ["PO3", "PO4", "PO5"],
+      "mapped_cos": [
+        "CO3",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO3",
+        "PO4",
+        "PO5"
+      ],
       "prerequisites": [
         "Digital Electronics & Verilog HDL",
         "Computer Organization & Design (Pipelined Processors)"
@@ -219,7 +267,8 @@
               "Hazard Detection Unit & Pipeline Bubble Stalls",
               "ALU Operand Forwarding Paths (EX/MEM and MEM/WB)",
               "Load-Use Read-After-Write (RAW) Dependency Resolution"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           },
           {
             "lecture_number": 18,
@@ -233,10 +282,13 @@
               "R-Type, I-Type, S-Type, B-Type, U-Type, J-Type Formats",
               "Register File x0 Hardwired Constant Zero Architecture",
               "Artix-7 FPGA Block RAM vs Distributed LUT RAM Synthesis"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8706",
@@ -244,8 +296,13 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 4,
-      "mapped_cos": ["CO4"],
-      "mapped_pos": ["PO2", "PO3"],
+      "mapped_cos": [
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO2",
+        "PO3"
+      ],
       "prerequisites": [
         "Operating Systems Concepts",
         "C Programming (Pointers, Memory Allocation & Callbacks)",
@@ -271,7 +328,8 @@
               "Liu & Layland Schedulability Bound: U <= n(2^(1/n) - 1)",
               "Priority Inversion Phenomenon & Unbounded Blocking",
               "Priority Inheritance Protocol vs Priority Ceiling Emulation"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           },
           {
             "lecture_number": 15,
@@ -285,10 +343,13 @@
               "Task Control Block (TCB) & Assembly Stack Pointer Swapping",
               "ARM Cortex-M PendSV Low-Priority Context Switch Handler",
               "Binary Semaphores vs Mutexes (xSemaphoreCreateMutex)"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8707",
@@ -296,8 +357,14 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 5,
-      "mapped_cos": ["CO5"],
-      "mapped_pos": ["PO3", "PO5", "PO12"],
+      "mapped_cos": [
+        "CO5"
+      ],
+      "mapped_pos": [
+        "PO3",
+        "PO5",
+        "PO12"
+      ],
       "prerequisites": [
         "Digital Image Processing",
         "Applied Linear Algebra & Convolution",
@@ -323,10 +390,13 @@
               "Depthwise Separable Convolutions in MobileNet Architecture",
               "Post-Training Quantization (FP32 to INT8 Weight Compression)",
               "CMOS Rolling Shutter Geometric Skew under High Velocities"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8708",
@@ -334,8 +404,15 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 5,
-      "mapped_cos": ["CO1", "CO5"],
-      "mapped_pos": ["PO1", "PO5", "PO12"],
+      "mapped_cos": [
+        "CO1",
+        "CO5"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO5",
+        "PO12"
+      ],
       "prerequisites": [
         "EC8702: Embedded Systems Architecture",
         "EC8706: Real-Time Operating Systems",
@@ -361,10 +438,13 @@
               "Multi-Layer AHB Crossbar Matrix & Bus Contention Arbitration",
               "Circular Ping-Pong DMA Buffer Topologies",
               "Zero-Copy FreeRTOS Stream Buffers & Direct-to-Task Notifications"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           }
         ]
-      }
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
     },
     {
       "module_code": "EC8709",
@@ -372,8 +452,14 @@
       "semester": 7,
       "credits": 4,
       "curriculum_unit": 5,
-      "mapped_cos": ["CO5"],
-      "mapped_pos": ["PO3", "PO5", "PO12"],
+      "mapped_cos": [
+        "CO5"
+      ],
+      "mapped_pos": [
+        "PO3",
+        "PO5",
+        "PO12"
+      ],
       "prerequisites": [
         "EC8708: Advanced Cortex-M DMA Architecture",
         "Digital Signal Processing (DFT & Spectral Windowing)",
@@ -399,7 +485,8 @@
               "Affine Asymmetric INT8 Quantization: q = round(r/S) + Z",
               "Fixed-Point Multiplier Decomposition: M = M_0 * 2^(-n)",
               "ARM SIMD Vector Saturation (__SSAT) & Dual-MAC Arithmetic"
-            ]
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
           },
           {
             "lecture_number": 17,
@@ -413,11 +500,1212 @@
               "Radix-2 Cooley-Tukey Fast Fourier Transform (FFT) on Xtensa/Cortex-M",
               "Ball Pass Frequency Inner Race (BPFI) Resonance Identification",
               "Dual-Core FreeRTOS Partitioning for Real-Time DSP Telemetry"
+            ],
+            "verification_status": "VERIFIED_ACTIVE"
+          }
+        ]
+      },
+      "verification_status": "VERIFIED_ACTIVE",
+      "last_verified": "2026-11-12"
+    },
+    {
+      "module_code": "EC23S01",
+      "module_title": "Digital Signal Processing Practice (Python)",
+      "semester": 4,
+      "credits": 2,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3",
+        "CO4",
+        "CO5"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Signals and Systems (EC23C04)",
+        "Linear Algebra & Numerical Methods (MA23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "last_verified": "2026-11-12",
+      "nptel_course": {
+        "course_id": "noc23-ee108",
+        "course_name": "Digital Signal Processing",
+        "instructor": "Prof. S. C. Dutta Roy / Prof. Govind Sharma",
+        "institution": "Indian Institute of Technology (IIT) Delhi / IIT Kanpur",
+        "portal_url": "https://nptel.ac.in/courses/117102060",
+        "playlist_id": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Discrete-Time Signals, Linear Convolution and System Classification",
+            "youtube_video_id": "nptel_ec23s01_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117102060",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Discrete Cauchy Convolution Sum",
+              "Nyquist-Shannon Sampling Theorem",
+              "Circular Convolution Zero-Padding Equivalence"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Fast Fourier Transform (FFT) Algorithms and Butterfly Networks",
+            "youtube_video_id": "nptel_ec23s01_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104058",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Radix-2 Decimation-in-Time Cooley-Tukey FFT",
+              "Twiddle Factor Symmetry and Periodicity",
+              "Bit-Reversal Permutation Array Operations"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "IIR Digital Filter Synthesis & Bilinear Transformation",
+            "youtube_video_id": "nptel_ec23s01_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117102060",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Tangent Frequency Pre-Warping",
+              "Butterworth Maximally Flat Analog Prototype",
+              "Bilinear Conformal s-plane to z-plane Mapping"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Linear-Phase FIR Filter Design & Windowing Techniques",
+            "youtube_video_id": "nptel_ec23s01_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117102060",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Linear-Phase Symmetric Impulse Response Conditions",
+              "Gibbs Phenomenon Sidelobe Suppression",
+              "Hamming and Kaiser Window Parameterization"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Adaptive Filters, LMS Algorithm & Multirate Signal Processing",
+            "youtube_video_id": "nptel_ec23s01_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105084",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Widrow-Hoff LMS Stochastic Gradient Descent",
+              "Mean-Square-Error Wiener-Hopf Optimal Solution",
+              "Multirate Noble Identities and Polyphase Decimation"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C01",
+      "module_title": "Circuit Analysis & Network Synthesis",
+      "semester": 2,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Engineering Mathematics (MA23C01)",
+        "Basic Electrical & Electronics (EE23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "108104157",
+        "course_name": "Basic Electrical Circuits & Network Synthesis",
+        "instructor": "Prof. S. C. Dutta Roy / Prof. Ankush Sharma",
+        "institution": "Indian Institute of Technology (IIT) Kanpur",
+        "portal_url": "https://nptel.ac.in/courses/108104157",
+        "playlist_id": "NPTEL_EC23C01_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Mesh & Nodal Analysis, Thevenin and Norton Equivalents",
+            "youtube_video_id": "nptel_ec23c01_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104157",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Modified Nodal Analysis (MNA)",
+              "Thevenin & Norton Duality",
+              "Maximum Power Transfer Theorem"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Transient Response of First and Second Order RL, RC & RLC Circuits",
+            "youtube_video_id": "nptel_ec23c01_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104157",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Zero-Input & Zero-State Response",
+              "Overdamped, Critically Damped & Underdamped RLC",
+              "Laplace Domain s-Impedance"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Sinusoidal Steady-State & Resonant Circuits",
+            "youtube_video_id": "nptel_ec23c01_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104157",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Phasor Impedance & Admittance",
+              "Series & Parallel Resonance Q-Factor",
+              "Half-Power Bandwidth"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Two-Port Network Parameter Formulations (Z, Y, ABCD, h)",
+            "youtube_video_id": "nptel_ec23c01_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104157",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Reciprocity and Symmetry Conditions",
+              "Hybrid h-Parameters for Transistor Models",
+              "Cascade & Parallel Interconnections"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Passive Network Synthesis: Foster and Cauer Forms",
+            "youtube_video_id": "nptel_ec23c01_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104157",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Positive Real Functions (PRF)",
+              "Foster I and II LC Partial Fractions",
+              "Cauer I and II Continued Fractions"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C02",
+      "module_title": "Semiconductor Physics & Electronic Materials",
+      "semester": 3,
+      "credits": 3,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Engineering Physics (PH23C01)",
+        "Applied Chemistry"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "115102025",
+        "course_name": "Semiconductor Physics and Devices",
+        "instructor": "Prof. M. K. Sanyal / Prof. B. R. Mehta",
+        "institution": "Indian Institute of Technology (IIT) Delhi",
+        "portal_url": "https://nptel.ac.in/courses/115102025",
+        "playlist_id": "NPTEL_EC23C02_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Energy Bands, Carrier Density & Fermi-Dirac Statistics",
+            "youtube_video_id": "nptel_ec23c02_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/115102025",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Density of States (DOS)",
+              "Intrinsic vs Extrinsic Carrier Concentrations",
+              "Fermi Level Temperature Dependence"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Carrier Drift, Diffusion & Einstein Relation",
+            "youtube_video_id": "nptel_ec23c02_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/115102025",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Drift Mobility & Scattering Mechanisms",
+              "Diffusion Gradient Law",
+              "Einstein Relation D / mu = k*T / q"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "PN Junction Diode Electrostatics & Shockley Equation",
+            "youtube_video_id": "nptel_ec23c02_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/115102025",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Built-in Potential V_bi Formulation",
+              "Poisson Equation Depletion Width",
+              "Zener vs Avalanche Breakdown Mechanisms"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "MOS Capacitor Band Bending & Inversion Dynamics",
+            "youtube_video_id": "nptel_ec23c02_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/115102025",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Accumulation, Depletion & Strong Inversion",
+              "Threshold Voltage V_TH Derivation",
+              "High-Frequency C-V Characteristics"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Optoelectronic Bandgap Transitions: Direct vs Indirect Semiconductors",
+            "youtube_video_id": "nptel_ec23c02_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/115102025",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "E-k Diagram Momentum Conservation",
+              "Radiative vs Non-Radiative Recombination",
+              "Solar Cell Quantum Efficiency"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C03",
+      "module_title": "Electronic Devices & Semiconductor Physics",
+      "semester": 3,
+      "credits": 3,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Semiconductor Physics (EC23C02)",
+        "Circuit Analysis (EC23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "117106091",
+        "course_name": "Solid State Devices",
+        "instructor": "Prof. Shreepad Karmalkar",
+        "institution": "Indian Institute of Technology (IIT) Madras",
+        "portal_url": "https://nptel.ac.in/courses/117106091",
+        "playlist_id": "NPTEL_EC23C03_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "BJT Operation Principles, Ebers-Moll Model & Early Effect",
+            "youtube_video_id": "nptel_ec23c03_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106091",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Ebers-Moll Superposition Equations",
+              "Base Transport Factor & Emitter Injection Efficiency",
+              "Early Voltage V_A & Base-Width Modulation"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "MOSFET Physical Scaling, Subthreshold Conduction & DIBL",
+            "youtube_video_id": "nptel_ec23c03_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106091",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Drain-Induced Barrier Lowering (DIBL)",
+              "Subthreshold Swing S_t (60 mV/decade limit)",
+              "Velocity Saturation in Short-Channel MOSFETs"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Special Diodes: Zener, Schottky, Tunnel & Varactor Physics",
+            "youtube_video_id": "nptel_ec23c03_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106091",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Schottky Thermionic Emission vs Diffusion",
+              "Quantum Mechanical Tunneling Peak-to-Valley Ratio",
+              "Varactor Voltage-Variable Capacitance"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Power Semiconductor Switches: SCR, TRIAC, GTO & IGBT",
+            "youtube_video_id": "nptel_ec23c03_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106091",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Two-Transistor SCR Analogy & Regenerative Latchup",
+              "IGBT Conductivity Modulation in Drift Region",
+              "Safe Operating Area (SOA) Boundaries"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Display Devices & Photonic Detectors: PIN, APD & CCD",
+            "youtube_video_id": "nptel_ec23c03_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106091",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "PIN Photodiode Drift-Limited Response Time",
+              "Avalanche Photodiode Impact Ionization Gain",
+              "Charge-Coupled Device Potential Wells"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C05",
+      "module_title": "Analog Electronics & Linear Integrated Circuits",
+      "semester": 4,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Electronic Devices (EC23C03)",
+        "Circuit Analysis (EC23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "108108111",
+        "course_name": "Analog Circuits and Linear Integrated Circuits",
+        "instructor": "Prof. Hardik J. Pandya",
+        "institution": "Indian Institute of Science (IISc) Bangalore",
+        "portal_url": "https://nptel.ac.in/courses/108108111",
+        "playlist_id": "NPTEL_EC23C05_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "BJT and MOSFET Small-Signal Hybrid-Pi Frequency Response",
+            "youtube_video_id": "nptel_ec23c05_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108108111",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Miller Theorem Equivalent Input Capacitance",
+              "High-Frequency Cutoff f_beta and Unity Gain Frequency f_T",
+              "Open-Circuit Time Constant (OCTC) Analysis"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Differential Pairs, Widlar Current Mirrors & Active Loads",
+            "youtube_video_id": "nptel_ec23c05_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108108111",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Common-Mode Rejection Ratio (CMRR) in dB",
+              "Wilson & Widlar Sub-Microampere Current Source",
+              "Active PMOS Load Differential Voltage Gain"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Op-Amp Internal Stages, Slew Rate & Input Offset Compensation",
+            "youtube_video_id": "nptel_ec23c05_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108108111",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Slew Rate Limiting SR = I_tail / C_comp",
+              "Input Offset Voltage & Bias Current Drift",
+              "Full-Power Bandwidth Formulation"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Active Filter Realizations: Sallen-Key & State-Variable Topologies",
+            "youtube_video_id": "nptel_ec23c05_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108108111",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Butterworth vs Chebyshev Sallen-Key Q-Factor",
+              "State-Variable Universal Filter Simultaneous Outputs",
+              "Switched-Capacitor Filter Equivalence"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Phase-Locked Loops (NE565), 555 Timers & Voltage Regulators",
+            "youtube_video_id": "nptel_ec23c05_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108108111",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "PLL Lock Range Delta_omega_L and Capture Range Delta_omega_C",
+              "555 Timer Astable Frequency & Duty Cycle Synthesis",
+              "Low-Dropout (LDO) vs Buck SMPS Efficiency"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C06",
+      "module_title": "Digital Electronics & Microprocessor Systems",
+      "semester": 4,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Circuit Analysis (EC23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "117106114",
+        "course_name": "Digital Circuits and Microprocessors",
+        "instructor": "Prof. S. Srinivasan",
+        "institution": "Indian Institute of Technology (IIT) Madras",
+        "portal_url": "https://nptel.ac.in/courses/117106114",
+        "playlist_id": "NPTEL_EC23C06_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Karnaugh Maps, Quine-McCluskey & Static/Dynamic Hazards",
+            "youtube_video_id": "nptel_ec23c06_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106114",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Prime Implicant Table Reduction",
+              "Static-1 and Static-0 Hazard Elimination Consensus Terms",
+              "Essential Hazard Delay Insertion"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Arithmetic Logic Units: Carry-Lookahead Adders & Barrel Shifters",
+            "youtube_video_id": "nptel_ec23c06_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106114",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Carry Generate G_i and Propagate P_i Formulations",
+              "Logarithmic Ripple Delay Reduction",
+              "Booth Multiplier 2's Complement Algorithm"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Sequential Synchronous Finite State Machines: Mealy vs Moore",
+            "youtube_video_id": "nptel_ec23c06_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106114",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "State Equivalence Partitioning & Implication Tables",
+              "One-Hot vs Binary Gray State Assignment",
+              "Setup & Hold Slack Timing Analysis"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Semiconductor Memories: SRAM 6T Cell, DRAM 1T1C Refresh & Flash",
+            "youtube_video_id": "nptel_ec23c06_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106114",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "6T SRAM Static Noise Margin (SNM)",
+              "DRAM Destructive Read & Sense Amplifier Pre-charge",
+              "Floating-Gate Fowler-Nordheim Tunneling"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Microprocessor Bus Interfacing: Memory Segmentation & Interrupts",
+            "youtube_video_id": "nptel_ec23c06_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117106114",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Physical Address Translation = Segment * 16 + Offset",
+              "Vectored Interrupt Acknowledge Handshake (INTA)",
+              "Wait-State Generation for Slow Peripherals"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C04",
+      "module_title": "Signals & Systems Analysis",
+      "semester": 3,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Calculus & Transform Techniques (MA23C01)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "108104100",
+        "course_name": "Signals and Systems",
+        "instructor": "Prof. K. S. Venkatesh",
+        "institution": "Indian Institute of Technology (IIT) Kanpur",
+        "portal_url": "https://nptel.ac.in/courses/108104100",
+        "playlist_id": "NPTEL_EC23C04_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Continuous-Time & Discrete-Time Linear Time-Invariant Systems",
+            "youtube_video_id": "nptel_ec23c04_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104100",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Convolution Integral & Convolution Sum",
+              "BIBO Stability Condition Integral |h(t)| dt < inf",
+              "Causality & Memoryless System Tests"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Continuous-Time Fourier Series & Fourier Transform Dualities",
+            "youtube_video_id": "nptel_ec23c04_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104100",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Dirichlet Conditions & Gibbs Phenomenon",
+              "Duality, Frequency Shifting & Modulation Theorems",
+              "Parseval Energy Spectral Density Theorem"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Laplace Transform, Region of Convergence (ROC) & Stability",
+            "youtube_video_id": "nptel_ec23c04_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104100",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Right-Sided, Left-Sided & Two-Sided ROC Properties",
+              "LTI Transfer Function H(s) Poles on Left-Half Plane",
+              "Unilateral Laplace Initial and Final Value Theorems"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Z-Transform, Inverse Z & Discrete LTI Transfer Functions",
+            "youtube_video_id": "nptel_ec23c04_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104100",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Unit Circle |z| = 1 ROC Inclusion for DTFT Existence",
+              "Contour Integration & Partial Fraction Expansion",
+              "Stability Condition: All Poles Inside Unit Circle"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Differential & Difference Equation Formulations of LTI Systems",
+            "youtube_video_id": "nptel_ec23c04_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108104100",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Homogeneous vs Particular Solutions",
+              "Direct Form I and Direct Form II Signal Flow Graphs",
+              "State-Space Matrix Representation"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C07",
+      "module_title": "Control Systems Engineering",
+      "semester": 4,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Circuit Analysis (EC23C01)",
+        "Signals & Systems (EC23C04)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "108106098",
+        "course_name": "Control Engineering",
+        "instructor": "Prof. Ramkrishna Pasumarthy",
+        "institution": "Indian Institute of Technology (IIT) Madras",
+        "portal_url": "https://nptel.ac.in/courses/108106098",
+        "playlist_id": "NPTEL_EC23C07_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Transfer Function Modeling: Mason's Gain Formula & Block Diagrams",
+            "youtube_video_id": "nptel_ec23c07_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108106098",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Signal Flow Graph Forward Path Gain P_k",
+              "Graph Determinant Delta and Sub-determinant Delta_k",
+              "Non-touching Loop Pair Identification"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Second-Order Transient Response & Error Constants",
+            "youtube_video_id": "nptel_ec23c07_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108106098",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Damping Ratio zeta & Undamped Natural Frequency omega_n",
+              "Percentage Overshoot %MP & Settling Time t_s (2% criterion)",
+              "Positional, Velocity & Acceleration Error Constants K_p, K_v, K_a"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Routh-Hurwitz Stability Criterion & Root Locus Construction",
+            "youtube_video_id": "nptel_ec23c07_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108106098",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Routh Array Row of Zeros Auxiliary Polynomial",
+              "Root Locus Asymptote Angles theta_a & Centroid sigma_a",
+              "Breakaway & Break-in Coordinate Derivations dK/ds = 0"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Frequency Response Analysis: Bode Plots & Nyquist Stability",
+            "youtube_video_id": "nptel_ec23c07_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108106098",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Gain Margin GM and Phase Margin PM Formulations",
+              "Corner Frequency Asymptotic Magnitude Approximations",
+              "Nyquist Encirclement Theorem N = Z - P"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "State-Space Representations, Controllability & PID Controllers",
+            "youtube_video_id": "nptel_ec23c07_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/108106098",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "State Transition Matrix exp(A*t) Laplace Inversion",
+              "Kalman Controllability Rank Matrix Q_c = [B AB ... A^(n-1)B]",
+              "Ziegler-Nichols PID Closed-Loop Tuning Rules"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "EC23C08",
+      "module_title": "Analog & Digital Communication Systems",
+      "semester": 5,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Signals & Systems (EC23C04)",
+        "Probability & Random Processes (MA23C02)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "117105144",
+        "course_name": "Modern Digital Communication Techniques",
+        "instructor": "Prof. Suvra Sekhar Das",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/117105144",
+        "playlist_id": "NPTEL_EC23C08_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Continuous-Wave Modulation: DSB-SC, SSB-SC & Superheterodyne Receivers",
+            "youtube_video_id": "nptel_ec23c08_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105144",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Hilbert Transform Phase Shifting for SSB Generation",
+              "Coherent Detection vs Envelope Distortion",
+              "Intermediate Frequency (IF = 455 kHz) & Image Frequency Rejection"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "Frequency Modulation, Carson's Rule & Foster-Seeley Discriminator",
+            "youtube_video_id": "nptel_ec23c08_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105144",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Carson Bandwidth B_FM = 2*(Delta_f + f_m)",
+              "Bessel Function Sideband Distribution J_n(beta)",
+              "Pre-emphasis & De-emphasis SNR Improvement"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Pulse Code Modulation (PCM), Quantization Noise & Delta Modulation",
+            "youtube_video_id": "nptel_ec23c08_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105144",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Signal-to-Quantization-Noise Ratio SQNR = 6.02*n + 1.76 dB",
+              "A-law & mu-law Non-uniform Companding",
+              "Slope Overload Distortion vs Granular Noise in DM"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Digital Carrier Modulation: BPSK, QPSK, 16-QAM Constellations & BER",
+            "youtube_video_id": "nptel_ec23c08_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105144",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Gram-Schmidt Orthogonal Basis Signal Space",
+              "Optimum Matched Filter & Correlator Receiver Structure",
+              "Bit Error Probability P_b = Q(sqrt(2*Eb/N0))"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Information Theory, Entropy, Huffman Coding & Shannon Capacity",
+            "youtube_video_id": "nptel_ec23c08_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117105144",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Source Entropy H(X) & Huffman Source Coding Efficiency",
+              "Shannon-Hartley Theorem C = B*log2(1 + SNR)",
+              "Shannon Channel Coding Bound Eb/N0 >= -1.59 dB"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "HDL6001",
+      "module_title": "Hardware Description Languages & FPGA Design",
+      "semester": 6,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Digital Electronics (EC23C06)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "106105165",
+        "course_name": "Hardware Modeling using Verilog",
+        "instructor": "Prof. Indranil Sengupta",
+        "institution": "Indian Institute of Technology (IIT) Kharagpur",
+        "portal_url": "https://nptel.ac.in/courses/106105165",
+        "playlist_id": "NPTEL_HDL6001_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "Verilog HDL Synthesizable Constructs & Behavioral Modeling",
+            "youtube_video_id": "nptel_hdl6001_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/106105165",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Blocking (=) vs Non-blocking (<=) Assignment Pitfalls",
+              "Event Sensitivity Lists in Always Blocks",
+              "Inferred Latch Prevention in Combinational RTL"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "RTL Synthesis of Pipelined Arithmetic Datapaths & MAC Units",
+            "youtube_video_id": "nptel_hdl6001_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/106105165",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Pipeline Register Insertion for High-Throughput",
+              "Fixed-Point Q-Format Multiplication and Saturation",
+              "Carry-Save Tree Multiplier Architectures"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "FSM Synthesis: One-Hot Encoding, Mealy/Moore & Glitch-Free Outputs",
+            "youtube_video_id": "nptel_hdl6001_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/106105165",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Two-Process vs Three-Process RTL FSM Coding Styles",
+              "Registered Output Logic to Eliminate Glitches",
+              "Safe State Machine Recovery from Illegal States"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "FPGA Architecture: Look-Up Tables (LUTs), DSP48E Slices & BRAM",
+            "youtube_video_id": "nptel_hdl6001_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/106105165",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Configurable Logic Block (CLB) Internal Routing",
+              "True Dual-Port Block RAM Synchronous Reads",
+              "DSP Slice Dedicated Multiply-Accumulate Capabilities"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Static Timing Analysis: Setup/Hold Slack & Clock Domain Crossing (CDC)",
+            "youtube_video_id": "nptel_hdl6001_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/106105165",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Setup Slack: T_clk >= t_cq + t_comb + t_setup",
+              "Metastability Mean Time Between Failures (MTBF)",
+              "Dual-Flop Synchronizers & Asynchronous Gray-Code FIFOs"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "module_code": "VLSI7001",
+      "module_title": "CMOS VLSI Design & Microelectronics",
+      "semester": 7,
+      "credits": 4,
+      "curriculum_unit": 1,
+      "mapped_cos": [
+        "CO1",
+        "CO2",
+        "CO3",
+        "CO4"
+      ],
+      "mapped_pos": [
+        "PO1",
+        "PO2",
+        "PO3",
+        "PO5"
+      ],
+      "prerequisites": [
+        "Electronic Devices (EC23C03)",
+        "Digital Electronics (EC23C06)"
+      ],
+      "verification_status": "PORTAL_FALLBACK",
+      "nptel_course": {
+        "course_id": "117101105",
+        "course_name": "VLSI Design",
+        "instructor": "Prof. A. N. Chandorkar",
+        "institution": "Indian Institute of Technology (IIT) Bombay",
+        "portal_url": "https://nptel.ac.in/courses/117101105",
+        "playlist_id": "NPTEL_VLSI7001_PORTAL",
+        "verification_status": "PORTAL_FALLBACK",
+        "lectures": [
+          {
+            "lecture_number": 1,
+            "lecture_title": "MOSFET Long-Channel & Short-Channel I-V Characteristics",
+            "youtube_video_id": "nptel_vlsi7001_lec01",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117101105",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 1,
+            "key_concepts": [
+              "Channel Length Modulation (Lambda) Formulation",
+              "Body Effect Parameter Gamma & V_TH Shift",
+              "Velocity Saturation and Carrier Mobility Degradation"
+            ]
+          },
+          {
+            "lecture_number": 2,
+            "lecture_title": "CMOS Inverter DC Characteristics & Switching Threshold V_M",
+            "youtube_video_id": "nptel_vlsi7001_lec02",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117101105",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 2,
+            "key_concepts": [
+              "Voltage Transfer Curve (VTC) Derivations",
+              "Noise Margins NM_H and NM_L Formulations",
+              "Beta Ratio Matching for Symmetric Switching"
+            ]
+          },
+          {
+            "lecture_number": 3,
+            "lecture_title": "Dynamic Delay, Logical Effort & Power Dissipation",
+            "youtube_video_id": "nptel_vlsi7001_lec03",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117101105",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 3,
+            "key_concepts": [
+              "Propagation Delays t_pHL and t_pLH Derivations",
+              "Method of Logical Effort D = g*h + p",
+              "Dynamic Power P_dyn = alpha * C_L * V_DD^2 * f_clk"
+            ]
+          },
+          {
+            "lecture_number": 4,
+            "lecture_title": "Alternative Logic Families: Pseudo-NMOS, Domino & Pass-Transistor Logic",
+            "youtube_video_id": "nptel_vlsi7001_lec04",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117101105",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 4,
+            "key_concepts": [
+              "Pseudo-NMOS Static Power Consumption Tradeoff",
+              "Domino Dynamic CMOS Precharge & Evaluate Phases",
+              "Charge Sharing Mitigation with Keeper Transistors"
+            ]
+          },
+          {
+            "lecture_number": 5,
+            "lecture_title": "Physical Layout, Lambda Design Rules & Clock Tree Distribution",
+            "youtube_video_id": "nptel_vlsi7001_lec05",
+            "verification_status": "PORTAL_FALLBACK",
+            "portal_url": "https://nptel.ac.in/courses/117101105",
+            "timestamp_start_sec": 0,
+            "timestamp_end_sec": 3600,
+            "unit_mapped": 5,
+            "key_concepts": [
+              "Mead-Conway Scalable Lambda Design Rules",
+              "Euler Path Technique for Minimum Layout Area",
+              "H-Tree Clock Distribution & Clock Jitter Tolerancing"
             ]
           }
         ]
       }
     }
-  ]
+  ],
+  "last_verified": "2026-11-12"
 }
-

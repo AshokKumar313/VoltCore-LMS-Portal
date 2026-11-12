@@ -1,5 +1,6 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
+import StudentLearningHub from '../components/StudentLearningHub.jsx';
 import PersonalizedLearningHub from '../components/PersonalizedLearningHub.jsx';
 import VoltCoreBrandHeader from '../components/VoltCoreBrandHeader.astro';
 
@@ -136,6 +137,9 @@ const pageMetadata = {
         </div>
       </div>
     </div>
+
+    <!-- Interactive Student Learning Hub Island (Continue Learning, Recents, Curriculum Grid, OBE Attainment) -->
+    <StudentLearningHub client:load />
 
     <!-- Interactive Personalized Learning Hub Island -->
     <PersonalizedLearningHub client:load />

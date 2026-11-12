@@ -4,6 +4,7 @@
  * German Precision Engineering + Italian Glassmorphism
  * Profile: Ashok Kumar A (MIT Campus, Anna University)
  */
+import { NAVIGATION_CATEGORIES } from '../data/navigationRegistry';
 ---
 
 <header class="sticky top-0 z-40 w-full border-b border-[#00F0B5]/15 bg-[#020813]/80 backdrop-blur-2xl transition-all">
@@ -43,6 +44,75 @@
           <span>ESP32-NODE-01</span>
           <span class="text-[#00F0B5] font-semibold">-58 dBm</span>
         </div>
+
+        <!-- 14 Unified Categories Desktop Dropdown -->
+        <div class="relative hidden lg:block ml-2" id="nav-categories-dropdown-container">
+          <button
+            type="button"
+            id="nav-categories-btn"
+            class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/20 hover:border-[#00F0B5]/50 text-slate-300 hover:text-white text-xs font-mono font-bold transition-all shadow-sm"
+          >
+            <span class="text-emerald-400">⚡</span>
+            <span>14 Categories</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- 14 Categories Mega Menu Popover -->
+          <div
+            id="nav-categories-menu"
+            class="hidden absolute left-0 mt-2 w-[720px] max-h-[75vh] overflow-y-auto rounded-2xl bg-[#041026] border border-[#00F0B5]/30 shadow-2xl backdrop-blur-2xl p-4 z-50 font-mono text-xs"
+          >
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-base">🏛️</span>
+                <span class="font-bold text-white font-sans">VoltCore Sovereign 14-Category Navigation</span>
+              </div>
+              <span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                86 Sovereign Routes
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              {NAVIGATION_CATEGORIES.map((cat) => (
+                <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/30 transition-colors">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                      <span>{cat.icon}</span>
+                      <span class="text-[11px] text-emerald-300">{cat.number}. {cat.name}</span>
+                    </div>
+                    <span class="text-[9px] text-slate-500">{cat.items.length}</span>
+                  </div>
+                  <div class="space-y-1">
+                    {cat.items.slice(0, 3).map((it) => (
+                      <a
+                        href={it.path}
+                        class="flex items-center justify-between text-[10px] text-slate-400 hover:text-white py-0.5 px-1 rounded hover:bg-slate-800/60 transition-colors"
+                      >
+                        <span class="truncate">{it.shortTitle || it.title}</span>
+                        {it.badge && (
+                          <span class="text-[8px] px-1 rounded font-bold" style={`color:${it.badgeColor || '#00F0B5'}; background:${it.badgeColor || '#00F0B5'}15`}>
+                            {it.badge}
+                          </span>
+                        )}
+                      </a>
+                    ))}
+                    {cat.items.length > 3 && (
+                      <button
+                        type="button"
+                        onclick="window.dispatchEvent(new CustomEvent('voltcore:open-search'))"
+                        class="text-[9px] text-emerald-400/80 hover:text-emerald-300 block text-left px-1 mt-0.5"
+                      >
+                        + {cat.items.length - 3} more routes &rarr;
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Center: Instant ⌘K Command Search Trigger -->
@@ -57,13 +127,27 @@
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <span class="truncate">Search modules, registers, topologies...</span>
+            <span class="truncate">Search subjects, topics, derivations, labs, or notes...</span>
           </div>
           <div class="flex items-center gap-1">
             <kbd class="px-1.5 py-0.5 rounded bg-[#020813] border border-slate-700 text-[10px] text-[#00F0B5] font-semibold">
               ⌘K
             </kbd>
           </div>
+        </button>
+
+        <!-- Mobile Navigation Drawer Toggle -->
+        <button
+          type="button"
+          id="mobile-drawer-toggle-btn"
+          class="lg:hidden p-2 rounded-xl bg-[#041026]/90 border border-[#00F0B5]/25 text-slate-300 hover:text-white hover:border-[#00F0B5] transition-all flex-shrink-0"
+          aria-label="Open Mobile Navigation Menu"
+        >
+          <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
 
         <!-- Studio Quick Link -->
@@ -1176,44 +1260,131 @@
       </div>
     </div>
   </dialog>
+
+  <!-- Mobile Off-Canvas Navigation Drawer (14 Categories) -->
+  <div
+    id="mobile-nav-drawer"
+    class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md lg:hidden transition-all"
+  >
+    <div
+      class="fixed inset-y-0 left-0 w-80 max-w-[85vw] bg-[#041026] border-r border-[#00F0B5]/30 shadow-2xl p-4 overflow-y-auto font-mono text-xs flex flex-col"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🏛️</span>
+          <div>
+            <div class="font-bold text-white text-sm">VoltCore Apex</div>
+            <div class="text-[10px] text-emerald-400 font-sans">14 Unified Categories</div>
+          </div>
+        </div>
+        <button
+          type="button"
+          id="mobile-drawer-close-btn"
+          class="p-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="py-3 border-b border-slate-800 space-y-2">
+        <button
+          type="button"
+          id="mobile-search-btn"
+          class="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900 border border-emerald-500/30 text-emerald-300 font-bold"
+        >
+          <span class="flex items-center gap-2">
+            <span>🔍</span>
+            <span>Search 86 Routes</span>
+          </span>
+          <kbd class="text-[9px] px-1.5 py-0.5 rounded bg-slate-950 border border-slate-700 text-emerald-400">⌘K</kbd>
+        </button>
+        <a
+          href="/workspace"
+          class="w-full flex items-center justify-between p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-white font-bold"
+        >
+          <span class="flex items-center gap-2">
+            <span>🖥️</span>
+            <span>Studio (18 Themes)</span>
+          </span>
+          <span class="text-[9px] px-1 rounded bg-emerald-500/30 text-emerald-200">Studio</span>
+        </a>
+      </div>
+
+      <!-- Categories Accordion List -->
+      <div class="py-3 space-y-2 flex-1 overflow-y-auto">
+        {NAVIGATION_CATEGORIES.map((cat) => (
+          <details class="group rounded-xl border border-slate-800/80 bg-slate-950/40 overflow-hidden">
+            <summary class="flex items-center justify-between p-2 cursor-pointer list-none hover:bg-slate-800/40 transition-colors">
+              <div class="flex items-center gap-2 font-bold text-slate-200">
+                <span>{cat.icon}</span>
+                <span class="text-[11px] text-emerald-300">{cat.number}. {cat.name}</span>
+              </div>
+              <span class="text-[10px] text-slate-500 group-open:rotate-90 transition-transform">▶</span>
+            </summary>
+            <div class="p-2 space-y-1 bg-slate-950/60 border-t border-slate-800/60">
+              {cat.items.map((it) => (
+                <a
+                  href={it.path}
+                  class="flex items-center justify-between py-1.5 px-2 rounded-lg text-slate-300 hover:text-white hover:bg-emerald-500/20 transition-colors text-[10px]"
+                >
+                  <span class="truncate">{it.shortTitle || it.title}</span>
+                  {it.badge && (
+                    <span class="text-[8px] px-1 rounded font-bold" style={`color:${it.badgeColor || '#00F0B5'}; background:${it.badgeColor || '#00F0B5'}20`}>
+                      {it.badge}
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </details>
+        ))}
+      </div>
+
+      <!-- Footer Info -->
+      <div class="pt-3 border-t border-slate-800 text-[10px] text-slate-500 flex justify-between items-center">
+        <span>AU Regulation 2023</span>
+        <span class="text-emerald-400">Ashok Kumar A</span>
+      </div>
+    </div>
+  </div>
 </header>
 
 <script>
-  // ⌘K Search Modal Controller
+  // ⌘K Search Trigger -> Dispatches event to GlobalCommandSearch
   const searchBtn = document.getElementById('cmd-k-search-trigger');
-  const searchModal = document.getElementById('search-palette-modal') as HTMLDialogElement | null;
-  const closeModalBtn = document.getElementById('close-modal-btn');
-  const searchInput = document.getElementById('cmd-k-input') as HTMLInputElement | null;
+  const mobileSearchBtn = document.getElementById('mobile-search-btn');
 
-  function openSearch() {
-    if (searchModal && !searchModal.open) {
-      searchModal.showModal();
-      setTimeout(() => searchInput?.focus(), 50);
-    }
+  function triggerGlobalSearch() {
+    window.dispatchEvent(new CustomEvent('voltcore:open-search'));
   }
 
-  function closeSearch() {
-    if (searchModal && searchModal.open) {
-      searchModal.close();
-    }
-  }
+  searchBtn?.addEventListener('click', triggerGlobalSearch);
+  mobileSearchBtn?.addEventListener('click', () => {
+    document.getElementById('mobile-nav-drawer')?.classList.add('hidden');
+    triggerGlobalSearch();
+  });
 
-  searchBtn?.addEventListener('click', openSearch);
-  closeModalBtn?.addEventListener('click', closeSearch);
+  // 14 Categories Desktop Mega Menu Toggle
+  const navCategoriesBtn = document.getElementById('nav-categories-btn');
+  const navCategoriesMenu = document.getElementById('nav-categories-menu');
 
-  // Keyboard shortcut listener: Cmd+K / Ctrl+K
-  window.addEventListener('keydown', (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
-      if (searchModal?.open) {
-        closeSearch();
-      } else {
-        openSearch();
-      }
-    }
-    if (e.key === 'Escape' && searchModal?.open) {
-      closeSearch();
-    }
+  navCategoriesBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navCategoriesMenu?.classList.toggle('hidden');
+  });
+
+  // Mobile Navigation Drawer Toggle
+  const mobileToggleBtn = document.getElementById('mobile-drawer-toggle-btn');
+  const mobileCloseBtn = document.getElementById('mobile-drawer-close-btn');
+  const mobileDrawer = document.getElementById('mobile-nav-drawer');
+
+  mobileToggleBtn?.addEventListener('click', () => {
+    mobileDrawer?.classList.remove('hidden');
+  });
+
+  mobileCloseBtn?.addEventListener('click', () => {
+    mobileDrawer?.classList.add('hidden');
   });
 
   // Profile Dropdown Toggle
@@ -1225,10 +1396,17 @@
     profileMenu?.classList.toggle('hidden');
   });
 
+  // Global Outside Click Dismissal
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     if (!profileMenu?.contains(target) && !profileBtn?.contains(target)) {
       profileMenu?.classList.add('hidden');
+    }
+    if (!navCategoriesMenu?.contains(target) && !navCategoriesBtn?.contains(target)) {
+      navCategoriesMenu?.classList.add('hidden');
+    }
+    if (target === mobileDrawer) {
+      mobileDrawer?.classList.add('hidden');
     }
   });
 </script>

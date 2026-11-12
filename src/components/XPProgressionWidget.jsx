@@ -175,7 +175,7 @@ export default function XPProgressionWidget({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
           <div className="p-2.5 rounded-xl bg-[#020813] border border-emerald-500/30 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-white">EC8702: FreeRTOS & Dual-Core ESP32</div>
+              <div className="font-semibold text-white">Embedded Systems: FreeRTOS &amp; Dual-Core ESP32</div>
               <div className="text-[10px] text-slate-400">Sem 7 • 4 Credits</div>
             </div>
             <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">

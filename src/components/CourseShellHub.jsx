@@ -6,6 +6,8 @@ import CourseQuizEngine from './CourseQuizEngine';
 import CourseLabSimulator from './CourseLabSimulator';
 import CourseProjectsHub from './CourseProjectsHub';
 import InstitutionalProfileTab from './InstitutionalProfileTab';
+import { getCoverSvgForCourse } from './CourseCoverArtwork';
+import EceGlossaryFormulaDrawer from './EceGlossaryFormulaDrawer';
 
 /**
  * ========================================================================================
@@ -227,6 +229,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
     { id: "simulator", label: "Lab Simulator", icon: "⚡", key: "7" },
     { id: "projects", label: "Projects & Progress", icon: "🚀", key: "8" },
     { id: "textbooks", label: "Textbooks & NPTEL", icon: "📚", key: "9" },
+    { id: "glossary", label: "Formulas & Glossary", icon: "📐", key: "g" },
     { id: "specializations", label: "Specialization Tracks (Tier 3)", icon: "🌐", key: "s" },
     { id: "institutional", label: "Institutional Profile (Isolated)", icon: "🏛️", key: "0" }
   ], []);
@@ -269,10 +272,10 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
           onClick={() => setActiveTab("overview")}
           className="font-bold hover:underline transition-all flex items-center gap-1.5"
           style={{ color: theme.primaryColor }}
-          title={`Switch to ${currentCourse.code} Overview`}
+          title={`Switch to ${currentCourse.title} Overview`}
         >
           <DepartmentalBadgeIcon code={currentCourse.code} className="w-3.5 h-3.5 inline" primaryColor={theme.primaryColor} />
-          <span>{currentCourse.code}</span>
+          <span>{currentCourse.title}</span>
         </button>
         <span className="text-slate-600">/</span>
         <button
@@ -321,9 +324,6 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 >
                   <DepartmentalBadgeIcon code={c.code} className="w-4 h-4" primaryColor={c.visualTheme.primaryColor} />
                   <span>{c.shortTitle || c.name}</span>
-                  <span className="hidden md:inline font-mono text-slate-500 text-[10px]">
-                    [{c.code}]
-                  </span>
                 </button>
               );
             })}
@@ -340,6 +340,16 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
           borderColor: theme.borderAccent
         }}
       >
+        {/* Bespoke SVG Course Cover Artwork Background */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-20"
+          style={{
+            backgroundImage: `url(${getCoverSvgForCourse(currentCourse.code)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+
         {/* Hardware-accelerated radial glow backdrop */}
         <div
           className="absolute -top-24 -right-24 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-25"
@@ -364,7 +374,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
               ></span>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider ${theme.badgeClass}`}>
                   {currentCourse.category}
@@ -372,15 +382,35 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 <span className="px-2 py-0.5 rounded-full bg-[#020813] text-slate-400 border border-slate-800 text-[10px] font-mono">
                   Semester {currentCourse.semester} • {currentCourse.credits} Credits ({currentCourse.lectureTutorialLabHours})
                 </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-950/40 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono hidden sm:inline-block">
+                  Anna University Regulation 2023 • MIT Campus
+                </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
-                {currentCourse.code}: {currentCourse.title}
+              <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+                {currentCourse.title}
               </h1>
 
               <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
                 {currentCourse.description}
               </p>
+
+              {/* Course Outcomes with Bloom's Taxonomy Chips */}
+              {currentCourse.courseOutcomes && currentCourse.courseOutcomes.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold mr-1">OBE Outcomes:</span>
+                  {currentCourse.courseOutcomes.map((co) => (
+                    <span
+                      key={co.id}
+                      className="px-2 py-0.5 rounded-md bg-[#020813] border border-slate-800 text-[10px] font-mono flex items-center gap-1"
+                      title={co.description}
+                    >
+                      <strong style={{ color: theme.primaryColor }}>{co.id}</strong>
+                      <span className="text-slate-400">({co.bloomLevel.split(' ')[0]})</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -397,6 +427,34 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 {currentCourse.credits === 3 ? "45 Lecture" : "48 Practical"}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Unit Completion Progress Bar */}
+        <div className="mt-4 pt-3 border-t border-slate-800/60 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-slate-400 text-[11px]">Syllabus Units:</span>
+            <div className="flex flex-wrap items-center gap-1">
+              {currentCourse.syllabusUnits.map((u, idx) => (
+                <button
+                  key={u.unitNumber}
+                  onClick={() => { setSelectedUnitIndex(idx); setActiveTab("syllabus"); }}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                    selectedUnitIndex === idx
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                      : "bg-[#020813] text-slate-400 border border-slate-800 hover:text-white"
+                  }`}
+                  title={u.title}
+                >
+                  Unit {ROMAN_NUMERALS[idx]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-400">
+            <span>Format: <strong className="text-white">{currentCourse.lectureTutorialLabHours}</strong></span>
+            <span>•</span>
+            <span>Weight: <strong className="text-white">60 CIA / 40 ESE</strong></span>
           </div>
         </div>
 
@@ -445,8 +503,8 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
                 <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                  <div className="text-[10px] text-slate-500 uppercase">Course Code</div>
-                  <div className="text-white font-bold text-sm mt-0.5">{currentCourse.code}</div>
+                  <div className="text-[10px] text-slate-500 uppercase">Curriculum Tier</div>
+                  <div className="text-white font-bold text-sm mt-0.5">{currentCourse.category || 'Regulation 2023'}</div>
                 </div>
                 <div className="p-3 rounded-xl bg-[#020813] border border-slate-800">
                   <div className="text-[10px] text-slate-500 uppercase">Semester</div>
@@ -573,7 +631,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 <button
                   key={unit.unitNumber}
                   onClick={() => setSelectedUnitIndex(idx)}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
                     isSelected
                       ? `bg-[#020813] shadow-lg border-2 ${theme.glowClass}`
                       : "bg-[#041026] border-slate-800 hover:border-slate-700 text-slate-400"
@@ -582,11 +640,20 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                     borderColor: isSelected ? theme.primaryColor : undefined
                   }}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-white">Unit {ROMAN_NUMERALS[idx]}</span>
-                    <span className="text-[10px] text-slate-500">{unit.hours}h</span>
+                  {/* Unit-level cover strip background */}
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-10 group-hover:opacity-20 transition-opacity"
+                    style={{
+                      backgroundImage: `url(${getCoverSvgForCourse(currentCourse.code)})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                  <div className="flex justify-between items-center relative z-10">
+                    <span className="font-bold text-white font-mono">Unit {ROMAN_NUMERALS[idx]}</span>
+                    <span className="text-[10px] text-slate-400 font-mono font-semibold">{unit.hours}h Study</span>
                   </div>
-                  <div className="text-[11px] truncate mt-1" style={{ color: isSelected ? theme.primaryColor : undefined }}>
+                  <div className="text-[11px] truncate mt-1 relative z-10 font-heading font-medium" style={{ color: isSelected ? theme.primaryColor : undefined }}>
                     {unit.title}
                   </div>
                 </button>
@@ -621,7 +688,17 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
           </div>
 
           {/* Active Unit Detailed Content */}
-          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-6">
+          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-6 relative overflow-hidden">
+            {/* Unit-level cover strip background */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-15"
+              style={{
+                backgroundImage: `url(${getCoverSvgForCourse(currentCourse.code)})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+            <div className="relative z-10 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
               <div>
                 <div className="text-xs font-mono font-bold" style={{ color: theme.primaryColor }}>
@@ -632,7 +709,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 </h3>
               </div>
               <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${theme.badgeClass}`}>
-                {currentCourse.code} • Unit {ROMAN_NUMERALS[selectedUnitIndex]}
+                Unit {ROMAN_NUMERALS[selectedUnitIndex]} • Comprehensive Studio
               </span>
             </div>
 
@@ -724,6 +801,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 )}
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -1074,7 +1152,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
               <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
-                  placeholder="Filter tracks, codes, hardware..."
+                  placeholder="Filter tracks, subjects, hardware..."
                   value={specSearch}
                   onChange={(e) => setSpecSearch(e.target.value)}
                   className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
@@ -1128,7 +1206,7 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                             border: `1px solid ${track.themeColor}40`
                           }}
                         >
-                          {track.code}
+                          {track.track}
                         </span>
                       </div>
 
@@ -1182,6 +1260,15 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       {activeTab === "institutional" && (
         <div role="tabpanel" id="panel-institutional" aria-labelledby="tab-institutional" className="space-y-6">
           <InstitutionalProfileTab isEmbeddedInShell={true} />
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* TAB 12: ECE MASTER FORMULA LIBRARY & GLOSSARY                         */}
+      {/* --------------------------------------------------------------------- */}
+      {activeTab === "glossary" && (
+        <div role="tabpanel" id="panel-glossary" aria-labelledby="tab-glossary" className="space-y-6">
+          <EceGlossaryFormulaDrawer embedded={true} />
         </div>
       )}
     </div>

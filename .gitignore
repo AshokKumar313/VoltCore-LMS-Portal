@@ -59,4 +59,5 @@ Thumbs.db
 scratch/
 .pytest_cache/
 backups/
+*.pdf
 

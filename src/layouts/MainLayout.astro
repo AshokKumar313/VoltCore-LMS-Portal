@@ -3,6 +3,8 @@ import Topbar from '../components/Topbar.astro';
 import GeminiTutorDrawer from '../components/GeminiTutorDrawer.astro';
 import ToastNotifications from '../components/ToastNotifications.jsx';
 import GeminiRagDrawer from '../components/GeminiRagDrawer.jsx';
+import GlobalCommandSearch from '../components/GlobalCommandSearch.jsx';
+import { getBreadcrumbs } from '../data/navigationRegistry';
 import '../styles/global.css';
 
 interface Props {
@@ -18,6 +20,10 @@ const {
   ieeeMode = false,
   activeNav = "dashboard",
 } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const isHome = currentPath === '/' || currentPath === '';
+const breadcrumbInfo = !isHome ? getBreadcrumbs(currentPath) : null;
 ---
 
 <!doctype html>
@@ -37,11 +43,11 @@ const {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="VoltCore Apex" />
 
-    <!-- Google Fonts: Inter, JetBrains Mono, Latin Modern / STIX Two for IEEE Academic Papers -->
+    <!-- Google Fonts: Inter, JetBrains Mono, Manrope, Latin Modern / STIX Two for IEEE Academic Papers -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=Manrope:wght@600;700;800&family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap"
       rel="stylesheet"
     />
 
@@ -84,6 +90,28 @@ const {
     <!-- Main Content Container with Glassmorphism -->
     <div class="relative z-10 flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       
+      <!-- Contextual Academic Breadcrumbs (Automatic derivation across all 86 routes) -->
+      {breadcrumbInfo && (
+        <nav aria-label="Breadcrumb" class="mb-4 flex items-center gap-2 text-xs font-mono text-[var(--theme-text-muted,#94A3B8)] py-1.5 px-3 rounded-xl bg-[var(--theme-surface,rgba(4,16,38,0.6))] border border-[var(--theme-border,rgba(0,240,181,0.2))] backdrop-blur-md">
+          <a href="/" class="hover:text-[var(--theme-primary,#00F0B5)] transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span>Home</span>
+          </a>
+          <span class="text-slate-600">/</span>
+          <span class="flex items-center gap-1 text-slate-300">
+            <span>{breadcrumbInfo.category.icon}</span>
+            <span>{breadcrumbInfo.category.name}</span>
+          </span>
+          <span class="text-slate-600">/</span>
+          <span class="text-[var(--theme-primary,#00F0B5)] font-bold truncate">
+            {breadcrumbInfo.item.shortTitle || breadcrumbInfo.item.title}
+          </span>
+        </nav>
+      )}
+
       <!-- IEEE Academic Journal Breadcrumb / Banner (if applicable) -->
       {ieeeMode && (
         <div class="mb-6 p-4 rounded-xl border border-[#00F0B5]/20 bg-[#041026]/70 backdrop-blur-xl flex flex-wrap items-center justify-between gap-4 text-xs font-mono">
@@ -151,11 +179,14 @@ const {
     <!-- Gemini AI Interactive Viva Tutor Drawer Component -->
     <GeminiTutorDrawer />
 
-    <!-- Phase 1 Enterprise Glassmorphic Toast Notifications -->
-    <ToastNotifications client:load />
+    <!-- Phase 1 Enterprise Glassmorphic Toast Notifications (Idle Hydration PERF-001) -->
+    <ToastNotifications client:idle />
 
-    <!-- Phase 2 Gemini RAG Curriculum & Viva Drawer -->
-    <GeminiRagDrawer client:load />
+    <!-- Phase 2 Gemini RAG Curriculum & Viva Drawer (Idle Hydration PERF-001) -->
+    <GeminiRagDrawer client:idle />
+
+    <!-- Phase 5 Global ⌘K Command Search & Navigator Island -->
+    <GlobalCommandSearch client:idle />
 
     <style is:global>
       /* Dynamic Theme-Adaptive Glassmorphism Core Utilities */

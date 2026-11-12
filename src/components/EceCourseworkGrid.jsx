@@ -479,8 +479,8 @@ export default function EceCourseworkGrid() {
                         <span className="text-[11px] font-mono text-slate-400">
                           {course.semester}
                         </span>
-                        <span className="text-[10px] font-mono text-slate-500 bg-slate-900/60 px-1.5 py-0.5 rounded border border-slate-800" title={`Technical Course Code: ${course.code}`}>
-                          {course.code}
+                        <span className="text-[10px] font-mono text-emerald-400/90 bg-slate-900/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                          Regulation 2023
                         </span>
                       </div>
                     </div>
@@ -699,7 +699,7 @@ export default function EceCourseworkGrid() {
                         {assessmentResult.score} / {assessmentResult.max_score} <span className="text-xs text-slate-400">PTS</span>
                       </div>
                       <div className="text-[10px] text-slate-500">
-                        {assessmentResult.course_code}
+                        {assessmentResult.subject || 'Verified Benchmark'}
                       </div>
                     </div>
                   </div>

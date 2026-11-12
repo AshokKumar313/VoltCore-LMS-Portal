@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import SystemStatusWidget from '../components/SystemStatusWidget.jsx';
 import CapstonePortfolioHub from '../components/CapstonePortfolioHub.jsx';
 import InstitutionalProfileTab from '../components/InstitutionalProfileTab.jsx';
+import InstitutionalCertificateGenerator from '../components/InstitutionalCertificateGenerator.jsx';
 
 // Student Profile Constants
 const profile = {
@@ -154,7 +155,7 @@ const profile = {
         <table class="w-full text-left">
           <thead>
             <tr class="text-slate-400 border-b border-slate-800 text-[11px]">
-              <th class="py-2.5 px-3">COURSE CODE</th>
+              <th class="py-2.5 px-3">DISCIPLINE DOMAIN</th>
               <th class="py-2.5 px-3">COURSE TITLE</th>
               <th class="py-2.5 px-3">CREDITS</th>
               <th class="py-2.5 px-3">GRADE</th>
@@ -164,7 +165,7 @@ const profile = {
           <tbody class="divide-y divide-slate-800/60">
             {profile.completedModules.map((mod) => (
               <tr class="hover:bg-[#041026] text-slate-200">
-                <td class="py-2.5 px-3 font-bold text-white">{mod.code}</td>
+                <td class="py-2.5 px-3 font-bold text-white">Core ECE</td>
                 <td class="py-2.5 px-3 text-[#00F0B5]">{mod.title}</td>
                 <td class="py-2.5 px-3 text-slate-300">{mod.credits}</td>
                 <td class="py-2.5 px-3 font-bold text-amber-300">{mod.grade}</td>
@@ -198,6 +199,9 @@ const profile = {
 
     <!-- Dedicated Institutional Profile & Localized Regulatory Mapping (Dormant by Default) -->
     <InstitutionalProfileTab client:load />
+
+    <!-- Institutional Curriculum Completion Certificate Generator -->
+    <InstitutionalCertificateGenerator client:visible />
 
   </div>
 </MainLayout>

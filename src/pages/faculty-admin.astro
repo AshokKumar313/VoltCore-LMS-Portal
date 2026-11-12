@@ -33,6 +33,36 @@ const pageMetadata = {
 ---
 
 <MainLayout title={pageMetadata.title} activeNav="faculty-admin">
+  <!-- AUTH-001: Pre-Hydration Faculty Admin Role Guard -->
+  <script is:inline>
+    (function() {
+      try {
+        var rawUser = localStorage.getItem('voltcore_user');
+        if (!rawUser) {
+          window.location.replace('/login?redirect=' + encodeURIComponent(window.location.pathname) + '&msg=auth_required');
+          return;
+        }
+        var user = JSON.parse(rawUser);
+        var allowedRoles = ["Admin_Owner", "Teacher"];
+        if (!user || !user.role || !allowedRoles.includes(user.role)) {
+          window.location.replace('/login?restricted=1&role_required=Teacher');
+        }
+      } catch (e) {
+        window.location.replace('/login?auth_error=1');
+      }
+    })();
+  </script>
+
+  <noscript>
+    <div class="p-6 my-4 rounded-2xl bg-red-950/80 border border-red-500/40 text-red-200 text-sm font-mono">
+      <div class="font-bold flex items-center gap-2 mb-2">
+        <span>🏛️</span>
+        <span>ACCESS RESTRICTED: JAVASCRIPT REQUIRED FOR ADMINISTRATIVE MANAGEMENT</span>
+      </div>
+      <p>This department management portal requires authenticated session tokens. Please enable JavaScript to continue.</p>
+    </div>
+  </noscript>
+
   <div class="space-y-6 font-mono">
     
     <!-- Hero Header Banner -->

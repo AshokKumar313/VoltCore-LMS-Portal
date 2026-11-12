@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+  <defs>
+    <style>
+      .wire { stroke: #00F0B5; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .wire-subtle { stroke: #64748B; stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+      .component { stroke: #38BDF8; stroke-width: 2.5; fill: #041026; }
+      .label-title { font-family: 'Manrope', system-ui, sans-serif; font-size: 14px; font-weight: 800; fill: #F8FAFC; }
+      .label-text { font-family: 'JetBrains Mono', monospace; font-size: 12px; fill: #94A3B8; }
+      .label-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: bold; fill: #00F0B5; }
+      .node { fill: #00F0B5; }
+    </style>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="600" height="400" rx="16" fill="#020813" stroke="#00F0B5" stroke-opacity="0.3" stroke-width="1.5"/>
+
+  <!-- Grid pattern ticks -->
+  <g opacity="0.15" stroke="#00F0B5" stroke-width="0.5">
+    <line x1="50" y1="0" x2="50" y2="400"/>
+    <line x1="150" y1="0" x2="150" y2="400"/>
+    <line x1="250" y1="0" x2="250" y2="400"/>
+    <line x1="350" y1="0" x2="350" y2="400"/>
+    <line x1="450" y1="0" x2="450" y2="400"/>
+    <line x1="550" y1="0" x2="550" y2="400"/>
+    <line x1="0" y1="50" x2="600" y2="50"/>
+    <line x1="0" y1="150" x2="600" y2="150"/>
+    <line x1="0" y1="250" x2="600" y2="250"/>
+    <line x1="0" y1="350" x2="600" y2="350"/>
+  </g>
+
+  <!-- Title & IEEE Classification -->
+  <text x="30" y="38" class="label-title">IEEE STD 315-1975 SCHEMATIC: BJT VOLTAGE-DIVIDER BIAS</text>
+  <text x="30" y="58" class="label-text">Anna University Reg 2023 • Discrete Analog Transistor Biasing Topology</text>
+
+  <!-- VCC Rail (+11.0V) -->
+  <line x1="160" y1="90" x2="440" y2="90" class="wire" stroke="#F59E0B"/>
+  <circle cx="300" cy="90" r="4" fill="#F59E0B"/>
+  <text x="285" y="80" class="label-val" fill="#F59E0B">V_CC = +11.0V</text>
+
+  <!-- Ground Rail -->
+  <line x1="160" y1="340" x2="440" y2="340" class="wire" stroke="#64748B"/>
+  <path d="M 300 340 L 300 355 M 288 355 L 312 355 M 292 360 L 308 360 M 296 365 L 304 365" stroke="#64748B" stroke-width="2"/>
+
+  <!-- Resistor R1 (Upper Divider) -->
+  <line x1="200" y1="90" x2="200" y2="120" class="wire"/>
+  <path d="M 200 120 L 194 125 L 206 135 L 194 145 L 206 155 L 194 165 L 200 170" class="component"/>
+  <line x1="200" y1="170" x2="200" y2="210" class="wire"/>
+  <text x="145" y="145" class="label-val">R_1</text>
+  <text x="135" y="160" class="label-text">56kΩ</text>
+
+  <!-- Resistor R2 (Lower Divider) -->
+  <line x1="200" y1="210" x2="200" y2="250" class="wire"/>
+  <path d="M 200 250 L 194 255 L 206 265 L 194 275 L 206 285 L 194 295 L 200 300" class="component"/>
+  <line x1="200" y1="300" x2="200" y2="340" class="wire"/>
+  <text x="145" y="275" class="label-val">R_2</text>
+  <text x="135" y="290" class="label-text">12kΩ</text>
+
+  <!-- Base Node Connection -->
+  <circle cx="200" cy="210" r="4" class="node"/>
+  <line x1="200" y1="210" x2="310" y2="210" class="wire"/>
+
+  <!-- Input Coupling Capacitor C1 -->
+  <line x1="90" y1="210" x2="135" y2="210" class="wire"/>
+  <line x1="135" y1="198" x2="135" y2="222" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="143" y1="198" x2="143" y2="222" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="143" y1="210" x2="200" y2="210" class="wire"/>
+  <text x="110" y="190" class="label-val">C_1</text>
+  <text x="70" y="235" class="label-text">V_in ~</text>
+
+  <!-- Resistor RC (Collector) -->
+  <line x1="360" y1="90" x2="360" y2="120" class="wire"/>
+  <path d="M 360 120 L 354 125 L 366 135 L 354 145 L 366 155 L 354 165 L 360 170" class="component"/>
+  <line x1="360" y1="170" x2="360" y2="190" class="wire"/>
+  <text x="375" y="145" class="label-val">R_C</text>
+  <text x="375" y="160" class="label-text">2.2kΩ</text>
+
+  <!-- NPN Transistor Q1 (IEEE Symbol) -->
+  <circle cx="340" cy="210" r="28" stroke="#38BDF8" stroke-width="1.8" fill="#041026"/>
+  <line x1="310" y1="210" x2="330" y2="210" class="wire"/>
+  <line x1="330" y1="195" x2="330" y2="225" stroke="#F8FAFC" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Collector lead -->
+  <line x1="330" y1="202" x2="355" y2="190" class="wire"/>
+  <line x1="355" y1="190" x2="360" y2="190" class="wire"/>
+  <!-- Emitter lead with Arrow -->
+  <line x1="330" y1="218" x2="355" y2="230" class="wire"/>
+  <polygon points="353,224 358,232 348,231" fill="#00F0B5"/>
+  <line x1="355" y1="230" x2="360" y2="230" class="wire"/>
+  <text x="325" y="172" class="label-val">Q_1</text>
+  <text x="325" y="255" class="label-text">2N2222A (β=150)</text>
+
+  <!-- Output Coupling Capacitor C2 -->
+  <circle cx="360" cy="190" r="4" class="node"/>
+  <line x1="360" y1="190" x2="430" y2="190" class="wire"/>
+  <line x1="430" y1="178" x2="430" y2="202" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="438" y1="178" x2="438" y2="202" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="438" y1="190" x2="490" y2="190" class="wire"/>
+  <text x="420" y="170" class="label-val">C_2</text>
+  <text x="495" y="195" class="label-val">V_out</text>
+
+  <!-- Resistor RE (Emitter) -->
+  <circle cx="360" cy="230" r="4" class="node"/>
+  <line x1="360" y1="230" x2="360" y2="250" class="wire"/>
+  <path d="M 360 250 L 354 255 L 366 265 L 354 275 L 366 285 L 354 295 L 360 300" class="component"/>
+  <line x1="360" y1="300" x2="360" y2="340" class="wire"/>
+  <text x="315" y="275" class="label-val">R_E</text>
+  <text x="315" y="290" class="label-text">680Ω</text>
+
+  <!-- Bypass Capacitor CE -->
+  <line x1="360" y1="240" x2="420" y2="240" class="wire"/>
+  <line x1="420" y1="240" x2="420" y2="270" class="wire"/>
+  <line x1="410" y1="270" x2="430" y2="270" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="410" y1="278" x2="430" y2="278" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="420" y1="278" x2="420" y2="340" class="wire"/>
+  <line x1="420" y1="340" x2="360" y2="340" class="wire"/>
+  <text x="435" y="278" class="label-val">C_E</text>
+  <text x="435" y="293" class="label-text">47µF</text>
+
+  <!-- DC Metrics Annotations Box -->
+  <rect x="440" y="28" width="135" height="48" rx="8" fill="#041026" stroke="#00F0B5" stroke-opacity="0.4"/>
+  <text x="450" y="46" class="label-text">I_CQ ≈ 1.93 mA</text>
+  <text x="450" y="64" class="label-text">V_CEQ ≈ 5.43 V</text>
+</svg>
