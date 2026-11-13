@@ -45,6 +45,82 @@ export function getDomainEmblemPath(courseCode = '', domain = '') {
   return '/assets/branding/emblem_analog_circuits.svg';
 }
 
+/**
+ * Returns the dedicated 1-to-1 course-specific vector SVG logo path.
+ * Covers all 14 Regulation 2023 ECE subjects plus Bare-Metal STM32 Academy.
+ */
+export function getCourseLogoPath(courseCode = '', subjectName = '') {
+  const code = (courseCode || '').toUpperCase().trim();
+  const name = (subjectName || '').toLowerCase().trim();
+
+  // 1. Digital Signal Processing & Algorithms
+  if (code === 'EC23S01' || name.includes('digital signal processing') || name.includes('dsp') || name.includes('algorithms')) {
+    return '/assets/branding/logo_digital_signal_processing.svg';
+  }
+  // 2. Electronic Devices and Circuit Theory
+  if (code === 'EC23C02' || code === 'EC23C03' || name.includes('electronic devices') || name.includes('semiconductor') || name.includes('circuit modeling')) {
+    return '/assets/branding/logo_electronic_devices.svg';
+  }
+  // 3. Signals and Systems Analysis
+  if (code === 'EC23C04' || name.includes('signals and systems') || name.includes('linear systems theory')) {
+    return '/assets/branding/logo_signals_and_systems.svg';
+  }
+  // 4. Analog Integrated Circuits Design
+  if (code === 'EC23C05' || name.includes('analog integrated circuit') || name.includes('analog ic')) {
+    return '/assets/branding/logo_analog_ic_design.svg';
+  }
+  // 5. Digital System Design and Microprocessors
+  if (code === 'EC23C06' || name.includes('digital system design') || name.includes('digital logic design')) {
+    return '/assets/branding/logo_digital_system_design.svg';
+  }
+  // 6. Linear Integrated Circuits and Applications
+  if (name.includes('linear integrated circuits') || name.includes('linear ic')) {
+    return '/assets/branding/logo_linear_ic_applications.svg';
+  }
+  // 7. Microcontroller Architecture and Interfacing
+  if (code === 'EC8702' || name.includes('microcontroller architecture') || name.includes('interfacing') || name.includes('embedded real-time')) {
+    return '/assets/branding/logo_microcontroller_interfacing.svg';
+  }
+  // 8. Control Systems Engineering
+  if (code === 'EC23C07' || name.includes('control systems')) {
+    return '/assets/branding/logo_control_systems.svg';
+  }
+  // 9. Digital Communication Systems
+  if (code === 'EC23C08' || name.includes('digital communication') || name.includes('telecommunications & rf')) {
+    return '/assets/branding/logo_digital_communication.svg';
+  }
+  // 10. Advanced Communication Systems & 5G
+  if (code === 'EC23E04' || name.includes('advanced communication') || name.includes('5g')) {
+    return '/assets/branding/logo_advanced_communication_5g.svg';
+  }
+  // 11. Ad Hoc and Wireless Sensor Networks
+  if (code === 'WSN8702' || name.includes('wireless sensor') || name.includes('ad hoc')) {
+    return '/assets/branding/logo_wireless_sensor_networks.svg';
+  }
+  // 12. Internet of Things & Embedded Sensors
+  if (code === 'IOT8701' || name.includes('internet of things') || name.includes('iot') || name.includes('embedded sensors')) {
+    return '/assets/branding/logo_iot_embedded_sensors.svg';
+  }
+  // 13. Verilog HDL & FPGA System Prototyping
+  if (code === 'HDL6001' || name.includes('verilog') || name.includes('fpga')) {
+    return '/assets/branding/logo_verilog_hdl_fpga.svg';
+  }
+  // 14. CMOS VLSI Design & Nanometer Technology
+  if (code === 'VLSI7001' || name.includes('cmos vlsi') || name.includes('vlsi design')) {
+    return '/assets/branding/logo_cmos_vlsi_design.svg';
+  }
+  // 15. Bare-Metal STM32 Academy
+  if (code === 'STM32' || code === 'STM32-ACADEMY' || name.includes('stm32') || name.includes('bare-metal') || name.includes('arm cortex-m microcontroller')) {
+    return '/assets/branding/logo_stm32_baremetal_academy.svg';
+  }
+  // Circuit Analysis & Network Synthesis (Tier 1 Foundation fallback)
+  if (code === 'EC23C01' || name.includes('circuit analysis') || name.includes('network synthesis')) {
+    return '/assets/branding/logo_signals_and_systems.svg';
+  }
+
+  return getDomainEmblemPath(courseCode);
+}
+
 export default function SubjectEmblem({
   courseCode,
   domain = '',
@@ -63,8 +139,8 @@ export default function SubjectEmblem({
   const sizeConfig = SIZE_MAP[size] || SIZE_MAP.md;
   const activeColor = customColor || meta.primaryColor;
   const displayName = meta.disciplineName || meta.name;
-  const domainEmblemPath = getDomainEmblemPath(courseCode, domain || meta.industryDomain || meta.subfield);
-  const shouldRenderBespoke = (useBespokeAsset || size === 'lg' || size === 'xl' || size === 'hero') && !hasImgError;
+  const dedicatedLogoPath = getCourseLogoPath(courseCode, displayName);
+  const shouldRenderBespoke = (useBespokeAsset || size === 'md' || size === 'lg' || size === 'xl' || size === 'hero') && !hasImgError;
 
   const emblemNode = (
     <div
@@ -97,8 +173,8 @@ export default function SubjectEmblem({
       >
         {shouldRenderBespoke ? (
           <img
-            src={domainEmblemPath}
-            alt={`${displayName} Emblem`}
+            src={dedicatedLogoPath}
+            alt={`${displayName} Logo`}
             className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300"
             onError={() => setHasImgError(true)}
           />

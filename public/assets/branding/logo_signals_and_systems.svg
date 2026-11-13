@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lss-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#021c24" />
+      <stop offset="60%" stop-color="#020e14" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lss-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9" />
+      <stop offset="50%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#0E7490" />
+    </linearGradient>
+    <linearGradient id="lss-teal" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#0F766E" />
+    </linearGradient>
+    <filter id="lss-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#06B6D4" opacity="0.12" filter="url(#lss-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lss-bg)" stroke="url(#lss-cyan)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#06B6D4" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- Continuous Convolution Pulse Wave (Top Half) -->
+  <g transform="translate(106, 90)">
+    <!-- Baseline -->
+    <line x1="0" y1="50" x2="300" y2="50" stroke="#64748B" stroke-width="1.5" stroke-dasharray="3 3" />
+    <!-- Rectangular Input Pulse x(t) -->
+    <path d="M 20,50 L 50,50 L 50,15 L 110,15 L 110,50 L 140,50" fill="none" stroke="#2DD4BF" stroke-width="2.5" />
+    <!-- Convolution Operator Symbol (*) -->
+    <text x="160" y="38" font-family="'Inter', sans-serif" font-size="18" font-weight="900" fill="#67E8F9" text-anchor="middle">∗</text>
+    <!-- Exponential Impulse Response h(t) -->
+    <path d="M 180,50 L 200,50 L 200,15 Q 220,25 240,40 Q 260,48 280,50" fill="none" stroke="#F59E0B" stroke-width="2.5" />
+  </g>
+
+  <!-- Laplace S-Plane with Poles & Zeros (Lower Half) -->
+  <g transform="translate(156, 190)">
+    <!-- S-Plane Grid & Region of Convergence (ROC) Shading in Left-Half Plane -->
+    <rect x="-30" y="10" width="130" height="190" fill="#06B6D4" fill-opacity="0.08" />
+
+    <!-- Real Axis (sigma) & Imaginary Axis (j_omega) -->
+    <line x1="-40" y1="105" x2="240" y2="105" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <line x1="100" y1="10" x2="100" y2="200" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <text x="245" y="109" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#CBD5E1">σ</text>
+    <text x="105" y="18" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#CBD5E1">jω</text>
+
+    <!-- Stable Complex Pole Pair (x) in Left-Half Plane -->
+    <g stroke="#06B6D4" stroke-width="4.5" stroke-linecap="round">
+      <!-- Upper Pole -->
+      <line x1="30" y1="45" x2="50" y2="65" />
+      <line x1="50" y1="45" x2="30" y2="65" />
+      <!-- Lower Pole -->
+      <line x1="30" y1="145" x2="50" y2="165" />
+      <line x1="50" y1="145" x2="30" y2="165" />
+    </g>
+
+    <!-- Transmission Zero (o) -->
+    <circle cx="70" cy="105" r="7" fill="#020813" stroke="#67E8F9" stroke-width="3" />
+    <!-- Radius Arc wn -->
+    <path d="M 100,105 L 40,55" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="4 3" />
+    <circle cx="100" cy="105" r="3.5" fill="#CBD5E1" />
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#67E8F9">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-135" y="-12" width="270" height="24" rx="12" fill="#020813" stroke="url(#lss-cyan)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#67E8F9" text-anchor="middle">
+      SIGNALS &amp; SYSTEMS ANALYSIS
+    </text>
+  </g>
+</svg>

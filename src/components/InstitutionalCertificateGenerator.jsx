@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ECE_SUBJECT_REGISTRY } from '../data/subjectRegistry';
+import { getCourseLogoPath } from './SubjectEmblem';
 
 /**
  * ============================================================================
@@ -46,26 +47,6 @@ export default function InstitutionalCertificateGenerator({
   }, []);
 
   const subjectList = Object.values(ECE_SUBJECT_REGISTRY).map(s => s.disciplineName || s.name);
-
-  const getDomainEmblemForSubjectName = (name = '') => {
-    const n = (name || '').toLowerCase();
-    if (n.includes('digital') || n.includes('vlsi') || n.includes('verilog')) {
-      return '/assets/branding/emblem_digital_systems.svg';
-    }
-    if (n.includes('signal') || n.includes('dsp') || n.includes('discrete')) {
-      return '/assets/branding/emblem_signal_processing.svg';
-    }
-    if (n.includes('embedded') || n.includes('iot') || n.includes('microprocessor') || n.includes('microcontroller') || n.includes('stm32')) {
-      return '/assets/branding/emblem_embedded_iot.svg';
-    }
-    if (n.includes('communication') || n.includes('rf') || n.includes('microwave') || n.includes('antenna')) {
-      return '/assets/branding/emblem_communication_systems.svg';
-    }
-    if (n.includes('control') || n.includes('electromagnetic') || n.includes('transmission')) {
-      return '/assets/branding/emblem_control_electromagnetics.svg';
-    }
-    return '/assets/branding/emblem_analog_circuits.svg';
-  };
 
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -204,7 +185,7 @@ export default function InstitutionalCertificateGenerator({
           </p>
           <div className="flex items-center justify-center gap-2.5">
             <img
-              src={getDomainEmblemForSubjectName(selectedSubject)}
+              src={getCourseLogoPath('', selectedSubject)}
               alt="Discipline Emblem"
               className="w-7 h-7 object-contain drop-shadow"
             />

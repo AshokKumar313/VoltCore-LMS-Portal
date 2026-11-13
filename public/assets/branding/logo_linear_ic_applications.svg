@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="llic-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#2a1002" />
+      <stop offset="60%" stop-color="#140601" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="llic-orange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDBA74" />
+      <stop offset="40%" stop-color="#EA580C" />
+      <stop offset="80%" stop-color="#C2410C" />
+      <stop offset="100%" stop-color="#7C2D12" />
+    </linearGradient>
+    <filter id="llic-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#EA580C" opacity="0.12" filter="url(#llic-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#llic-bg)" stroke="url(#llic-orange)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#EA580C" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- 555 Timer Astable Square Wave (Top Half) -->
+  <g transform="translate(106, 95)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 0,25 L 35,25 L 35,0 L 95,0 L 95,25 L 155,25 L 155,0 L 215,0 L 215,25 L 275,25 L 275,0 L 300,0"
+          fill="none" stroke="#FB923C" stroke-width="2.5" />
+    <text x="150" y="-8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FDBA74" text-anchor="middle">555 Astable Multivibrator Wave</text>
+  </g>
+
+  <!-- Precision Op-Amp Triangle with Negative Feedback Loop (Center) -->
+  <g transform="translate(166, 175)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Op-Amp Triangle Silhouette -->
+    <polygon points="30,20 30,160 160,90" fill="#041226" stroke="url(#llic-orange)" stroke-width="5" />
+
+    <!-- Inverting Input (-) & Resistor Rin -->
+    <line x1="-60" y1="55" x2="30" y2="55" stroke="url(#llic-orange)" stroke-width="3.5" />
+    <circle cx="-60" cy="55" r="4.5" fill="#FB923C" />
+    <text x="45" y="63" font-family="'Inter', sans-serif" font-size="20" font-weight="900" fill="#FDBA74">−</text>
+
+    <!-- Non-Inverting Input (+) Tied to Ground -->
+    <line x1="-60" y1="125" x2="30" y2="125" stroke="url(#llic-orange)" stroke-width="3.5" />
+    <circle cx="-60" cy="125" r="4.5" fill="#FB923C" />
+    <text x="43" y="132" font-family="'Inter', sans-serif" font-size="18" font-weight="900" fill="#FDBA74">+</text>
+
+    <!-- Output Lead Vout -->
+    <line x1="160" y1="90" x2="220" y2="90" stroke="url(#llic-orange)" stroke-width="4" />
+    <circle cx="220" cy="90" r="5" fill="#00F0B5" />
+    <text x="215" y="80" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#00F0B5">Vout</text>
+
+    <!-- Negative Feedback Resistor Loop (Rf) -->
+    <path d="M -15,55 L -15,0 L 190,0 L 190,90" fill="none" stroke="#F59E0B" stroke-width="3" stroke-dasharray="6 3" />
+    <rect x="70" y="-10" width="40" height="20" rx="3" fill="#020813" stroke="#F59E0B" stroke-width="2" />
+    <text x="90" y="4" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FDE68A" text-anchor="middle">Rf</text>
+  </g>
+
+  <!-- Transfer Gain Equation Inscription -->
+  <text x="256" y="380" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#FDBA74" text-anchor="middle">
+    Av = -(Rf / Rin)
+  </text>
+
+  <!-- Peripheral Solder Vias -->
+  <g fill="#FDBA74">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#llic-orange)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#FDBA74" text-anchor="middle">
+      LINEAR INTEGRATED CIRCUITS &amp; APPLICATIONS
+    </text>
+  </g>
+</svg>

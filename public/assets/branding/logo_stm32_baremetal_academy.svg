@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lsma-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#03211c" />
+      <stop offset="60%" stop-color="#02120e" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lsma-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5EEAD4" />
+      <stop offset="40%" stop-color="#00F0B5" />
+      <stop offset="80%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#00693E" />
+    </linearGradient>
+    <linearGradient id="lsma-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="45%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <filter id="lsma-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#00F0B5" opacity="0.12" filter="url(#lsma-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lsma-bg)" stroke="url(#lsma-emerald)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#F59E0B" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- Multi-Layer AHB Bus Matrix Routing Traces (Background) -->
+  <g stroke="#00F0B5" stroke-width="2" opacity="0.45" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 80,180 L 140,180 L 170,210" />
+    <path d="M 80,240 L 120,240 L 150,270" />
+    <path d="M 432,180 L 372,180 L 342,210" />
+    <path d="M 432,240 L 392,240 L 362,270" />
+  </g>
+
+  <!-- Central ARM Cortex-M4 Silicon Die Core -->
+  <g transform="translate(166, 120)">
+    <!-- Main Silicon Die Body -->
+    <rect x="0" y="0" width="180" height="170" rx="16" fill="#04141c" stroke="url(#lsma-emerald)" stroke-width="4.5" />
+
+    <!-- Cortex-M4 Core Architecture Sub-Die -->
+    <rect x="20" y="20" width="140" height="60" rx="8" fill="#020813" stroke="url(#lsma-gold)" stroke-width="2.5" />
+    <text x="90" y="45" font-family="'Manrope', sans-serif" font-size="12" font-weight="900" fill="#FFF" text-anchor="middle">ARM Cortex-M4</text>
+    <text x="90" y="65" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#00F0B5" text-anchor="middle">FPU • DSP • 168MHz</text>
+
+    <!-- Nested Vectored Interrupt Controller (NVIC) Module -->
+    <rect x="20" y="95" width="65" height="55" rx="6" fill="#020813" stroke="#5EEAD4" stroke-width="2" />
+    <text x="52" y="118" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" fill="#5EEAD4" text-anchor="middle">NVIC</text>
+    <text x="52" y="136" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#CBD5E1" text-anchor="middle">Vector ISR</text>
+
+    <!-- Direct Memory Access (DMA) Zero-Copy Controller -->
+    <rect x="95" y="95" width="65" height="55" rx="6" fill="#020813" stroke="url(#lsma-gold)" stroke-width="2" />
+    <text x="127" y="118" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" fill="#F59E0B" text-anchor="middle">DMA2</text>
+    <text x="127" y="136" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="600" fill="#CBD5E1" text-anchor="middle">Zero-Copy</text>
+  </g>
+
+  <!-- Peripheral Register Bit-Banding (GPIOx_BSRR Atomic Access) Inscription -->
+  <g transform="translate(136, 320)">
+    <rect x="0" y="0" width="240" height="38" rx="8" fill="#020813" stroke="url(#lsma-gold)" stroke-width="1.8" />
+    <text x="120" y="16" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" fill="#FDE68A" text-anchor="middle">
+      GPIOx_BSRR [31:0] ATOMIC
+    </text>
+    <text x="120" y="30" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600" fill="#5EEAD4" text-anchor="middle">
+      Single-Cycle Set/Reset • FreeRTOS Deterministic
+    </text>
+  </g>
+
+  <!-- Golden Silicon Beacon Star -->
+  <g transform="translate(256, 68)" fill="url(#lsma-gold)">
+    <polygon points="0,-12 3,-3 12,0 3,3 0,12 -3,3 -12,0 -3,-3" />
+    <circle cx="0" cy="0" r="2.5" fill="#FFF" />
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#5EEAD4">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lsma-emerald)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#5EEAD4" text-anchor="middle">
+      BARE-METAL STM32 ACADEMY
+    </text>
+  </g>
+</svg>

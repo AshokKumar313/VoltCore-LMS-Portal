@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lac5g-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#220b33" />
+      <stop offset="60%" stop-color="#11041c" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lac5g-magenta" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9D5FF" />
+      <stop offset="40%" stop-color="#A855F7" />
+      <stop offset="80%" stop-color="#9333EA" />
+      <stop offset="100%" stop-color="#581C87" />
+    </linearGradient>
+    <filter id="lac5g-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#A855F7" opacity="0.12" filter="url(#lac5g-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lac5g-bg)" stroke="url(#lac5g-magenta)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#A855F7" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- OFDM Orthogonal Subcarrier Sinc Peaks (Top Region) -->
+  <g transform="translate(116, 95)" opacity="0.85">
+    <path d="M 0,40 Q 30,0 60,40 Q 90,0 120,40 Q 150,0 180,40 Q 210,0 240,40 Q 270,0 280,40"
+          fill="none" stroke="#C084FC" stroke-width="2.5" />
+    <path d="M 30,40 Q 60,10 90,40 Q 120,10 150,40 Q 180,10 210,40"
+          fill="none" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 2" />
+    <text x="140" y="-8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#E9D5FF" text-anchor="middle">Orthogonal Frequency Division (OFDM)</text>
+  </g>
+
+  <!-- 5G mmWave Phased-Array Patch Antenna Array (Lower Center) -->
+  <g transform="translate(186, 280)">
+    <!-- 4x1 Microstrip Patch Antenna Array -->
+    <rect x="-60" y="0" width="30" height="35" rx="3" fill="#3B0764" stroke="url(#lac5g-magenta)" stroke-width="2.5" />
+    <rect x="-10" y="0" width="30" height="35" rx="3" fill="#3B0764" stroke="url(#lac5g-magenta)" stroke-width="2.5" />
+    <rect x="40" y="0" width="30" height="35" rx="3" fill="#3B0764" stroke="url(#lac5g-magenta)" stroke-width="2.5" />
+    <rect x="90" y="0" width="30" height="35" rx="3" fill="#3B0764" stroke="url(#lac5g-magenta)" stroke-width="2.5" />
+
+    <!-- Feedlines -->
+    <line x1="-45" y1="35" x2="-45" y2="55" stroke="#A855F7" stroke-width="2.5" />
+    <line x1="5" y1="35" x2="5" y2="55" stroke="#A855F7" stroke-width="2.5" />
+    <line x1="55" y1="35" x2="55" y2="55" stroke="#A855F7" stroke-width="2.5" />
+    <line x1="105" y1="35" x2="105" y2="55" stroke="#A855F7" stroke-width="2.5" />
+    <line x1="-45" y1="55" x2="105" y2="55" stroke="#A855F7" stroke-width="2.5" />
+    <line x1="30" y1="55" x2="30" y2="75" stroke="#A855F7" stroke-width="3" />
+    <circle cx="30" cy="75" r="4.5" fill="#E9D5FF" />
+  </g>
+
+  <!-- Steered Beamforming Radiation Lobes (Concentric Arcs Angled Upward) -->
+  <g stroke="url(#lac5g-magenta)" fill="none" stroke-linecap="round" opacity="0.8">
+    <path d="M 216,250 A 45 45 0 0 1 296,250" stroke-width="3" />
+    <path d="M 196,220 A 75 75 0 0 1 316,220" stroke-width="3.5" stroke-dasharray="10 4" />
+    <path d="M 176,190 A 105 105 0 0 1 336,190" stroke-width="4" />
+    <path d="M 156,160 A 135 135 0 0 1 356,160" stroke-width="4.5" stroke-dasharray="14 6" />
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#E9D5FF">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lac5g-magenta)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#E9D5FF" text-anchor="middle">
+      ADVANCED COMMUNICATION SYSTEMS &amp; 5G
+    </text>
+  </g>
+</svg>

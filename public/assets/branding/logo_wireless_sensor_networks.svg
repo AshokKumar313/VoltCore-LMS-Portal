@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lwsn-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#170933" />
+      <stop offset="60%" stop-color="#0c041f" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lwsn-skyviolet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DDD6FE" />
+      <stop offset="40%" stop-color="#8B5CF6" />
+      <stop offset="80%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#5B21B6" />
+    </linearGradient>
+    <filter id="lwsn-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#7C3AED" opacity="0.12" filter="url(#lwsn-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lwsn-bg)" stroke="url(#lwsn-skyviolet)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#7C3AED" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- Multi-Hop Mesh Network Node Interconnections (Center) -->
+  <g stroke="#A78BFA" stroke-width="2.2" opacity="0.6" stroke-dasharray="6 4">
+    <!-- Sink Node to Routers -->
+    <line x1="256" y1="180" x2="160" y2="240" />
+    <line x1="256" y1="180" x2="352" y2="240" />
+    <line x1="256" y1="180" x2="256" y2="300" />
+    <!-- Router to Sensor End Devices -->
+    <line x1="160" y1="240" x2="110" y2="320" />
+    <line x1="160" y1="240" x2="190" y2="340" />
+    <line x1="352" y1="240" x2="400" y2="320" />
+    <line x1="352" y1="240" x2="320" y2="340" />
+    <!-- Cross Mesh Links -->
+    <line x1="160" y1="240" x2="256" y2="300" />
+    <line x1="352" y1="240" x2="256" y2="300" />
+    <line x1="190" y1="340" x2="320" y2="340" />
+  </g>
+
+  <!-- Central Gateway / Sink Node (Gold Star Crest) -->
+  <g transform="translate(256, 180)">
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="4 3" opacity="0.6" />
+    <circle cx="0" cy="0" r="45" fill="none" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="6 4" opacity="0.4" />
+    <circle cx="0" cy="0" r="14" fill="#020813" stroke="#F59E0B" stroke-width="3" />
+    <polygon points="0,-7 2,-2 7,0 2,2 0,7 -2,2 -7,0 -2,-2" fill="#F59E0B" />
+    <text x="0" y="-18" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" fill="#FDE68A" text-anchor="middle">GATEWAY SINK</text>
+  </g>
+
+  <!-- Mesh Router Nodes -->
+  <g fill="#020813" stroke="url(#lwsn-skyviolet)" stroke-width="3">
+    <circle cx="160" cy="240" r="10" />
+    <circle cx="352" cy="240" r="10" />
+    <circle cx="256" cy="300" r="10" />
+  </g>
+  <g fill="#00F0B5">
+    <circle cx="160" cy="240" r="4" />
+    <circle cx="352" cy="240" r="4" />
+    <circle cx="256" cy="300" r="4" />
+  </g>
+
+  <!-- Leaf Sensor Nodes with RF Propagation Ripples -->
+  <g fill="#020813" stroke="#C4B5FD" stroke-width="2.5">
+    <circle cx="110" cy="320" r="8" />
+    <circle cx="190" cy="340" r="8" />
+    <circle cx="320" cy="340" r="8" />
+    <circle cx="400" cy="320" r="8" />
+  </g>
+  <g fill="#DDD6FE">
+    <circle cx="110" cy="320" r="3" />
+    <circle cx="190" cy="340" r="3" />
+    <circle cx="320" cy="340" r="3" />
+    <circle cx="400" cy="320" r="3" />
+  </g>
+
+  <!-- Ripple Waves around Leaf Nodes -->
+  <g stroke="#7C3AED" stroke-width="1" fill="none" opacity="0.5">
+    <circle cx="110" cy="320" r="16" />
+    <circle cx="400" cy="320" r="16" />
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#DDD6FE">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lwsn-skyviolet)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#DDD6FE" text-anchor="middle">
+      WIRELESS SENSOR &amp; AD HOC NETWORKS
+    </text>
+  </g>
+</svg>

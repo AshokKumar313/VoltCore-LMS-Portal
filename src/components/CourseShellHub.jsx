@@ -541,8 +541,8 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 background: `linear-gradient(135deg, ${theme.gradientFrom}, ${theme.gradientTo})`
               }}
             >
-              <div className="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center">
-                <DepartmentalBadgeIcon code={currentCourse.code} className="w-10 h-10 sm:w-12 sm:h-12" primaryColor={theme.primaryColor} />
+              <div className="w-full h-full bg-[#020813] rounded-[14px] flex items-center justify-center p-2">
+                <SubjectEmblem courseCode={currentCourse.code} size="lg" showFrame={false} />
               </div>
               <span
                 className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full ring-2 ring-[#020813] animate-pulse"

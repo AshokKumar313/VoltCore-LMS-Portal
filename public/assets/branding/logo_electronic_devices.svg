@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="led-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#241503" />
+      <stop offset="60%" stop-color="#120901" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="led-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082" />
+      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="80%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#92400E" />
+    </linearGradient>
+    <linearGradient id="led-amber" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+    <filter id="led-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#F59E0B" opacity="0.12" filter="url(#led-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#led-bg)" stroke="url(#led-gold)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#F59E0B" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- PN Junction Energy Band Diagram (Top Half) -->
+  <g transform="translate(106, 95)" stroke-linecap="round">
+    <!-- Conduction Band Ec -->
+    <path d="M 0,30 L 110,30 C 150,30 150,90 190,90 L 300,90" fill="none" stroke="#FFE082" stroke-width="3" />
+    <text x="310" y="94" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#FFE082">Ec</text>
+
+    <!-- Fermi Level Ef (Dashed Flat line) -->
+    <line x1="0" y1="60" x2="300" y2="60" stroke="#F59E0B" stroke-width="2" stroke-dasharray="6 4" opacity="0.8" />
+    <text x="310" y="64" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F59E0B">Ef</text>
+
+    <!-- Valence Band Ev -->
+    <path d="M 0,110 L 110,110 C 150,110 150,170 190,170 L 300,170" fill="none" stroke="#F59E0B" stroke-width="3" />
+    <text x="310" y="174" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#F59E0B">Ev</text>
+
+    <!-- Depletion Region Boundary Indicators -->
+    <line x1="110" y1="15" x2="110" y2="185" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5" />
+    <line x1="190" y1="15" x2="190" y2="185" stroke="#F59E0B" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.5" />
+    <text x="150" y="200" font-family="'Inter', sans-serif" font-size="10" font-weight="600" fill="#FFE082" text-anchor="middle">Depletion W</text>
+  </g>
+
+  <!-- Diode / BJT Exponential I-V Characteristic Curve (Lower Half) -->
+  <g transform="translate(136, 260)">
+    <!-- Axes: Voltage (V) & Current (I) -->
+    <line x1="20" y1="130" x2="220" y2="130" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <line x1="60" y1="145" x2="60" y2="10" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" />
+    <text x="230" y="134" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#CBD5E1">V</text>
+    <text x="56" y="5" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#CBD5E1">I</text>
+
+    <!-- Exponential Diode Forward Conduction Curve -->
+    <path d="M 20,130 L 60,130 L 120,130 Q 150,130 160,80 Q 170,30 180,10"
+          fill="none" stroke="url(#led-gold)" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Knee Voltage Vk Threshold Point -->
+    <circle cx="150" cy="130" r="4.5" fill="#FFE082" />
+    <text x="150" y="148" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#FFE082" text-anchor="middle">Vγ ≈ 0.7V</text>
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#FFE082">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#led-gold)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#FFE082" text-anchor="middle">
+      ELECTRONIC DEVICES &amp; CIRCUIT THEORY
+    </text>
+  </g>
+</svg>

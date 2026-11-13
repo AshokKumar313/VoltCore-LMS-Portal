@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lcvd-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#021c33" />
+      <stop offset="60%" stop-color="#010e1c" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lcvd-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="40%" stop-color="#0284C7" />
+      <stop offset="80%" stop-color="#0369A1" />
+      <stop offset="100%" stop-color="#075985" />
+    </linearGradient>
+    <linearGradient id="lcvd-poly" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+    <filter id="lcvd-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#0284C7" opacity="0.12" filter="url(#lcvd-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lcvd-bg)" stroke="url(#lcvd-cyan)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#0284C7" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- CMOS Inverter Transistor Silicon Cross-Section (Center) -->
+  <g transform="translate(116, 110)">
+    <!-- P-Substrate Silicon Wafer Base -->
+    <rect x="0" y="80" width="280" height="130" rx="8" fill="#021426" stroke="#0369A1" stroke-width="2.5" />
+    <text x="260" y="195" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#38BDF8">P-Sub</text>
+
+    <!-- N-Well Diffusion Tub for PMOS (Left Region) -->
+    <rect x="15" y="80" width="115" height="75" rx="6" fill="#073b61" stroke="#38BDF8" stroke-width="2" />
+    <text x="72" y="102" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#7DD3FC" text-anchor="middle">N-Well (PMOS)</text>
+
+    <!-- P+ Source/Drain Diffusions in N-Well -->
+    <rect x="25" y="80" width="28" height="25" fill="#D97706" rx="2" />
+    <rect x="90" y="80" width="28" height="25" fill="#D97706" rx="2" />
+    <text x="39" y="97" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#FFF" text-anchor="middle">p+</text>
+    <text x="104" y="97" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#FFF" text-anchor="middle">p+</text>
+
+    <!-- N+ Source/Drain Diffusions in P-Sub (Right Region for NMOS) -->
+    <rect x="160" y="80" width="28" height="25" fill="#00F0B5" rx="2" />
+    <rect x="225" y="80" width="28" height="25" fill="#00F0B5" rx="2" />
+    <text x="174" y="97" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#020813" text-anchor="middle">n+</text>
+    <text x="239" y="97" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#020813" text-anchor="middle">n+</text>
+
+    <!-- Thin Gate Oxide Layers (SiO2) -->
+    <rect x="58" y="74" width="26" height="6" fill="#E2E8F0" opacity="0.9" />
+    <rect x="193" y="74" width="26" height="6" fill="#E2E8F0" opacity="0.9" />
+
+    <!-- Polysilicon Gates (Red/Gold Stack) -->
+    <rect x="58" y="52" width="26" height="22" rx="2" fill="url(#lcvd-poly)" stroke="#FFE082" stroke-width="1.2" />
+    <rect x="193" y="52" width="26" height="22" rx="2" fill="url(#lcvd-poly)" stroke="#FFE082" stroke-width="1.2" />
+
+    <!-- Metal 1 Common Input Rail Connecting Both Gates (Vin) -->
+    <path d="M 71,52 L 71,25 L 206,25 L 206,52" fill="none" stroke="#38BDF8" stroke-width="3" />
+    <circle cx="138" cy="25" r="5" fill="#38BDF8" />
+    <text x="138" y="15" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="800" fill="#BAE6FD" text-anchor="middle">Vin (Gate)</text>
+
+    <!-- Metal 1 Common Output Rail Connecting Drains (Vout) -->
+    <path d="M 104,80 L 104,45 L 174,45 L 174,80" fill="none" stroke="#F59E0B" stroke-width="2.5" />
+    <circle cx="139" cy="45" r="4" fill="#F59E0B" />
+    <text x="139" y="60" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" fill="#FDE68A" text-anchor="middle">Vout</text>
+  </g>
+
+  <!-- Physical Sub-Micron Nanometer FinFET / Interconnect Grid Inscription -->
+  <g transform="translate(136, 340)">
+    <line x1="0" y1="20" x2="240" y2="20" stroke="#0284C7" stroke-width="2" stroke-dasharray="8 4" opacity="0.5" />
+    <text x="120" y="10" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#38BDF8" text-anchor="middle">
+      7nm FinFET • DRC &amp; LVS Clean
+    </text>
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#38BDF8">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lcvd-cyan)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#38BDF8" text-anchor="middle">
+      CMOS VLSI DESIGN &amp; NANOMETER TECH
+    </text>
+  </g>
+</svg>

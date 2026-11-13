@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lies-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#022119" />
+      <stop offset="60%" stop-color="#01120d" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lies-seafoam" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7" />
+      <stop offset="40%" stop-color="#059669" />
+      <stop offset="80%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#064E3B" />
+    </linearGradient>
+    <filter id="lies-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#059669" opacity="0.12" filter="url(#lies-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lies-bg)" stroke="url(#lies-seafoam)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#059669" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- Cloud Telemetry Ingest Wave (Top Region) -->
+  <g transform="translate(196, 90)">
+    <!-- Cloud Silhouette -->
+    <path d="M 25,45 A 20,20 0 0,1 60,25 A 30,30 0 0,1 110,35 A 25,25 0 0,1 125,50 A 18,18 0 0,1 115,70 L 25,70 A 15,15 0 0,1 25,45 Z"
+          fill="#031e16" stroke="url(#lies-seafoam)" stroke-width="2.5" />
+    <!-- Telemetry Uplink Wireless Arcs -->
+    <path d="M 45,78 Q 65,95 85,78" fill="none" stroke="#6EE7B7" stroke-width="2" />
+    <path d="M 35,88 Q 65,110 95,88" fill="none" stroke="#6EE7B7" stroke-width="2" stroke-dasharray="4 3" />
+    <!-- Upward Arrow Stream -->
+    <line x1="65" y1="110" x2="65" y2="76" stroke="#00F0B5" stroke-width="2.5" />
+    <polygon points="65,72 61,80 69,80" fill="#00F0B5" />
+  </g>
+
+  <!-- Edge IoT Sensor Node Package (Center) -->
+  <g transform="translate(186, 215)">
+    <!-- Sensor IC Body -->
+    <rect x="0" y="0" width="140" height="120" rx="14" fill="#031410" stroke="url(#lies-seafoam)" stroke-width="4.5" />
+
+    <!-- MEMS Transducer Diaphragm Cavity -->
+    <circle cx="70" cy="50" r="30" fill="#020813" stroke="#34D399" stroke-width="2" />
+    <circle cx="70" cy="50" r="18" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-dasharray="4 3" />
+    <circle cx="70" cy="50" r="6" fill="#00F0B5" />
+
+    <!-- Low-Power Battery Life Indicator -->
+    <rect x="40" y="90" width="55" height="18" rx="3" fill="#020813" stroke="#6EE7B7" stroke-width="1.8" />
+    <rect x="95" y="94" width="4" height="10" rx="1" fill="#6EE7B7" />
+    <rect x="44" y="93" width="38" height="12" rx="1.5" fill="#34D399" />
+    <text x="63" y="103" font-family="'JetBrains Mono', monospace" font-size="8" font-weight="800" fill="#020813" text-anchor="middle">98%</text>
+
+    <!-- Peripheral Sensor Leads -->
+    <g fill="#6EE7B7">
+      <rect x="25" y="-12" width="6" height="12" rx="1.5" /><rect x="67" y="-12" width="6" height="12" rx="1.5" /><rect x="109" y="-12" width="6" height="12" rx="1.5" />
+      <rect x="25" y="120" width="6" height="12" rx="1.5" /><rect x="67" y="120" width="6" height="12" rx="1.5" /><rect x="109" y="120" width="6" height="12" rx="1.5" />
+      <rect x="-12" y="30" width="12" height="6" rx="1.5" /><rect x="-12" y="80" width="12" height="6" rx="1.5" />
+      <rect x="140" y="30" width="12" height="6" rx="1.5" /><rect x="140" y="80" width="12" height="6" rx="1.5" />
+    </g>
+  </g>
+
+  <!-- Environmental Sensor Pulse Wave (Temperature, Humidity, Pressure) -->
+  <path d="M 60,370 Q 95,350 130,370 T 200,370 T 270,370 T 340,370 T 410,370 T 452,370"
+        fill="none" stroke="#6EE7B7" stroke-width="2.5" opacity="0.6" stroke-linecap="round" />
+
+  <!-- Peripheral Vias -->
+  <g fill="#6EE7B7">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lies-seafoam)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#6EE7B7" text-anchor="middle">
+      INTERNET OF THINGS &amp; EMBEDDED SENSORS
+    </text>
+  </g>
+</svg>

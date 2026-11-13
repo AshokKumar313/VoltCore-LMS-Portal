@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <radialGradient id="lmci-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#11113b" />
+      <stop offset="60%" stop-color="#080824" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+    <linearGradient id="lmci-indigo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A5B4FC" />
+      <stop offset="40%" stop-color="#6366F1" />
+      <stop offset="80%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#312E81" />
+    </linearGradient>
+    <filter id="lmci-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="210" fill="#6366F1" opacity="0.12" filter="url(#lmci-glow)" />
+
+  <!-- Octagonal Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#lmci-bg)" stroke="url(#lmci-indigo)" stroke-width="6" stroke-linejoin="round" />
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#6366F1" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="8 6" />
+
+  <!-- 8-Bit Hardware Register Bitfield Box (Top Half) -->
+  <g transform="translate(116, 95)">
+    <g fill="#020813" stroke="#818CF8" stroke-width="2">
+      <rect x="0" y="0" width="35" height="30" />
+      <rect x="35" y="0" width="35" height="30" />
+      <rect x="70" y="0" width="35" height="30" />
+      <rect x="105" y="0" width="35" height="30" />
+      <rect x="140" y="0" width="35" height="30" />
+      <rect x="175" y="0" width="35" height="30" />
+      <rect x="210" y="0" width="35" height="30" />
+      <rect x="245" y="0" width="35" height="30" />
+    </g>
+    <!-- Register Bit Values (1 0 1 1 0 0 1 0) -->
+    <g font-family="'JetBrains Mono', monospace" font-size="12" font-weight="800" fill="#A5B4FC" text-anchor="middle">
+      <text x="17" y="20">1</text><text x="52" y="20">0</text><text x="87" y="20">1</text><text x="122" y="20">1</text>
+      <text x="157" y="20">0</text><text x="192" y="20">0</text><text x="227" y="20">1</text><text x="262" y="20">0</text>
+    </g>
+    <text x="140" y="-8" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#C7D2FE" text-anchor="middle">GPIO_MODER [7:0]</text>
+  </g>
+
+  <!-- Central Microcontroller IC Package with Symmetrical Peripheral Pins -->
+  <g transform="translate(196, 175)">
+    <!-- QFP Silicon Body -->
+    <rect x="0" y="0" width="120" height="120" rx="12" fill="#040f26" stroke="url(#lmci-indigo)" stroke-width="4.5" />
+    <circle cx="18" cy="18" r="5" fill="#A5B4FC" />
+    <rect x="30" y="30" width="60" height="60" rx="6" fill="#020813" stroke="#818CF8" stroke-width="2" />
+    <text x="60" y="65" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="800" fill="#00F0B5" text-anchor="middle">MCU</text>
+
+    <!-- Top & Bottom Pins -->
+    <g fill="#A5B4FC">
+      <rect x="20" y="-20" width="8" height="20" rx="2" /><rect x="40" y="-20" width="8" height="20" rx="2" />
+      <rect x="60" y="-20" width="8" height="20" rx="2" /><rect x="80" y="-20" width="8" height="20" rx="2" />
+      <rect x="20" y="120" width="8" height="20" rx="2" /><rect x="40" y="120" width="8" height="20" rx="2" />
+      <rect x="60" y="120" width="8" height="20" rx="2" /><rect x="80" y="120" width="8" height="20" rx="2" />
+      <!-- Left & Right Pins -->
+      <rect x="-20" y="20" width="20" height="8" rx="2" /><rect x="-20" y="40" width="20" height="8" rx="2" />
+      <rect x="-20" y="60" width="20" height="8" rx="2" /><rect x="-20" y="80" width="20" height="8" rx="2" />
+      <rect x="120" y="20" width="20" height="8" rx="2" /><rect x="120" y="40" width="20" height="8" rx="2" />
+      <rect x="120" y="60" width="20" height="8" rx="2" /><rect x="120" y="80" width="20" height="8" rx="2" />
+    </g>
+  </g>
+
+  <!-- Bus Protocol Traces (SPI, I2C, UART) Radiating Across Lower Region -->
+  <g stroke="#818CF8" stroke-width="2.5" fill="none" opacity="0.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- SPI MOSI/MISO Lines -->
+    <path d="M 176,215 L 110,215 L 80,245 L 80,330" />
+    <path d="M 176,235 L 130,235 L 100,265 L 100,330" />
+    <!-- I2C SDA/SCL Lines -->
+    <path d="M 336,215 L 400,215 L 430,245 L 430,330" />
+    <path d="M 336,235 L 380,235 L 410,265 L 410,330" />
+  </g>
+
+  <!-- Bus Labels -->
+  <g font-family="'JetBrains Mono', monospace" font-size="10" font-weight="700" fill="#A5B4FC">
+    <text x="80" y="350" text-anchor="middle">SPI BUS</text>
+    <text x="420" y="350" text-anchor="middle">I2C BUS</text>
+    <text x="256" y="370" text-anchor="middle" fill="#00F0B5">USART / DMA READY</text>
+  </g>
+
+  <!-- Peripheral Vias -->
+  <g fill="#A5B4FC">
+    <circle cx="150" cy="36" r="6" /><circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" /><circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" /><circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" /><circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Ribbon Label -->
+  <g transform="translate(256, 442)">
+    <rect x="-140" y="-12" width="280" height="24" rx="12" fill="#020813" stroke="url(#lmci-indigo)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2" fill="#A5B4FC" text-anchor="middle">
+      MICROCONTROLLER ARCHITECTURE &amp; INTERFACING
+    </text>
+  </g>
+</svg>
