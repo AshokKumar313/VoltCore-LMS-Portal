@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro';
 import TextbookReaderHub from '../components/TextbookReaderHub.jsx';
 import EceGlossaryFormulaDrawer from '../components/EceGlossaryFormulaDrawer.jsx';
 import AcademicResourceVault from '../components/AcademicResourceVault.jsx';
+import CanvaVisualShowcase from '../components/CanvaVisualShowcase.jsx';
 
 /**
  * ========================================================================================
@@ -87,6 +88,9 @@ const pageMetadata = {
 
     <!-- ECE Master Formula Library & Academic Glossary Quick-Reference Drawer -->
     <EceGlossaryFormulaDrawer client:visible />
+
+    <!-- Canva Visual Posters, Infographics & Presentation Showcase -->
+    <CanvaVisualShowcase client:visible />
 
     <!-- Academic Open Resource & Google Drive Vault Panel -->
     <AcademicResourceVault client:visible />

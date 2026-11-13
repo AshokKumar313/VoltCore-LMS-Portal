@@ -7,17 +7,24 @@
 ## 1. Overview & Architectural Role
 VoltCore Apex Academia features a bespoke, vector-first visual system designed to render beautifully across all **18 institutional CSS themes** (including Dark MIT Oceanic, Slate Midnight, Nordic Frost, Crimson Research, and High-Contrast Accessibility).
 
-This directory (`public/assets/covers/`) and its sibling asset directories are pre-wired to accept custom graphics designed in **Canva**, Figma, Adobe Illustrator, or Inkscape.
+This directory and its sibling asset directories are pre-wired to accept custom graphics designed in **Canva**, Figma, Adobe Illustrator, or Inkscape:
+- `public/assets/covers/` — Course domain headers and unit strip headers.
+- `public/assets/branding/` — Institutional seals, crests, and emblems.
+- `public/assets/diagrams/` — Circuit schematics, block diagrams, and timing wave charts.
+- `public/assets/posters/` — High-resolution formula posters and curriculum roadmap infographics.
+- `public/assets/presentations/` — 16:9 lecture presentation slide deck templates.
 
 ---
 
 ## 2. Dimensional & Technical Specifications
 
-| Asset Type | Target Path | Dimensions | Aspect Ratio | Formats | Max File Size | Safe Margin |
+| Asset Type | Target Directory | Canvas Dimensions | Aspect Ratio | Formats | Max File Size | Safe Margin |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Course & Unit Covers** | `public/assets/covers/` | `1200 × 400 px` | 3:1 | SVG (preferred), WebP | `< 15 KB` (SVG) / `< 60 KB` (WebP) | 48px on all edges |
-| **Subject Emblems** | `public/assets/branding/` | `512 × 512 px` | 1:1 | SVG (transparent) | `< 10 KB` | 32px circular safe zone |
-| **IEEE Schematic Diagrams** | `public/assets/diagrams/` | `800 × 500 px` | 16:10 | SVG (IEEE Std 315 / 1076) | `< 20 KB` | 24px around text labels |
+| **Formula & Tech Posters** | `public/assets/posters/` | `1200 × 900 px` or `1200 × 1600 px` | 4:3 or 3:4 | SVG (preferred), WebP | `< 15 KB` (SVG) / `< 75 KB` (WebP) | 40px all margins |
+| **Lecture Slide Decks** | `public/assets/presentations/` | `1200 × 675 px` or `1920 × 1080 px` | 16:9 | SVG (preferred), WebP | `< 15 KB` (SVG) / `< 80 KB` (WebP) | 48px horizontal |
+| **Subject Emblems** | `public/assets/branding/` | `512 × 512 px` | 1:1 | SVG (transparent) | `< 10 KB` | 32px circular zone |
+| **IEEE Schematic Diagrams** | `public/assets/diagrams/` | `800 × 500 px` | 16:10 | SVG (IEEE Std 315) | `< 20 KB` | 24px around text |
 
 ---
 
@@ -51,18 +58,22 @@ This directory (`public/assets/covers/`) and its sibling asset directories are p
 
 ---
 
-## 4. Pre-Wired Asset Map
+## 4. Pre-Wired Asset Drop-In Map
 
-Drop custom-designed replacement SVGs directly into `public/assets/covers/` with the exact filenames below:
+### A. Course Covers (`public/assets/covers/`)
+- `cover_signals_dsp.svg`
+- `cover_analog_devices.svg`
+- `cover_digital_vlsi.svg`
+- `cover_comm_rf.svg`
+- `cover_embedded_iot.svg`
+- `cover_control_em.svg`
 
-| Target Filename | Subject Domain / Category | Featured Technical Motifs |
-| :--- | :--- | :--- |
-| `cover_signals_dsp.svg` | Digital Signal Processing, Filter Design, Wavelets | Radix-2 FFT butterflies, Dirac delta combs, KaTeX formulas |
-| `cover_analog_devices.svg` | Analog Electronics, Op-Amps, BJTs, MOSFETs | Hybrid-$\pi$ models, differential pairs, Bode curves |
-| `cover_digital_vlsi.svg` | Digital Logic, VLSI Design, Verilog, RISC-V | 5-stage pipeline buses, clock trees, cell layout grids |
-| `cover_comm_rf.svg` | Wireless Comm, Antennas, RF Systems | QAM constellations, Smith charts, radiation patterns |
-| `cover_embedded_iot.svg` | Microcontrollers, ARM Cortex-M, STM32, RTOS | NVIC interrupt trees, DMA circular buffers, AHB matrix |
-| `cover_control_em.svg` | Control Systems, State-Space, EM Fields | Root locus plots, Nyquist contours, Maxwell wave fronts |
+### B. Posters & Roadmap Infographics (`public/assets/posters/`)
+- `ece_formula_master_poster.svg` — Master formula sheet across all core ECE disciplines.
+- `stm32_architecture_roadmap.svg` — 21-chapter embedded systems & RTOS roadmap.
+
+### C. Lecture Presentations (`public/assets/presentations/`)
+- `ece_dsp_spectral_lecture_deck.svg` — 16:9 OBE lecture slide deck presentation.
 
 ---
 
@@ -70,6 +81,8 @@ Drop custom-designed replacement SVGs directly into `public/assets/covers/` with
 
 1. Create a custom design in Canva:
    - For Covers: `1200` wide by `400` tall (px).
+   - For Posters: `1200` wide by `900` tall (px).
+   - For Slides: `1200` wide by `675` tall (px).
    - For Emblems: `512` wide by `512` tall (px).
 2. Choose **Share** $\to$ **Download**.
 3. Select **SVG** as file type (with *Transparent Background* for emblems).

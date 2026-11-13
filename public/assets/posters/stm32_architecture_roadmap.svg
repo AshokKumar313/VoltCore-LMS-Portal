@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#040914"/><stop offset="50%" stop-color="#09132b"/><stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="violetGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <pattern id="gridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.7" stroke-opacity="0.35"/>
+    </pattern>
+    <style>
+      .hdr { font-family:'Manrope',sans-serif; }
+      .lbl { font-family:'Inter',sans-serif; }
+      .cde { font-family:'JetBrains Mono',monospace; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#bgGrad)"/>
+  <rect width="1200" height="900" fill="url(#gridPattern)"/>
+
+  <path d="M 200 240 L 200 780 M 500 240 L 500 780 M 800 240 L 800 780" fill="none" stroke="#334155" stroke-width="3" stroke-dasharray="6 6"/>
+
+  <!-- Header Banner -->
+  <g transform="translate(60, 40)">
+    <rect width="1080" height="110" rx="14" fill="#0b1329" fill-opacity="0.8" stroke="#334155" stroke-width="1"/>
+    <rect x="0" y="0" width="8" height="110" rx="4" fill="url(#amberGrad)"/>
+    <text x="35" y="38" fill="#fbbf24" class="hdr" font-size="13" font-weight="700" letter-spacing="2">EMBEDDED SYSTEMS &amp; REAL-TIME ARCHITECTURES</text>
+    <text x="35" y="70" fill="#f8fafc" class="hdr" font-size="24" font-weight="800">ARM Cortex-M &amp; Microcontroller Engineering Roadmap</text>
+    <text x="35" y="94" fill="#94a3b8" class="lbl" font-size="13">From Bare-Metal Register Programming to RTOS Queues, CMSIS-DSP &amp; Edge TinyML</text>
+    <rect x="910" y="32" width="140" height="46" rx="8" fill="#1e293b" stroke="#fbbf24" stroke-width="1"/>
+    <text x="980" y="52" fill="#fbbf24" class="hdr" font-size="10" font-weight="700" text-anchor="middle">CURRICULUM TRACK</text>
+    <text x="980" y="68" fill="#f8fafc" class="lbl" font-size="11" font-weight="600" text-anchor="middle">21 Core Chapters</text>
+  </g>
+
+  <!-- Stage 1 -->
+  <g transform="translate(70, 180)">
+    <rect width="250" height="640" rx="14" fill="#0f172a" fill-opacity="0.9" stroke="#38bdf8" stroke-width="1.5"/>
+    <path d="M 0 14 Q 0 0 14 0 L 236 0 Q 250 0 250 14 L 250 48 L 0 48 Z" fill="url(#cyanGrad)"/>
+    <text x="20" y="30" fill="#040914" class="hdr" font-size="14" font-weight="800">STAGE 1: BARE-METAL CORE</text>
+    <g transform="translate(15, 65)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#38bdf8"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Memory Map &amp; Buses</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">AHB/APB Matrix Contention</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Flash @ 0x08000000 | SRAM</text>
+    </g>
+    <g transform="translate(15, 165)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#38bdf8"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">RCC &amp; Clock Trees</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">HSE, HSI, PLL Multipliers</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">HCLK, SysTick 1ms Tick</text>
+    </g>
+    <g transform="translate(15, 265)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#38bdf8"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">GPIO &amp; Bit-Banding</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">MODER, OTYPER, PUPDR</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Atomic BSRR Register Writes</text>
+    </g>
+    <g transform="translate(15, 365)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#38bdf8"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">NVIC &amp; EXTI Interrupts</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Tail-chaining &amp; Latency</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">12 Cycles Context Stacking</text>
+    </g>
+    <g transform="translate(15, 465)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#38bdf8"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">C Runtime &amp; Linker</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Vector Table &amp; Reset Handler</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">.text, .data, .bss &amp; Stack</text>
+    </g>
+  </g>
+
+  <!-- Stage 2 -->
+  <g transform="translate(350, 180)">
+    <rect width="250" height="640" rx="14" fill="#0f172a" fill-opacity="0.9" stroke="#10b981" stroke-width="1.5"/>
+    <path d="M 0 14 Q 0 0 14 0 L 236 0 Q 250 0 250 14 L 250 48 L 0 48 Z" fill="url(#emeraldGrad)"/>
+    <text x="20" y="30" fill="#040914" class="hdr" font-size="14" font-weight="800">STAGE 2: PERIPHERALS &amp; DMA</text>
+    <g transform="translate(15, 65)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#10b981"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Hardware Timers &amp; PWM</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Prescaler &amp; Auto-Reload</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Center-Aligned PWM Mode</text>
+    </g>
+    <g transform="translate(15, 165)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#10b981"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">UART &amp; Ring Buffers</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Baud Generator &amp; Oversample</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Volatile Head/Tail Pointers</text>
+    </g>
+    <g transform="translate(15, 265)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#10b981"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">SPI Bus Controller</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">CPOL/CPHA Modes 0..3</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Up to 45 MHz Full-Duplex</text>
+    </g>
+    <g transform="translate(15, 365)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#10b981"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">I2C Protocol Master</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Clock Stretch &amp; ACK/NACK</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Open-Drain Pullup Sizing</text>
+    </g>
+    <g transform="translate(15, 465)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#10b981"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Direct Memory Access (DMA)</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Circular Ping-Pong Stream</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">HTIF / TCIF Double Buffer</text>
+    </g>
+  </g>
+
+  <!-- Stage 3 -->
+  <g transform="translate(630, 180)">
+    <rect width="250" height="640" rx="14" fill="#0f172a" fill-opacity="0.9" stroke="#8b5cf6" stroke-width="1.5"/>
+    <path d="M 0 14 Q 0 0 14 0 L 236 0 Q 250 0 250 14 L 250 48 L 0 48 Z" fill="url(#violetGrad)"/>
+    <text x="20" y="30" fill="#f8fafc" class="hdr" font-size="14" font-weight="800">STAGE 3: FREERTOS KERNEL</text>
+    <g transform="translate(15, 65)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#c084fc"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Scheduler &amp; TCB</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Preemptive Priority Slicing</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">PendSV Context Switching</text>
+    </g>
+    <g transform="translate(15, 165)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#c084fc"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Semaphores &amp; Mutexes</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Priority Inheritance Guard</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Avoid Priority Inversion</text>
+    </g>
+    <g transform="translate(15, 265)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#c084fc"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Inter-Task Message Queues</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Thread-Safe FIFO Ring</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Copy-by-Value Struct Handoff</text>
+    </g>
+    <g transform="translate(15, 365)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#c084fc"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Task Notifications</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Lightweight Direct Signaling</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">38 Cycles Switch Overhead</text>
+    </g>
+    <g transform="translate(15, 465)">
+      <rect width="220" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#c084fc"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Software Timers &amp; Groups</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Daemon Event Flags</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">xEventGroupWaitBits() API</text>
+    </g>
+  </g>
+
+  <!-- Stage 4 -->
+  <g transform="translate(910, 180)">
+    <rect width="230" height="640" rx="14" fill="#0f172a" fill-opacity="0.9" stroke="#f59e0b" stroke-width="1.5"/>
+    <path d="M 0 14 Q 0 0 14 0 L 216 0 Q 230 0 230 14 L 230 48 L 0 48 Z" fill="url(#amberGrad)"/>
+    <text x="15" y="30" fill="#040914" class="hdr" font-size="13" font-weight="800">STAGE 4: ADVANCED DSP &amp; AI</text>
+    <g transform="translate(15, 65)">
+      <rect width="200" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#fbbf24"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Hardware FPU &amp; DSP</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">CMSIS-DSP SIMD Vector</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">arm_rfft_fast_f32()</text>
+    </g>
+    <g transform="translate(15, 165)">
+      <rect width="200" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#fbbf24"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Low-Power Modes &amp; RTC</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Sleep, Stop &amp; Standby</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Sub-μA Optimization</text>
+    </g>
+    <g transform="translate(15, 265)">
+      <rect width="200" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#fbbf24"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Watchdogs &amp; Brownout</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">IWDG &amp; WWDG Windows</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">BOR Voltage Reset Levels</text>
+    </g>
+    <g transform="translate(15, 365)">
+      <rect width="200" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#fbbf24"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Custom Bootloader (IAP)</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">Flash Reprogramming</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">Dual-Bank Firmware</text>
+    </g>
+    <g transform="translate(15, 465)">
+      <rect width="200" height="85" rx="8" fill="#1e293b" stroke="#334155"/>
+      <circle cx="20" cy="22" r="5" fill="#fbbf24"/>
+      <text x="32" y="26" fill="#f8fafc" class="hdr" font-size="12" font-weight="700">Edge TinyML Inference</text>
+      <text x="15" y="48" fill="#94a3b8" class="lbl" font-size="10">TFLite Micro Quantization</text>
+      <text x="15" y="64" fill="#64748b" class="cde" font-size="9">INT8 Audio/Vibration CNN</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(60, 860)">
+    <text x="0" y="15" fill="#64748b" class="lbl" font-size="11">VOLTCORE APEX ACADEMIA — DEPARTMENT OF ELECTRONICS ENGINEERING, MIT CAMPUS, ANNA UNIVERSITY</text>
+    <text x="1080" y="15" fill="#64748b" class="lbl" font-size="11" text-anchor="end">EMBEDDED SYSTEMS &amp; RTOS MASTERY ROADMAP</text>
+  </g>
+</svg>

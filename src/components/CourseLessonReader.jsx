@@ -7,6 +7,7 @@ import IeeeEngineeringVisualizer from './IeeeEngineeringVisualizer';
 import { ECE_SUBJECT_REGISTRY } from '../data/subjectRegistry';
 import AcademicResourceVault from './AcademicResourceVault';
 import { getCoverSvgForCourse } from './CourseCoverArtwork';
+import EceInteractiveLabApplets from './EceInteractiveLabApplets';
 
 /**
  * ========================================================================================
@@ -58,6 +59,7 @@ export default function CourseLessonReader({
   const [currentNoteText, setCurrentNoteText] = useState("");
   const [noteSavedFeedback, setNoteSavedFeedback] = useState(false);
   const [stimulusTransmitted, setStimulusTransmitted] = useState(false);
+  const [showInteractiveApplets, setShowInteractiveApplets] = useState(false);
 
   // Transmit hardware serial command to active Wokwi hardware bridge
   const handleTransmitStimulus = (lesson) => {
@@ -991,6 +993,43 @@ export default function CourseLessonReader({
             {/* Academic Open Resource & Google Drive Vault */}
             <section className="pt-2">
               <AcademicResourceVault embedded={true} />
+            </section>
+
+            {/* Standalone Interactive ECE Mini-Applets Suite (Phase 13) */}
+            <section className="pt-2">
+              <div className="rounded-2xl border border-slate-800 bg-[#041026] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowInteractiveApplets(!showInteractiveApplets)}
+                  className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-900/60 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="p-2 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 text-lg">
+                      🎛️
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        Interactive Engineering Mini-Applets
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                          Convolution • Op-Amps • Logic • Serial
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        Zero-polling visual sandbox for testing waveforms, logic gates, and packet frames.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono text-sky-400 font-bold px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700">
+                    {showInteractiveApplets ? 'Hide Applets ▲' : 'Open Applets ▼'}
+                  </span>
+                </button>
+
+                {showInteractiveApplets && (
+                  <div className="p-4 border-t border-slate-800 bg-slate-950/80">
+                    <EceInteractiveLabApplets />
+                  </div>
+                )}
+              </div>
             </section>
 
             {/* ===============================================================

@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="100%" height="100%">
+  <defs>
+    <linearGradient id="deckBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1128"/>
+      <stop offset="60%" stop-color="#050a1a"/>
+      <stop offset="100%" stop-color="#02040a"/>
+    </linearGradient>
+    <linearGradient id="accentCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#334155" fill-opacity="0.3"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#deckBg)"/>
+  <rect width="1200" height="675" fill="url(#dotGrid)"/>
+
+  <!-- Top Accent Bar -->
+  <rect x="0" y="0" width="1200" height="6" fill="url(#accentCyan)"/>
+
+  <!-- Slide Title Container -->
+  <g transform="translate(80, 70)">
+    <rect width="1040" height="90" rx="12" fill="#0f172a" fill-opacity="0.8" stroke="#1e293b"/>
+    <text x="30" y="36" fill="#38bdf8" font-family="'Manrope', sans-serif" font-size="12" font-weight="700" letter-spacing="2">DEPARTMENT OF ELECTRONICS ENGINEERING | ANNA UNIVERSITY MIT CAMPUS</text>
+    <text x="30" y="66" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="22" font-weight="800">Lecture Slide Deck: Discrete-Time Signal Processing &amp; Fast Algorithms</text>
+    <rect x="910" y="24" width="100" height="38" rx="6" fill="#1e293b" stroke="#38bdf8"/>
+    <text x="960" y="48" fill="#38bdf8" font-family="'Manrope', sans-serif" font-size="11" font-weight="700" text-anchor="middle">SLIDE 01 / 45</text>
+  </g>
+
+  <!-- Content Columns -->
+  <g transform="translate(80, 190)">
+    <!-- Left Column: Syllabus Objectives -->
+    <rect width="500" height="400" rx="12" fill="#0f172a" fill-opacity="0.85" stroke="#334155"/>
+    <text x="25" y="40" fill="#38bdf8" font-family="'Manrope', sans-serif" font-size="16" font-weight="700">Course Learning Objectives (OBE)</text>
+    
+    <g transform="translate(25, 70)">
+      <circle cx="8" cy="12" r="4" fill="#38bdf8"/>
+      <text x="25" y="16" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="13" font-weight="600">CO1: Discrete Convolution &amp; LTI Superposition</text>
+      <text x="25" y="36" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Impulse response convolution sum and stability analysis.</text>
+    </g>
+
+    <g transform="translate(25, 140)">
+      <circle cx="8" cy="12" r="4" fill="#38bdf8"/>
+      <text x="25" y="16" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="13" font-weight="600">CO2: Z-Transform &amp; Pole-Zero Pole Placement</text>
+      <text x="25" y="36" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Stability criteria: all poles strictly inside unit circle |z| &lt; 1.</text>
+    </g>
+
+    <g transform="translate(25, 210)">
+      <circle cx="8" cy="12" r="4" fill="#38bdf8"/>
+      <text x="25" y="16" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="13" font-weight="600">CO3: Radix-2 DIT / DIF Fast Fourier Transform</text>
+      <text x="25" y="36" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Cooley-Tukey decimation in time butterfly computational reduction.</text>
+    </g>
+
+    <g transform="translate(25, 280)">
+      <circle cx="8" cy="12" r="4" fill="#38bdf8"/>
+      <text x="25" y="16" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="13" font-weight="600">CO4: Finite Impulse Response (FIR) Filter Design</text>
+      <text x="25" y="36" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">Hamming, Hanning, Blackman windowing &amp; linear phase constraints.</text>
+    </g>
+  </g>
+
+  <!-- Right Column: Butterfly Diagram & Derivation -->
+  <g transform="translate(620, 190)">
+    <rect width="500" height="400" rx="12" fill="#0f172a" fill-opacity="0.85" stroke="#334155"/>
+    <text x="25" y="40" fill="#34d399" font-family="'Manrope', sans-serif" font-size="16" font-weight="700">Analytical Butterfly Node Structure</text>
+    
+    <!-- Butterfly flow schematic -->
+    <g transform="translate(40, 80)">
+      <line x1="40" y1="40" x2="220" y2="40" stroke="#38bdf8" stroke-width="2"/>
+      <line x1="40" y1="140" x2="220" y2="140" stroke="#38bdf8" stroke-width="2"/>
+      <line x1="40" y1="40" x2="220" y2="140" stroke="#34d399" stroke-width="2" stroke-dasharray="3 3"/>
+      <line x1="40" y1="140" x2="220" y2="40" stroke="#34d399" stroke-width="2"/>
+      
+      <circle cx="40" cy="40" r="5" fill="#38bdf8"/>
+      <circle cx="40" cy="140" r="5" fill="#38bdf8"/>
+      <circle cx="220" cy="40" r="5" fill="#34d399"/>
+      <circle cx="220" cy="140" r="5" fill="#34d399"/>
+
+      <text x="10" y="45" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="12">x[0]</text>
+      <text x="10" y="145" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="12">x[1]</text>
+      
+      <text x="130" y="165" fill="#fbbf24" font-family="'Inter', sans-serif" font-size="11">W_N^k</text>
+      <text x="235" y="45" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="12">X_A = x[0] + W_N^k x[1]</text>
+      <text x="235" y="145" fill="#e2e8f0" font-family="'Inter', sans-serif" font-size="12">X_B = x[0] - W_N^k x[1]</text>
+    </g>
+
+    <!-- Formula Box -->
+    <g transform="translate(25, 270)">
+      <rect width="450" height="90" rx="8" fill="#020617" stroke="#1e293b"/>
+      <text x="20" y="30" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="11">COMPUTATIONAL ADVANTAGE</text>
+      <text x="20" y="55" fill="#38bdf8" font-family="'JetBrains Mono', monospace" font-size="14">Direct DFT: O(N²) = 65,536 ops</text>
+      <text x="20" y="75" fill="#34d399" font-family="'JetBrains Mono', monospace" font-size="14">Radix-2 FFT: (N/2)log₂(N) = 1,024 ops  [64× Speedup]</text>
+    </g>
+  </g>
+
+  <!-- Slide Footer -->
+  <g transform="translate(80, 625)">
+    <text x="0" y="15" fill="#64748b" font-family="'Inter', sans-serif" font-size="10">ANNA UNIVERSITY REGULATION 2023 | DEPARTMENT OF ELECTRONICS ENGINEERING, MIT CAMPUS</text>
+    <text x="1040" y="15" fill="#64748b" font-family="'Inter', sans-serif" font-size="10" text-anchor="end">CONFIDENTIAL &amp; PROPRIETARY ACADEMIC COURSEWARE</text>
+  </g>
+</svg>

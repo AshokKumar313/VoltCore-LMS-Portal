@@ -5,6 +5,7 @@ import LtspiceSimulationViewer from '../components/LtspiceSimulationViewer.jsx';
 import RtosSchedulerHub from '../components/RtosSchedulerHub.jsx';
 import DmaNvicHub from '../components/DmaNvicHub.jsx';
 import TinyMlEngineHub from '../components/TinyMlEngineHub.jsx';
+import EceInteractiveLabApplets from '../components/EceInteractiveLabApplets.jsx';
 ---
 
 <MainLayout title="Hardware & Analog Simulation Laboratory | VoltCore Apex" activeNav="simulation">
@@ -226,6 +227,23 @@ import TinyMlEngineHub from '../components/TinyMlEngineHub.jsx';
       </div>
 
       <TinyMlEngineHub client:load />
+    </section>
+
+    <!-- Section 7: Standalone Interactive ECE Mini-Applets Suite (Phase 13) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-2.5 h-6 bg-gradient-to-b from-[#38BDF8] to-[#818CF8] rounded-full"></div>
+          <h2 class="text-xl font-bold text-white tracking-tight font-mono">
+            7. Standalone Interactive ECE Mini-Applets Suite
+          </h2>
+        </div>
+        <span class="text-xs font-mono text-sky-300 hidden sm:inline">
+          Discrete Convolution • Op-Amp Topologies • Logic Breadboard • Serial Protocols
+        </span>
+      </div>
+
+      <EceInteractiveLabApplets client:visible />
     </section>
 
   </div>

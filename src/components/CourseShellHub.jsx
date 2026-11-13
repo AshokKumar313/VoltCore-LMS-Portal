@@ -8,6 +8,7 @@ import CourseProjectsHub from './CourseProjectsHub';
 import InstitutionalProfileTab from './InstitutionalProfileTab';
 import { getCoverSvgForCourse } from './CourseCoverArtwork';
 import EceGlossaryFormulaDrawer from './EceGlossaryFormulaDrawer';
+import CanvaVisualShowcase from './CanvaVisualShowcase';
 
 /**
  * ========================================================================================
@@ -1075,54 +1076,59 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
       )}
 
       {/* --------------------------------------------------------------------- */}
-      {/* TAB 7: TEXTBOOKS & NPTEL MAPPING */}
+      {/* TAB 7: TEXTBOOKS & NPTEL MAPPING & CANVA VISUAL SHOWCASE             */}
       {/* --------------------------------------------------------------------- */}
       {activeTab === "textbooks" && (
-        <div role="tabpanel" id="panel-textbooks" aria-labelledby="tab-textbooks" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <span>📖 Prescribed Textbooks (Reg 2023)</span>
-            </h3>
-            <ul className="space-y-2 text-xs font-mono text-slate-300">
-              {currentCourse.textbooks.map((tb, i) => (
-                <li key={i} className="p-3 rounded-xl bg-[#020813] border border-slate-800">
-                  <span className="font-bold" style={{ color: theme.primaryColor }}>[{i + 1}] </span>
-                  {tb}
-                </li>
-              ))}
-            </ul>
+        <div role="tabpanel" id="panel-textbooks" aria-labelledby="tab-textbooks" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                <span>📖 Prescribed Textbooks (Reg 2023)</span>
+              </h3>
+              <ul className="space-y-2 text-xs font-mono text-slate-300">
+                {currentCourse.textbooks.map((tb, i) => (
+                  <li key={i} className="p-3 rounded-xl bg-[#020813] border border-slate-800">
+                    <span className="font-bold" style={{ color: theme.primaryColor }}>[{i + 1}] </span>
+                    {tb}
+                  </li>
+                ))}
+              </ul>
 
-            <h4 className="font-bold text-xs text-slate-400 font-mono uppercase tracking-wider pt-2">
-              Reference Literature:
-            </h4>
-            <ul className="space-y-2 text-xs font-mono text-slate-400">
-              {currentCourse.referenceBooks.map((rb, i) => (
-                <li key={i} className="p-2.5 rounded-lg bg-[#020813]/60 border border-slate-800">
-                  {rb}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">
-              <span>📺 NPTEL & Digital Lecture Mapping</span>
-            </h3>
-            <div className="p-4 rounded-xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
-              <div className="text-slate-400 uppercase text-[10px]">Associated NPTEL Course ID:</div>
-              <div className="font-bold text-sm" style={{ color: theme.primaryColor }}>{currentCourse.nptelCourseId || "noc23-ee44"}</div>
-              <div className="text-slate-400 text-[11px] leading-relaxed">
-                Lectures mapped from premier open educational resources and IIT faculties to modular syllabus units.
-              </div>
+              <h4 className="font-bold text-xs text-slate-400 font-mono uppercase tracking-wider pt-2">
+                Reference Literature:
+              </h4>
+              <ul className="space-y-2 text-xs font-mono text-slate-400">
+                {currentCourse.referenceBooks.map((rb, i) => (
+                  <li key={i} className="p-2.5 rounded-lg bg-[#020813]/60 border border-slate-800">
+                    {rb}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <a
-              href="/nptel-player"
-              className="block w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-center text-xs font-mono font-bold text-emerald-300 transition-colors"
-            >
-              Open NPTEL Smart Lecture Player →
-            </a>
+            <div className="p-6 rounded-2xl bg-[#041026] border border-slate-800 space-y-4">
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                <span>📺 NPTEL & Digital Lecture Mapping</span>
+              </h3>
+              <div className="p-4 rounded-xl bg-[#020813] border border-slate-800 space-y-2 font-mono text-xs">
+                <div className="text-slate-400 uppercase text-[10px]">Associated NPTEL Course ID:</div>
+                <div className="font-bold text-sm" style={{ color: theme.primaryColor }}>{currentCourse.nptelCourseId || "noc23-ee44"}</div>
+                <div className="text-slate-400 text-[11px] leading-relaxed">
+                  Lectures mapped from premier open educational resources and IIT faculties to modular syllabus units.
+                </div>
+              </div>
+
+              <a
+                href="/nptel-player"
+                className="block w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-center text-xs font-mono font-bold text-emerald-300 transition-colors"
+              >
+                Open NPTEL Smart Lecture Player →
+              </a>
+            </div>
           </div>
+
+          {/* Canva Visual Posters & Presentation Gallery */}
+          <CanvaVisualShowcase />
         </div>
       )}
 

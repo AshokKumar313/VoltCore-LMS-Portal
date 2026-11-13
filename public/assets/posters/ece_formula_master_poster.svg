@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070d1e"/>
+      <stop offset="50%" stop-color="#0b1739"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="emeraldGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="amberGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.7" stroke-opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bgGrad)"/>
+  <rect width="1200" height="900" fill="url(#grid)"/>
+
+  <!-- Subtle circuit lines in background -->
+  <path d="M 50 150 L 250 150 L 300 200 L 900 200 L 950 150 L 1150 150" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-opacity="0.2"/>
+  <path d="M 100 820 L 400 820 L 450 780 L 750 780 L 800 820 L 1100 820" fill="none" stroke="#10b981" stroke-width="1.2" stroke-opacity="0.2"/>
+
+  <!-- Header Banner -->
+  <g transform="translate(60, 40)">
+    <rect width="1080" height="110" rx="14" fill="#0f172a" fill-opacity="0.7" stroke="#334155" stroke-width="1"/>
+    <rect x="0" y="0" width="8" height="110" rx="4" fill="url(#cyanGlow)"/>
+    <text x="35" y="38" fill="#38bdf8" font-family="'Manrope', sans-serif" font-size="13" font-weight="700" letter-spacing="2">MADRAS INSTITUTE OF TECHNOLOGY (MIT) CAMPUS — ANNA UNIVERSITY</text>
+    <text x="35" y="70" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="24" font-weight="800">Department of Electronics Engineering | Master Formula Infographic</text>
+    <text x="35" y="94" fill="#94a3b8" font-family="'Inter', sans-serif" font-size="13">Regulation 2023 — Foundational Core Derivations &amp; Analytical Equations</text>
+    <rect x="910" y="32" width="140" height="46" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+    <text x="980" y="52" fill="#38bdf8" font-family="'Manrope', sans-serif" font-size="10" font-weight="700" text-anchor="middle">OFFICIAL REFERENCE</text>
+    <text x="980" y="68" fill="#f8fafc" font-family="'Inter', sans-serif" font-size="11" font-weight="600" text-anchor="middle">IEEE / AU-R2023</text>
+  </g>
+
+  <!-- Card 1: Signals, DSP & Frequency Transforms -->
+  <g transform="translate(60, 175)">
+    <rect width="525" height="320" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+    <path d="M 0 14 Q 0 0 14 0 L 511 0 Q 525 0 525 14 L 525 45 L 0 45 Z" fill="#1e293b"/>
+    <circle cx="25" cy="22" r="6" fill="#38bdf8"/>
+    <text x="42" y="27" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="15" font-weight="700">Signals, DSP &amp; Spectral Transformations</text>
+    
+    <!-- Item 1: Convolution -->
+    <rect x="20" y="60" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="80" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Discrete Convolution &amp; LTI Superposition</text>
+    <text x="35" y="100" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">y[n] = x[n] * h[n] = ∑ x[k] h[n - k],   -∞ &lt; k &lt; ∞</text>
+
+    <!-- Item 2: DTFT & DFT -->
+    <rect x="20" y="122" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="142" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Discrete-Time Fourier &amp; N-Point DFT</text>
+    <text x="35" y="162" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">X[k] = ∑ x[n] W_N^(kn),   W_N = e^(-j 2π / N),   0 ≤ k &lt; N</text>
+
+    <!-- Item 3: Nyquist & Z-Transform -->
+    <rect x="20" y="184" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="204" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Nyquist-Shannon Sampling &amp; Bilateral Z-Transform</text>
+    <text x="35" y="224" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">f_s ≥ 2 · B_max,   X(z) = ∑ x[n] z^(-n),   r_min &lt; |z| &lt; r_max</text>
+
+    <!-- Item 4: Radix-2 FFT Complexity -->
+    <rect x="20" y="246" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="266" fill="#38bdf8" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Radix-2 Cooley-Tukey FFT Speedup</text>
+    <text x="35" y="286" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">Complex Mults: (N/2) log_2(N)  vs  N² Direct DFT</text>
+  </g>
+
+  <!-- Card 2: Semiconductor Devices & Analog Circuits -->
+  <g transform="translate(615, 175)">
+    <rect width="525" height="320" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+    <path d="M 0 14 Q 0 0 14 0 L 511 0 Q 525 0 525 14 L 525 45 L 0 45 Z" fill="#1e293b"/>
+    <circle cx="25" cy="22" r="6" fill="#10b981"/>
+    <text x="42" y="27" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="15" font-weight="700">Semiconductor Devices &amp; Analog Electronics</text>
+
+    <!-- Item 1: BJT Transconductance -->
+    <rect x="20" y="60" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="80" fill="#34d399" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Small-Signal Hybrid-π Transconductance</text>
+    <text x="35" y="100" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">g_m = I_C / V_T ≈ I_C / 25.86 mV,   r_π = β / g_m,   r_o = (V_A + V_CE) / I_C</text>
+
+    <!-- Item 2: Op-Amp Feedback -->
+    <rect x="20" y="122" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="142" fill="#34d399" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Operational Amplifier Closed-Loop Gain Topologies</text>
+    <text x="35" y="162" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">Inverting: A_v = -R_f / R_in,   Non-Inverting: A_v = 1 + (R_f / R_1)</text>
+
+    <!-- Item 3: MOSFET Square-Law -->
+    <rect x="20" y="184" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="204" fill="#34d399" font-family="'Inter', sans-serif" font-size="11" font-weight="600">MOSFET Saturation Current &amp; Channel Pinch-Off</text>
+    <text x="35" y="224" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">I_D = (1/2) μ_n C_ox (W/L) (V_GS - V_th)² (1 + λ V_DS)</text>
+
+    <!-- Item 4: Slew Rate & GBW -->
+    <rect x="20" y="246" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="266" fill="#34d399" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Gain-Bandwidth Product &amp; Slew Rate Limit</text>
+    <text x="35" y="286" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">GBW = A_0 · f_b,   SR = (dV_out / dt)_max = 2π f_max V_peak</text>
+  </g>
+
+  <!-- Card 3: Electromagnetic Fields & Communication Theory -->
+  <g transform="translate(60, 520)">
+    <rect width="525" height="320" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+    <path d="M 0 14 Q 0 0 14 0 L 511 0 Q 525 0 525 14 L 525 45 L 0 45 Z" fill="#1e293b"/>
+    <circle cx="25" cy="22" r="6" fill="#c084fc"/>
+    <text x="42" y="27" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="15" font-weight="700">Electromagnetic Fields &amp; Wireless Systems</text>
+
+    <!-- Item 1: Maxwell's Equations -->
+    <rect x="20" y="60" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="80" fill="#c084fc" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Maxwell-Faraday &amp; Ampere-Maxwell Laws</text>
+    <text x="35" y="100" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">∇ × E = -∂B/∂t,   ∇ × H = J + ∂D/∂t,   ∇ · D = ρ_v</text>
+
+    <!-- Item 2: Transmission Line Impedance -->
+    <rect x="20" y="122" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="142" fill="#c084fc" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Characteristic Impedance &amp; Reflection Coefficient</text>
+    <text x="35" y="162" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">Z_0 = √( (R + jωL) / (G + jωC) ) ≈ √(L / C),   Γ = (Z_L - Z_0)/(Z_L + Z_0)</text>
+
+    <!-- Item 3: Shannon Channel Capacity -->
+    <rect x="20" y="184" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="204" fill="#c084fc" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Shannon-Hartley Theorem for AWGN Channels</text>
+    <text x="35" y="224" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">C = B · log_2(1 + SNR) = B · log_2(1 + P / (N_0 B))  (bps)</text>
+
+    <!-- Item 4: Friis Transmission Equation -->
+    <rect x="20" y="246" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="266" fill="#c084fc" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Friis Free-Space RF Path Loss &amp; Link Budget</text>
+    <text x="35" y="286" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">P_r = P_t · G_t · G_r · ( λ / (4π d) )²</text>
+  </g>
+
+  <!-- Card 4: Embedded Systems & Digital Computer Architecture -->
+  <g transform="translate(615, 520)">
+    <rect width="525" height="320" rx="14" fill="url(#cardGrad)" stroke="#334155" stroke-width="1"/>
+    <path d="M 0 14 Q 0 0 14 0 L 511 0 Q 525 0 525 14 L 525 45 L 0 45 Z" fill="#1e293b"/>
+    <circle cx="25" cy="22" r="6" fill="#fbbf24"/>
+    <text x="42" y="27" fill="#f8fafc" font-family="'Manrope', sans-serif" font-size="15" font-weight="700">Embedded Real-Time Systems &amp; Digital Logic</text>
+
+    <!-- Item 1: CPU Execution Time & Amdahl's Law -->
+    <rect x="20" y="60" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="80" fill="#fbbf24" font-family="'Inter', sans-serif" font-size="11" font-weight="600">CPU Execution Time &amp; Pipelined Performance</text>
+    <text x="35" y="100" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">T_exec = IC · CPI · T_clk,   Speedup = 1 / ( (1 - p) + (p / s) )</text>
+
+    <!-- Item 2: Static Timing Analysis Slack -->
+    <rect x="20" y="122" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="142" fill="#fbbf24" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Static Timing Setup &amp; Hold Slack Analysis</text>
+    <text x="35" y="162" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">T_slack(setup) = (T_clk + T_skew) - (T_cq + T_comb + T_setup) ≥ 0</text>
+
+    <!-- Item 3: ADC Quantization SNR -->
+    <rect x="20" y="184" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="204" fill="#fbbf24" font-family="'Inter', sans-serif" font-size="11" font-weight="600">ADC Quantization Noise &amp; Dynamic Range</text>
+    <text x="35" y="224" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">SNR_ideal = 6.02 · N + 1.76 dB,   V_LSB = V_ref / 2^N</text>
+
+    <!-- Item 4: DMA Double-Buffer Throughput -->
+    <rect x="20" y="246" width="485" height="52" rx="8" fill="#0b1329" stroke="#1e293b"/>
+    <text x="35" y="266" fill="#fbbf24" font-family="'Inter', sans-serif" font-size="11" font-weight="600">Circular DMA Bus Matrix Transfer Pacing</text>
+    <text x="35" y="286" fill="#e2e8f0" font-family="'STIX Two Text', serif" font-size="14" font-weight="600">T_transfer = N · (1 / f_HCLK) · (1 + P_contention / (1 - P_contention))</text>
+  </g>
+
+  <!-- Footer -->
+  <g transform="translate(60, 860)">
+    <text x="0" y="15" fill="#64748b" font-family="'Inter', sans-serif" font-size="11">VOLTCORE APEX ACADEMIA — DEPARTMENT OF ELECTRONICS ENGINEERING, MIT CAMPUS, ANNA UNIVERSITY</text>
+    <text x="1080" y="15" fill="#64748b" font-family="'Inter', sans-serif" font-size="11" text-anchor="end">REGULATION 2023 ACCREDITED | OPEN ACCESS ENGINEERING STUDIO</text>
+  </g>
+</svg>
