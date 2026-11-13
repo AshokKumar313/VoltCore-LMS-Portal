@@ -47,6 +47,26 @@ export default function InstitutionalCertificateGenerator({
 
   const subjectList = Object.values(ECE_SUBJECT_REGISTRY).map(s => s.disciplineName || s.name);
 
+  const getDomainEmblemForSubjectName = (name = '') => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('digital') || n.includes('vlsi') || n.includes('verilog')) {
+      return '/assets/branding/emblem_digital_systems.svg';
+    }
+    if (n.includes('signal') || n.includes('dsp') || n.includes('discrete')) {
+      return '/assets/branding/emblem_signal_processing.svg';
+    }
+    if (n.includes('embedded') || n.includes('iot') || n.includes('microprocessor') || n.includes('microcontroller') || n.includes('stm32')) {
+      return '/assets/branding/emblem_embedded_iot.svg';
+    }
+    if (n.includes('communication') || n.includes('rf') || n.includes('microwave') || n.includes('antenna')) {
+      return '/assets/branding/emblem_communication_systems.svg';
+    }
+    if (n.includes('control') || n.includes('electromagnetic') || n.includes('transmission')) {
+      return '/assets/branding/emblem_control_electromagnetics.svg';
+    }
+    return '/assets/branding/emblem_analog_circuits.svg';
+  };
+
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
       window.print();
@@ -150,11 +170,11 @@ export default function InstitutionalCertificateGenerator({
         {/* Institutional Header */}
         <div className="space-y-1.5 relative z-10">
           <div className="flex items-center justify-center gap-3">
-            <span className="text-2xl">🏛️</span>
+            <img src="/assets/branding/voltcore_master_logo.svg" alt="VoltCore Master Crest" className="w-9 h-9 object-contain drop-shadow" />
             <span className="font-heading font-extrabold text-xs sm:text-sm tracking-widest text-amber-400 uppercase font-mono">
               ANNA UNIVERSITY • MADRAS INSTITUTE OF TECHNOLOGY CAMPUS
             </span>
-            <span className="text-2xl">⚡</span>
+            <img src="/assets/branding/voltcore_master_logo.svg" alt="VoltCore Master Crest" className="w-9 h-9 object-contain drop-shadow" />
           </div>
           <h1 className="font-heading font-extrabold text-xl sm:text-2xl md:text-3xl text-white tracking-tight uppercase">
             Department of Electronics Engineering
@@ -182,8 +202,15 @@ export default function InstitutionalCertificateGenerator({
           <p className="text-xs sm:text-sm text-slate-300 font-serif leading-relaxed pt-2">
             for demonstrating exemplary mastery across all five curricular units, laboratory simulation testbenches, and IEEE instrumentation standards in
           </p>
-          <div className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight">
-            {selectedSubject}
+          <div className="flex items-center justify-center gap-2.5">
+            <img
+              src={getDomainEmblemForSubjectName(selectedSubject)}
+              alt="Discipline Emblem"
+              className="w-7 h-7 object-contain drop-shadow"
+            />
+            <div className="font-heading font-bold text-lg sm:text-xl text-white tracking-tight">
+              {selectedSubject}
+            </div>
           </div>
           <div className="text-xs font-mono text-cyan-300">
             Attainment Grade: <strong>{gradeRubric}</strong>
@@ -210,9 +237,8 @@ export default function InstitutionalCertificateGenerator({
           <div className="flex flex-col items-center justify-center">
             <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-0.5 shadow-lg flex items-center justify-center">
               <div className="w-full h-full bg-[#020813] rounded-full flex flex-col items-center justify-center text-center p-1">
-                <span className="text-base text-amber-400">★</span>
-                <span className="text-[7px] text-amber-300 font-bold tracking-tighter uppercase">MIT CAMPUS</span>
-                <span className="text-[6px] text-slate-400">VERIFIED</span>
+                <img src="/assets/branding/voltcore_master_logo.svg" alt="MIT Campus Verified" className="w-7 h-7 object-contain" />
+                <span className="text-[6px] text-amber-300 font-bold tracking-tighter uppercase mt-0.5">MIT VERIFIED</span>
               </div>
             </div>
             <div className="text-[9px] text-slate-500 mt-1 font-mono">{certId}</div>

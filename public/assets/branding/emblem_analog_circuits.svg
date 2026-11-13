@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Radial Surface Background -->
+    <radialGradient id="eac-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#1c1102" />
+      <stop offset="55%" stop-color="#0a0501" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+
+    <!-- Warm Amber Gold Metallic Gradient -->
+    <linearGradient id="eac-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082" />
+      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="80%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#78350F" />
+    </linearGradient>
+
+    <!-- Luminous Silicon Emerald Accent -->
+    <linearGradient id="eac-emerald" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0B5" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="eac-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="256" r="210" fill="#F59E0B" opacity="0.12" filter="url(#eac-glow)" />
+
+  <!-- Outer Octagonal Silicon Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#eac-bg)" stroke="url(#eac-gold)" stroke-width="6" stroke-linejoin="round" />
+
+  <!-- Inner Die Step Inset Ring -->
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#F59E0B" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="8 6" />
+
+  <!-- Concentric Polar Radar Ring -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#FFC83B" stroke-width="1.2" stroke-opacity="0.25" />
+  <circle cx="256" cy="256" r="100" fill="none" stroke="#00F0B5" stroke-width="1.0" stroke-opacity="0.3" stroke-dasharray="4 4" />
+
+  <!-- Continuous Amplified Sine Waveform Flowing Horizontally Across Background -->
+  <path d="M 56,256 Q 106,170 156,256 T 256,256 T 356,256 T 456,256"
+        fill="none" stroke="url(#eac-emerald)" stroke-width="3" stroke-linecap="round" opacity="0.55" />
+
+  <!-- Bipolar Junction Transistor (NPN BJT) Centerpiece -->
+  <!-- Base Terminal Wire & Lead -->
+  <line x1="100" y1="256" x2="200" y2="256" stroke="url(#eac-gold)" stroke-width="5" stroke-linecap="round" />
+  <circle cx="100" cy="256" r="7" fill="url(#eac-gold)" />
+
+  <!-- Base Bar (Thick Vertical Electrode) -->
+  <line x1="200" y1="186" x2="200" y2="326" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+
+  <!-- Collector Slanted Leg (Top) -->
+  <line x1="200" y1="216" x2="300" y2="156" stroke="url(#eac-gold)" stroke-width="5" stroke-linecap="round" />
+  <line x1="300" y1="156" x2="300" y2="90" stroke="url(#eac-gold)" stroke-width="5" stroke-linecap="round" />
+  <circle cx="300" cy="90" r="7" fill="url(#eac-gold)" />
+
+  <!-- Emitter Slanted Leg with NPN Arrow (Bottom) -->
+  <line x1="200" y1="296" x2="300" y2="356" stroke="url(#eac-gold)" stroke-width="5" stroke-linecap="round" />
+  <line x1="300" y1="356" x2="300" y2="422" stroke="url(#eac-gold)" stroke-width="5" stroke-linecap="round" />
+  <circle cx="300" cy="422" r="7" fill="url(#eac-gold)" />
+
+  <!-- NPN Emitter Directional Arrowhead -->
+  <polygon points="268,328 290,344 262,352" fill="url(#eac-gold)" stroke="#FFC83B" stroke-width="1.5" />
+
+  <!-- Transistor Envelope Enclosing Circle -->
+  <circle cx="256" cy="256" r="82" fill="none" stroke="url(#eac-gold)" stroke-width="3.5" stroke-dasharray="14 8" opacity="0.75" />
+
+  <!-- Peripheral Solder Vias at 8 Octagon Vertices -->
+  <g fill="#FFE082">
+    <circle cx="150" cy="36" r="6" />
+    <circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" />
+    <circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" />
+    <circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" />
+    <circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Subfield Ribbon Label (Zero Course Codes) -->
+  <g transform="translate(256, 442)">
+    <rect x="-130" y="-12" width="260" height="24" rx="12" fill="#020813" stroke="url(#eac-gold)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2.5" fill="#FFE082" text-anchor="middle">
+      ANALOG CIRCUITS &amp; DEVICES
+    </text>
+  </g>
+</svg>

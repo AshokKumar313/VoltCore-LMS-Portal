@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="eds-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#021c2e" />
+      <stop offset="60%" stop-color="#020e1a" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+
+    <!-- Electric Cyan Gradient -->
+    <linearGradient id="eds-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67E8F9" />
+      <stop offset="40%" stop-color="#06B6D4" />
+      <stop offset="80%" stop-color="#0284C7" />
+      <stop offset="100%" stop-color="#0369A1" />
+    </linearGradient>
+
+    <!-- Royal Electric Blue Gradient -->
+    <linearGradient id="eds-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93C5FD" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="eds-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="256" r="210" fill="#06B6D4" opacity="0.12" filter="url(#eds-glow)" />
+
+  <!-- Outer Octagonal Silicon Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#eds-bg)" stroke="url(#eds-cyan)" stroke-width="6" stroke-linejoin="round" />
+
+  <!-- Inner Die Chamfer Inset -->
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="8 6" />
+
+  <!-- Digital Clock Pulse Waveform Across Upper Half -->
+  <path d="M 60,140 L 110,140 L 110,95 L 170,95 L 170,140 L 230,140 L 230,95 L 290,95 L 290,140 L 350,140 L 350,95 L 410,95 L 410,140 L 452,140"
+        fill="none" stroke="url(#eds-cyan)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.6" />
+
+  <!-- Rising Edge Trigger Arrows on Clock Wave -->
+  <g fill="#00F0B5">
+    <polygon points="110,115 106,125 114,125" />
+    <polygon points="230,115 226,125 234,125" />
+    <polygon points="350,115 346,125 354,125" />
+  </g>
+
+  <!-- Primary Logic Gate (Precision NAND / AND Gate Silhouette) -->
+  <g transform="translate(180, 200)" stroke="url(#eds-cyan)" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Input Rails -->
+    <line x1="-70" y1="20" x2="-10" y2="20" />
+    <line x1="-70" y1="70" x2="-10" y2="70" />
+    <circle cx="-70" cy="20" r="5" fill="#38BDF8" stroke="none" />
+    <circle cx="-70" cy="70" r="5" fill="#38BDF8" stroke="none" />
+
+    <!-- Gate Body: Back flat line and semicircular dome -->
+    <path d="M -10,0 L 50,0 C 90,0 115,20 115,45 C 115,70 90,90 50,90 L -10,90 Z" fill="#041226" fill-opacity="0.8" />
+
+    <!-- NAND Inversion Bubble -->
+    <circle cx="127" cy="45" r="8" fill="#020813" stroke="url(#eds-cyan)" stroke-width="3.5" />
+
+    <!-- Output Rail -->
+    <line x1="135" y1="45" x2="190" y2="45" />
+    <circle cx="190" cy="45" r="5" fill="#00F0B5" stroke="none" />
+  </g>
+
+  <!-- XOR Input Secondary Gate Silhouette (Offset Lower Left) -->
+  <g transform="translate(150, 310)" stroke="url(#eds-blue)" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round">
+    <path d="M -30,0 Q -10,25 -30,50" />
+    <path d="M -20,0 Q 0,25 -20,50 L 20,50 Q 55,25 20,0 Z" />
+    <line x1="42" y1="25" x2="70" y2="25" />
+  </g>
+
+  <!-- 4-Bit Bus Register Taps & Labels (D0..D3, Q) -->
+  <g font-family="'JetBrains Mono', monospace" font-size="11" font-weight="700" fill="#93C5FD" opacity="0.85">
+    <text x="82" y="224">A</text>
+    <text x="82" y="274">B</text>
+    <text x="390" y="249">Q = (A·B)'</text>
+  </g>
+
+  <!-- Peripheral Solder Vias at 8 Octagon Vertices -->
+  <g fill="#38BDF8">
+    <circle cx="150" cy="36" r="6" />
+    <circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" />
+    <circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" />
+    <circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" />
+    <circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Subfield Ribbon Label (Zero Course Codes) -->
+  <g transform="translate(256, 442)">
+    <rect x="-130" y="-12" width="260" height="24" rx="12" fill="#020813" stroke="url(#eds-cyan)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2.5" fill="#67E8F9" text-anchor="middle">
+      DIGITAL &amp; VLSI SYSTEMS
+    </text>
+  </g>
+</svg>

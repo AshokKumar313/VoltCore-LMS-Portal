@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="ece-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#24070a" />
+      <stop offset="60%" stop-color="#120305" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+
+    <!-- Crimson Flame Gradient -->
+    <linearGradient id="ece-crimson" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCA5A5" />
+      <stop offset="40%" stop-color="#EF4444" />
+      <stop offset="80%" stop-color="#B91C1C" />
+      <stop offset="100%" stop-color="#7F1D1D" />
+    </linearGradient>
+
+    <!-- Celestial Orbital Gold Gradient -->
+    <linearGradient id="ece-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FED7AA" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="ece-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="256" r="210" fill="#EF4444" opacity="0.12" filter="url(#ece-glow)" />
+
+  <!-- Outer Octagonal Silicon Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#ece-bg)" stroke="url(#ece-crimson)" stroke-width="6" stroke-linejoin="round" />
+
+  <!-- Inner Chamfer Inset -->
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#F59E0B" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="8 6" />
+
+  <!-- Electromagnetic Toroidal Flux Field Lines (Concentric Ellipses) -->
+  <g stroke="url(#ece-gold)" fill="none" opacity="0.45" stroke-linecap="round">
+    <ellipse cx="256" cy="256" rx="140" ry="70" stroke-width="1.8" transform="rotate(-30 256 256)" />
+    <ellipse cx="256" cy="256" rx="140" ry="70" stroke-width="1.8" transform="rotate(30 256 256)" stroke-dasharray="8 4" />
+  </g>
+
+  <!-- Complex S-Plane Coordinate System (Sigma + jOmega) -->
+  <g stroke="#FCA5A5" stroke-width="2.5" opacity="0.75" stroke-linecap="round">
+    <!-- Real Axis (Sigma) -->
+    <line x1="100" y1="256" x2="412" y2="256" />
+    <!-- Imaginary Axis (jOmega) -->
+    <line x1="280" y1="80" x2="280" y2="400" />
+  </g>
+
+  <!-- Natural Frequency wn Radial Arc & Damping Angle zeta -->
+  <path d="M 280,256 L 195,171" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 3" />
+  <path d="M 280,256 L 195,341" stroke="#F59E0B" stroke-width="2" stroke-dasharray="4 3" />
+  <path d="M 240,256 A 40 40 0 0 1 252,228" fill="none" stroke="#F59E0B" stroke-width="2" />
+
+  <!-- Root-Locus Pole Crosses (X) in Left Half S-Plane -->
+  <!-- Conjugate Open-Loop Complex Poles -->
+  <g stroke="#EF4444" stroke-width="5" stroke-linecap="round">
+    <!-- Upper Complex Pole -->
+    <line x1="185" y1="161" x2="205" y2="181" />
+    <line x1="205" y1="161" x2="185" y2="181" />
+
+    <!-- Lower Complex Pole -->
+    <line x1="185" y1="331" x2="205" y2="351" />
+    <line x1="205" y1="331" x2="185" y2="351" />
+
+    <!-- Real Axis Pole -->
+    <line x1="130" y1="246" x2="150" y2="266" />
+    <line x1="150" y1="246" x2="130" y2="266" />
+  </g>
+
+  <!-- System Open-Loop Zeros (O) -->
+  <circle cx="230" cy="256" r="8" fill="#020813" stroke="url(#ece-gold)" stroke-width="4" />
+  <circle cx="280" cy="256" r="4" fill="#FCA5A5" /> <!-- Origin marker -->
+
+  <!-- Curved Asymptotic Root-Locus Trajectories -->
+  <path d="M 195,171 Q 140,200 100,200" fill="none" stroke="url(#ece-crimson)" stroke-width="3" stroke-dasharray="6 4" />
+  <path d="M 195,341 Q 140,312 100,312" fill="none" stroke="url(#ece-crimson)" stroke-width="3" stroke-dasharray="6 4" />
+
+  <!-- Axis Mathematical Nomenclature (Zero Course Codes) -->
+  <g font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" fill="#FED7AA" opacity="0.9">
+    <text x="400" y="248">σ</text>
+    <text x="290" y="98">jω</text>
+    <text x="210" y="244">z₁</text>
+    <text x="170" y="160">s₁</text>
+    <text x="170" y="360">s₂</text>
+  </g>
+
+  <!-- Peripheral Solder Vias at 8 Octagon Vertices -->
+  <g fill="#FCA5A5">
+    <circle cx="150" cy="36" r="6" />
+    <circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" />
+    <circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" />
+    <circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" />
+    <circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Subfield Ribbon Label (Zero Course Codes) -->
+  <g transform="translate(256, 442)">
+    <rect x="-135" y="-12" width="270" height="24" rx="12" fill="#020813" stroke="url(#ece-crimson)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2.5" fill="#FCA5A5" text-anchor="middle">
+      CONTROL &amp; ELECTROMAGNETICS
+    </text>
+  </g>
+</svg>

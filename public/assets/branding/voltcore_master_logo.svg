@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="vml-bg-grad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#071a36" />
+      <stop offset="60%" stop-color="#020813" />
+      <stop offset="100%" stop-color="#01040a" />
+    </radialGradient>
+
+    <!-- Metallic Brushed Gold Gradient -->
+    <linearGradient id="vml-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE885" />
+      <stop offset="35%" stop-color="#F59E0B" />
+      <stop offset="70%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#92400E" />
+    </linearGradient>
+
+    <!-- Luminous Silicon Emerald Gradient -->
+    <linearGradient id="vml-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5EEAD4" />
+      <stop offset="40%" stop-color="#00F0B5" />
+      <stop offset="80%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#00693E" />
+    </linearGradient>
+
+    <!-- Electric Cyan Gradient -->
+    <linearGradient id="vml-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BAE6FD" />
+      <stop offset="50%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Shield Border Gradient -->
+    <linearGradient id="vml-shield-border" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="30%" stop-color="#00F0B5" />
+      <stop offset="70%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="vml-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="vml-subtle-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Shield Backing Glow -->
+  <path d="M 256, 30 C 392, 30 456, 80 456, 212 C 456, 368 324, 452 256, 490 C 188, 452 56, 368 56, 212 C 56, 80 120, 30 256, 30 Z"
+        fill="url(#vml-emerald)" opacity="0.18" filter="url(#vml-glow)" />
+
+  <!-- Master Crest Shield Body -->
+  <path d="M 256, 32 C 390, 32 452, 82 452, 212 C 452, 365 322, 448 256, 486 C 190, 448 60, 365 60, 212 C 60, 82 122, 32 256, 32 Z"
+        fill="url(#vml-bg-grad)" stroke="url(#vml-shield-border)" stroke-width="6" stroke-linejoin="round" />
+
+  <!-- Inner Inset Shield Border -->
+  <path d="M 256, 50 C 374, 50 430, 96 430, 212 C 430, 348 314, 426 256, 460 C 198, 426 82, 348 82, 212 C 82, 96 138, 50 256, 50 Z"
+        fill="none" stroke="url(#vml-gold)" stroke-width="2" stroke-dasharray="8 4" opacity="0.65" />
+
+  <!-- Symmetrical PCB Circuit Traces - Left Wing -->
+  <g stroke="url(#vml-emerald)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75">
+    <path d="M 108, 160 L 150, 160 L 175, 185 L 175, 230 L 205, 260" />
+    <path d="M 96, 212 L 136, 212 L 160, 236 L 160, 300 L 195, 335" />
+    <path d="M 120, 268 L 140, 268 L 168, 296 L 210, 296" />
+    <path d="M 148, 350 L 172, 350 L 210, 388 L 230, 388" />
+  </g>
+
+  <!-- Left Solder Pads & Vias -->
+  <g fill="url(#vml-gold)">
+    <circle cx="108" cy="160" r="4.5" />
+    <circle cx="96" cy="212" r="4.5" />
+    <circle cx="120" cy="268" r="4.5" />
+    <circle cx="148" cy="350" r="4.5" />
+    <circle cx="205" cy="260" r="3.5" fill="#00F0B5" />
+    <circle cx="195" cy="335" r="3.5" fill="#00F0B5" />
+    <circle cx="210" cy="296" r="3.5" fill="#00F0B5" />
+  </g>
+
+  <!-- Symmetrical PCB Circuit Traces - Right Wing -->
+  <g stroke="url(#vml-emerald)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75">
+    <path d="M 404, 160 L 362, 160 L 337, 185 L 337, 230 L 307, 260" />
+    <path d="M 416, 212 L 376, 212 L 352, 236 L 352, 300 L 317, 335" />
+    <path d="M 392, 268 L 372, 268 L 344, 296 L 302, 296" />
+    <path d="M 364, 350 L 340, 350 L 302, 388 L 282, 388" />
+  </g>
+
+  <!-- Right Solder Pads & Vias -->
+  <g fill="url(#vml-gold)">
+    <circle cx="404" cy="160" r="4.5" />
+    <circle cx="416" cy="212" r="4.5" />
+    <circle cx="392" cy="268" r="4.5" />
+    <circle cx="364" cy="350" r="4.5" />
+    <circle cx="307" cy="260" r="3.5" fill="#00F0B5" />
+    <circle cx="317" cy="335" r="3.5" fill="#00F0B5" />
+    <circle cx="302" cy="296" r="3.5" fill="#00F0B5" />
+  </g>
+
+  <!-- Concentric Celestial Radar / Graticule Rings -->
+  <circle cx="256" cy="235" r="115" fill="none" stroke="#00F0B5" stroke-width="1.2" stroke-opacity="0.25" stroke-dasharray="4 6" />
+  <circle cx="256" cy="235" r="88" fill="none" stroke="url(#vml-gold)" stroke-width="1.5" stroke-opacity="0.35" />
+  <circle cx="256" cy="235" r="62" fill="none" stroke="#38BDF8" stroke-width="1.2" stroke-opacity="0.3" stroke-dasharray="3 3" />
+
+  <!-- Oscilloscope Sine-Wave Core Meridian -->
+  <path d="M 146, 235 Q 173, 175 201, 235 T 256, 235 T 311, 235 T 366, 235"
+        fill="none" stroke="url(#vml-cyan)" stroke-width="2.5" stroke-linecap="round" opacity="0.6" />
+
+  <!-- Central Dynamic Silicon Lightning Bolt / Waveform Apex -->
+  <polygon points="274,78 226,205 264,205 238,325 304,185 266,185"
+           fill="url(#vml-emerald)" stroke="#FFE885" stroke-width="2" filter="url(#vml-subtle-glow)" />
+
+  <!-- Golden Apex Star Beacon -->
+  <g transform="translate(256, 62)" fill="url(#vml-gold)">
+    <polygon points="0,-16 4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4" />
+    <circle cx="0" cy="0" r="3" fill="#FFF" />
+  </g>
+
+  <!-- MIT Campus / Department Bottom Academic Ribbon Banner -->
+  <g transform="translate(256, 420)">
+    <path d="M -130,-14 L 130,-14 L 115,14 L -115,14 Z"
+          fill="#020813" stroke="url(#vml-gold)" stroke-width="2" />
+    <text x="0" y="5" font-family="'Manrope', 'Inter', -apple-system, sans-serif" font-size="12" font-weight="800"
+          letter-spacing="3" fill="url(#vml-gold)" text-anchor="middle">
+      APEX ACADEMIA
+    </text>
+  </g>
+
+  <!-- Lower Terminal Anchor Node -->
+  <circle cx="256" cy="460" r="5" fill="url(#vml-gold)" stroke="#00F0B5" stroke-width="2" />
+</svg>

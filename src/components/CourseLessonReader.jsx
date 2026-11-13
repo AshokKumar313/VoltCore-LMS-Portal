@@ -8,6 +8,7 @@ import { ECE_SUBJECT_REGISTRY } from '../data/subjectRegistry';
 import AcademicResourceVault from './AcademicResourceVault';
 import { getCoverSvgForCourse } from './CourseCoverArtwork';
 import EceInteractiveLabApplets from './EceInteractiveLabApplets';
+import SubjectEmblem from './SubjectEmblem';
 
 /**
  * ========================================================================================
@@ -535,31 +536,34 @@ export default function CourseLessonReader({
                 SECTION 1: COURSE IDENTITY, TITLE & ACTION TOOLBAR
                 =============================================================== */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-5">
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-                  <span
-                    className="px-2.5 py-0.5 rounded-full font-bold border"
-                    style={{
-                      backgroundColor: `${themeColor}15`,
-                      color: themeColor,
-                      borderColor: `${themeColor}40`
-                    }}
-                  >
-                    UNIT {activeLesson.unitRoman} • {activeLesson.unitTitle || 'Curriculum Studio'}
-                  </span>
-                  <span className="text-slate-400">Lesson {activeLesson.lessonNumber}</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-slate-400">~{activeLesson.estimatedMinutes} mins study</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800 text-[10px]">
-                    {activeLesson.difficulty}
-                  </span>
-                </div>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight">
-                  {activeLesson.title}
-                </h2>
-                <div className="text-xs text-slate-400 font-mono">
-                  Anna University Regulation 2023 • MIT Campus • Department of Electronics Engineering
+              <div className="flex items-start gap-4">
+                <SubjectEmblem courseCode={courseCode} size="lg" className="shrink-0 mt-1" />
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full font-bold border"
+                      style={{
+                        backgroundColor: `${themeColor}15`,
+                        color: themeColor,
+                        borderColor: `${themeColor}40`
+                      }}
+                    >
+                      UNIT {activeLesson.unitRoman} • {activeLesson.unitTitle || 'Curriculum Studio'}
+                    </span>
+                    <span className="text-slate-400">Lesson {activeLesson.lessonNumber}</span>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-slate-400">~{activeLesson.estimatedMinutes} mins study</span>
+                    <span className="text-slate-600">•</span>
+                    <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-800 text-[10px]">
+                      {activeLesson.difficulty}
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-extrabold text-white tracking-tight">
+                    {activeLesson.title}
+                  </h2>
+                  <div className="text-xs text-slate-400 font-mono">
+                    Anna University Regulation 2023 • MIT Campus • Department of Electronics Engineering
+                  </div>
                 </div>
               </div>
 

@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Gradient -->
+    <radialGradient id="eei-bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#021c1f" />
+      <stop offset="60%" stop-color="#020e14" />
+      <stop offset="100%" stop-color="#020813" />
+    </radialGradient>
+
+    <!-- Emerald Luminous Gradient -->
+    <linearGradient id="eei-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5EEAD4" />
+      <stop offset="40%" stop-color="#00F0B5" />
+      <stop offset="80%" stop-color="#0D9488" />
+      <stop offset="100%" stop-color="#00693E" />
+    </linearGradient>
+
+    <!-- Metallic Silver/Platinum Gradient -->
+    <linearGradient id="eei-silver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#CBD5E1" />
+      <stop offset="80%" stop-color="#64748B" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="eei-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="256" cy="256" r="210" fill="#00F0B5" opacity="0.12" filter="url(#eei-glow)" />
+
+  <!-- Outer Octagonal Silicon Die Carrier -->
+  <polygon points="150,36 362,36 476,150 476,362 362,476 150,476 36,362 36,150"
+           fill="url(#eei-bg)" stroke="url(#eei-emerald)" stroke-width="6" stroke-linejoin="round" />
+
+  <!-- Inner Chamfer Inset -->
+  <polygon points="160,56 352,56 456,160 456,352 352,456 160,456 56,352 56,160"
+           fill="none" stroke="#94A3B8" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="8 6" />
+
+  <!-- Omnidirectional Wireless Beacon Waves (Top Apex) -->
+  <g stroke="#00F0B5" fill="none" opacity="0.75" stroke-linecap="round">
+    <path d="M 226,110 A 35 35 0 0 1 286,110" stroke-width="2.5" />
+    <path d="M 206,90 A 60 60 0 0 1 306,90" stroke-width="2.5" stroke-dasharray="6 4" />
+    <path d="M 186,70 A 85 85 0 0 1 326,70" stroke-width="3" />
+  </g>
+
+  <!-- Central ARM QFP Microcontroller Package -->
+  <!-- Chip Substrate Body -->
+  <rect x="186" y="186" width="140" height="140" rx="14"
+        fill="#041226" stroke="url(#eei-silver)" stroke-width="4.5" />
+
+  <!-- Silicon Core Center Die -->
+  <rect x="221" y="221" width="70" height="70" rx="6"
+        fill="#020813" stroke="url(#eei-emerald)" stroke-width="2.5" />
+  <circle cx="256" cy="256" r="14" fill="url(#eei-emerald)" opacity="0.8" />
+  <circle cx="204" cy="204" r="5" fill="#5EEAD4" /> <!-- Pin 1 Index Marker -->
+
+  <!-- Peripheral QFP Lead Pins - North -->
+  <g fill="url(#eei-silver)">
+    <rect x="206" y="162" width="6" height="20" rx="2" />
+    <rect x="226" y="162" width="6" height="20" rx="2" />
+    <rect x="246" y="162" width="6" height="20" rx="2" />
+    <rect x="266" y="162" width="6" height="20" rx="2" />
+    <rect x="286" y="162" width="6" height="20" rx="2" />
+    <rect x="306" y="162" width="6" height="20" rx="2" />
+  </g>
+
+  <!-- Peripheral QFP Lead Pins - South -->
+  <g fill="url(#eei-silver)">
+    <rect x="206" y="330" width="6" height="20" rx="2" />
+    <rect x="226" y="330" width="6" height="20" rx="2" />
+    <rect x="246" y="330" width="6" height="20" rx="2" />
+    <rect x="266" y="330" width="6" height="20" rx="2" />
+    <rect x="286" y="330" width="6" height="20" rx="2" />
+    <rect x="306" y="330" width="6" height="20" rx="2" />
+  </g>
+
+  <!-- Peripheral QFP Lead Pins - West -->
+  <g fill="url(#eei-silver)">
+    <rect x="162" y="206" width="20" height="6" rx="2" />
+    <rect x="162" y="226" width="20" height="6" rx="2" />
+    <rect x="162" y="246" width="20" height="6" rx="2" />
+    <rect x="162" y="266" width="20" height="6" rx="2" />
+    <rect x="162" y="286" width="20" height="6" rx="2" />
+    <rect x="162" y="306" width="20" height="6" rx="2" />
+  </g>
+
+  <!-- Peripheral QFP Lead Pins - East -->
+  <g fill="url(#eei-silver)">
+    <rect x="330" y="206" width="20" height="6" rx="2" />
+    <rect x="330" y="226" width="20" height="6" rx="2" />
+    <rect x="330" y="246" width="20" height="6" rx="2" />
+    <rect x="330" y="266" width="20" height="6" rx="2" />
+    <rect x="330" y="286" width="20" height="6" rx="2" />
+    <rect x="330" y="306" width="20" height="6" rx="2" />
+  </g>
+
+  <!-- PCB Copper Fanout Traces with 45-degree Angled Routing -->
+  <g stroke="#00F0B5" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 162,216 L 120,216 L 90,246 L 70,246" />
+    <path d="M 162,296 L 120,296 L 90,326 L 70,326" />
+    <path d="M 350,216 L 392,216 L 422,246 L 442,246" />
+    <path d="M 350,296 L 392,296 L 422,326 L 442,326" />
+    <path d="M 216,350 L 216,392 L 186,422" />
+    <path d="M 296,350 L 296,392 L 326,422" />
+  </g>
+
+  <!-- Peripheral Solder Vias at 8 Octagon Vertices -->
+  <g fill="#5EEAD4">
+    <circle cx="150" cy="36" r="6" />
+    <circle cx="362" cy="36" r="6" />
+    <circle cx="476" cy="150" r="6" />
+    <circle cx="476" cy="362" r="6" />
+    <circle cx="362" cy="476" r="6" />
+    <circle cx="150" cy="476" r="6" />
+    <circle cx="36" cy="362" r="6" />
+    <circle cx="36" cy="150" r="6" />
+  </g>
+
+  <!-- Editorial Subfield Ribbon Label (Zero Course Codes) -->
+  <g transform="translate(256, 442)">
+    <rect x="-130" y="-12" width="260" height="24" rx="12" fill="#020813" stroke="url(#eei-emerald)" stroke-width="1.5" />
+    <text y="4" font-family="'Manrope', 'Inter', sans-serif" font-size="10" font-weight="800"
+          letter-spacing="2.5" fill="#5EEAD4" text-anchor="middle">
+      EMBEDDED SYSTEMS &amp; IOT
+    </text>
+  </g>
+</svg>
