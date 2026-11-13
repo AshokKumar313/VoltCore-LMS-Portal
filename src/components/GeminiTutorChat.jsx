@@ -12,7 +12,7 @@ import React, { useState, useEffect, useRef } from 'react';
 const VIVA_QUESTION_BANK = [
   {
     id: 'viva-1',
-    topic: 'STM32 Atomic Bit Ops & BSRR (STM32-MOD-05)',
+    topic: 'STM32 Atomic Bit Ops & Register Mapping',
     bloomLevel: 'L4 (Analyze)',
     poAttainment: ['PO1', 'PO2'],
     question: 'Why does writing to GPIOx_BSRR guarantee race-condition-free pin toggling from concurrent ISRs without needing __disable_irq() or FreeRTOS critical sections?',
@@ -23,7 +23,7 @@ const VIVA_QUESTION_BANK = [
   },
   {
     id: 'viva-2',
-    topic: 'RISC-V Microarchitecture (RISCV8705)',
+    topic: 'RISC-V Microarchitecture & Hazard Forwarding',
     bloomLevel: 'L4 (Analyze)',
     poAttainment: ['PO2', 'PO4'],
     question: 'Why does an instruction immediately following a "lw" instruction requiring the loaded data cause an unavoidable 1-cycle pipeline stall even with a full hazard forwarding unit?',
@@ -34,7 +34,7 @@ const VIVA_QUESTION_BANK = [
   },
   {
     id: 'viva-3',
-    topic: 'Defense UAV Telemetry & FHSS (UAV8703)',
+    topic: 'Defense UAV Telemetry & Spread Spectrum',
     bloomLevel: 'L5 (Evaluate)',
     poAttainment: ['PO3', 'PO4'],
     question: 'Calculate the maximum Doppler shift at 2.4 GHz for a UAV traveling at 108 km/h. Why does this cause LoRa CSS demodulation failure when Spreading Factor SF=10 and Bandwidth=203 kHz?',
@@ -45,7 +45,7 @@ const VIVA_QUESTION_BANK = [
   },
   {
     id: 'viva-4',
-    topic: 'FreeRTOS & Multi-Core Systems (RTOS8706)',
+    topic: 'FreeRTOS & Real-Time Kernel Scheduling',
     bloomLevel: 'L3 (Apply)',
     poAttainment: ['PO2', 'PO3'],
     question: 'How does Priority Inheritance in FreeRTOS resolve unbounded Priority Inversion when a high-priority telemetry task and a low-priority RFID reader task share the SPI bus mutex?',
@@ -56,7 +56,7 @@ const VIVA_QUESTION_BANK = [
   },
   {
     id: 'viva-5',
-    topic: 'Direct Memory Access & ADC Streaming (STM32-MOD-12)',
+    topic: 'Direct Memory Access & ADC Stream Processing',
     bloomLevel: 'L4 (Analyze)',
     poAttainment: ['PO3', 'PO5'],
     question: 'Explain why DMA circular mode combined with Half-Transfer (HT) and Transfer-Complete (TC) interrupts enables zero-copy, jitter-free DSP ping-pong audio streaming on Cortex-M4.',
@@ -65,6 +65,14 @@ const VIVA_QUESTION_BANK = [
     marks: 5,
     difficulty: 'Senior Firmware Engineer'
   }
+];
+
+const TUTOR_STUDY_MODES = [
+  { id: 'concept', label: 'Concept Explainer', icon: '💡', prefix: 'Explain with silicon register context: ' },
+  { id: 'numerical', label: 'Numerical Tutor', icon: '🔢', prefix: 'Provide a step-by-step numerical calculation: ' },
+  { id: 'viva', label: 'Viva Voce Prep', icon: '🎯', prefix: 'Generate an Anna University viva challenge for: ' },
+  { id: 'exam', label: 'Exam Generator', icon: '📝', prefix: 'Generate 2-mark definitions and 16-mark derivations for: ' },
+  { id: 'summary', label: 'Notes Summariser', icon: '📋', prefix: 'Provide a high-yield syllabus and formula summary for: ' },
 ];
 
 const SAMPLE_CODE_C_HAZARD = `// STM32 Timer Interrupt & Telemetry Handler
@@ -138,6 +146,7 @@ export default function GeminiTutorChat({
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [studyMode, setStudyMode] = useState('concept'); // 'concept' | 'numerical' | 'viva' | 'exam' | 'summary'
 
   // Code Reviewer State
   const [reviewCode, setReviewCode] = useState(SAMPLE_CODE_C_HAZARD);
@@ -202,15 +211,29 @@ export default function GeminiTutorChat({
     });
   };
 
+  const sanitizeModuleTitle = (mod) => {
+    if (!mod) return null;
+    if (/[A-Z]{2,4}\d{4,5}/i.test(mod) || /STM32-MOD/i.test(mod)) {
+      return 'Curriculum Ground Truth';
+    }
+    return mod;
+  };
+
   // Dispatch Query to RAG Endpoint with fallback
   const handleSendQuery = async (queryText) => {
-    const query = (queryText || inputQuery).trim();
-    if (!query || isLoading) return;
+    const rawQuery = (queryText || inputQuery).trim();
+    if (!rawQuery || isLoading) return;
+
+    // Apply active study mode prompt framing
+    const activeModeObj = TUTOR_STUDY_MODES.find(m => m.id === studyMode);
+    const query = activeModeObj && studyMode !== 'concept' && !rawQuery.startsWith(activeModeObj.prefix)
+      ? `${activeModeObj.prefix}${rawQuery}`
+      : rawQuery;
 
     const userMsg = {
       id: `usr-${Date.now()}`,
       sender: 'user',
-      text: query,
+      text: rawQuery,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -653,6 +676,26 @@ export default function GeminiTutorChat({
       {/* TAB 1: RAG AI TUTOR */}
       {activeTab === 'chat' && (
         <div className="flex flex-col flex-1 min-h-0">
+          {/* Study Modes Pill Bar */}
+          <div className="px-2 py-1.5 bg-[#020813]/90 border-b border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider pl-1 shrink-0">Mode:</span>
+            {TUTOR_STUDY_MODES.map((sm) => (
+              <button
+                key={sm.id}
+                type="button"
+                onClick={() => setStudyMode(sm.id)}
+                className={`px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap transition-all flex items-center gap-1 shrink-0 ${
+                  studyMode === sm.id
+                    ? 'bg-[#00F0B5] text-[#020813] font-bold shadow-sm'
+                    : 'bg-[#041026] text-slate-400 hover:text-white border border-slate-800'
+                }`}
+              >
+                <span>{sm.icon}</span>
+                <span>{sm.label}</span>
+              </button>
+            ))}
+          </div>
+
           {/* Quick Prompt Chips */}
           <div className="p-2 bg-[#020813]/60 border-b border-slate-800 flex gap-1.5 overflow-x-auto">
             <button
@@ -714,9 +757,9 @@ export default function GeminiTutorChat({
                         {reg}
                       </span>
                     ))}
-                    {msg.topModule && (
+                    {msg.topModule && sanitizeModuleTitle(msg.topModule) && (
                       <span className="px-1.5 py-0.5 rounded bg-[#00693E]/40 border border-[#00F0B5]/30 text-[10px] text-[#00F0B5] font-mono ml-auto">
-                        {msg.topModule}
+                        {sanitizeModuleTitle(msg.topModule)}
                       </span>
                     )}
                   </div>

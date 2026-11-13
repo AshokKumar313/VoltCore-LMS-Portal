@@ -82,12 +82,63 @@ const DEFAULT_FLAGSHIP_LESSONS = [
   }
 ];
 
+const DEFAULT_WEEKLY_PLAN = [
+  { id: 'wp-1', day: 'Monday', subject: 'Signals, DSP & Wavelet Analysis', topic: 'Radix-2 FFT Butterfly Flow Graphs', duration: '45m', completed: true },
+  { id: 'wp-2', day: 'Tuesday', subject: 'Semiconductor Devices & Integrated Circuits', topic: 'Small-Signal BJT Hybrid-π Models', duration: '50m', completed: true },
+  { id: 'wp-3', day: 'Wednesday', subject: 'Embedded Real-Time Systems & IoT', topic: 'ARM Cortex-M NVIC Interrupt Tail-Chaining', duration: '60m', completed: false },
+  { id: 'wp-4', day: 'Thursday', subject: 'Digital Systems & Computer Architecture', topic: '4-Variable Karnaugh Map & Prime Implicants', duration: '40m', completed: false },
+  { id: 'wp-5', day: 'Friday', subject: 'Electromagnetic Waves, Antennas & RF', topic: 'Transmission Line Characteristic Impedance & Smith Charts', duration: '55m', completed: false },
+  { id: 'wp-6', day: 'Saturday', subject: 'Hardware & Analog Simulation Laboratory', topic: 'SPICE AC Small-Signal & Transient Analysis', duration: '90m', completed: false },
+  { id: 'wp-7', day: 'Sunday', subject: 'Review & Spaced Repetition', topic: 'SM-2 Flashcard Recall & GATE Formula Revision', duration: '30m', completed: false }
+];
+
+const RECOMMENDED_REVISION = [
+  {
+    id: 'rev-1',
+    subject: 'Signals, DSP & Wavelet Analysis',
+    unit: 'Unit II: Fast Fourier Transform & Spectral Bins',
+    reason: '12 Due SM-2 Flashcards',
+    urgency: 'High Priority',
+    badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+    actionUrl: '/course-hub'
+  },
+  {
+    id: 'rev-2',
+    subject: 'Embedded Real-Time Systems & IoT',
+    unit: 'Unit IV: Bus Matrix Contention & DMA Stream Pacing',
+    reason: 'Prerequisite for Lab 304 HIL',
+    urgency: 'Lab Readiness',
+    badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    actionUrl: '/embedded-systems/stm32-academy'
+  },
+  {
+    id: 'rev-3',
+    subject: 'Semiconductor Devices & Integrated Circuits',
+    unit: 'Unit III: MOSFET Saturation & Channel Pinch-Off',
+    reason: 'Anna University High Weightage',
+    urgency: 'Exam High-Yield',
+    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    actionUrl: '/analog-electronics'
+  },
+  {
+    id: 'rev-4',
+    subject: 'Digital Systems & Computer Architecture',
+    unit: 'Unit I: Prime Implicant Synthesis & Hazards',
+    reason: 'Incomplete Practice Assessment',
+    urgency: 'Recommended',
+    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    actionUrl: '/digital-logic'
+  }
+];
+
 export default function StudentLearningHub() {
   const [recentLesson, setRecentLesson] = useState(DEFAULT_FLAGSHIP_LESSONS[0]);
   const [bookmarkedCount, setBookmarkedCount] = useState(0);
   const [recentBookmarks, setRecentBookmarks] = useState([]);
   const [dueFlashcardsCount, setDueFlashcardsCount] = useState(12);
   const [completedLessonsCount, setCompletedLessonsCount] = useState(14);
+  const [weeklyPlan, setWeeklyPlan] = useState(DEFAULT_WEEKLY_PLAN);
+  const [selectedDayFilter, setSelectedDayFilter] = useState('All');
   const [userProfile, setUserProfile] = useState({
     name: 'Active Peer',
     role: 'Student',
@@ -138,11 +189,31 @@ export default function StudentLearningHub() {
         if (lastLesson) {
           setRecentLesson(JSON.parse(lastLesson));
         }
+
+        // Read weekly planner
+        const rawPlanner = localStorage.getItem('voltcore_weekly_planner');
+        if (rawPlanner) {
+          setWeeklyPlan(JSON.parse(rawPlanner));
+        }
       }
     } catch (e) {
       console.warn('[StudentLearningHub]: LocalStorage hydration error', e);
     }
   }, []);
+
+  const toggleWeeklyTask = (taskId) => {
+    setWeeklyPlan(prev => {
+      const updated = prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('voltcore_weekly_planner', JSON.stringify(updated));
+        }
+      } catch (err) {
+        console.warn('Failed to save weekly planner', err);
+      }
+      return updated;
+    });
+  };
 
   return (
     <div className="space-y-8 font-sans">
@@ -401,6 +472,162 @@ export default function StudentLearningHub() {
               </div>
             );
           })}
+        </div>
+      </section>
+
+
+      {/* ==========================================================================
+          3.5. SMART WEEKLY STUDY PLANNER & RECOMMENDED REVISION (PHASE 14)
+          ========================================================================== */}
+      <section
+        className="rounded-3xl p-6 sm:p-8 border space-y-6"
+        style={{
+          background: 'var(--theme-surface, rgba(4,16,38,0.85))',
+          borderColor: 'var(--theme-border, rgba(0,240,181,0.25))',
+        }}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2 font-mono">
+              <span>📅</span>
+              <span>Regulation 2023 Study Pacing</span>
+            </div>
+            <h3 className="font-heading font-extrabold text-xl text-white tracking-tight">
+              Smart Weekly Study Planner &amp; Recommended Revision
+            </h3>
+            <p className="text-xs text-slate-400 mt-1 font-sans">
+              Structured study plan across core subjects with adaptive spaced repetition and lab readiness pacing.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right font-mono text-xs">
+              <span className="text-slate-400">Weekly Progress: </span>
+              <span className="text-emerald-400 font-bold">
+                {weeklyPlan.filter(t => t.completed).length} / {weeklyPlan.length} Done
+              </span>
+            </div>
+            <div className="w-24 h-2.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500"
+                style={{
+                  width: `${(weeklyPlan.filter(t => t.completed).length / weeklyPlan.length) * 100}%`
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Two-Column Grid: Planner on Left, Recommended Revision on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Weekly Planner */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                Scheduled Study Sessions
+              </h4>
+              <div className="flex items-center gap-1">
+                {['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                  <button
+                    key={day}
+                    onClick={() => setSelectedDayFilter(day)}
+                    className={`px-2 py-1 rounded text-[10px] font-mono transition-colors ${
+                      selectedDayFilter === day
+                        ? 'bg-sky-500 text-white font-bold'
+                        : 'bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {day === 'All' ? 'All' : day.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              {weeklyPlan
+                .filter(item => selectedDayFilter === 'All' || item.day === selectedDayFilter)
+                .map(item => (
+                  <div
+                    key={item.id}
+                    onClick={() => toggleWeeklyTask(item.id)}
+                    className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                      item.completed
+                        ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-400'
+                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded flex items-center justify-center border text-xs ${
+                        item.completed
+                          ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
+                          : 'border-slate-700 bg-slate-950'
+                      }`}>
+                        {item.completed ? '✓' : ''}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-950 text-cyan-400 border border-slate-800">
+                            {item.day}
+                          </span>
+                          <span className="text-xs font-bold text-white font-sans">
+                            {item.subject}
+                          </span>
+                        </div>
+                        <div className={`text-xs mt-0.5 ${item.completed ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                          {item.topic}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-500 flex-shrink-0">
+                      ⏱️ {item.duration}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Right Column: Recommended Revision */}
+          <div className="lg:col-span-5 space-y-4">
+            <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              Recommended Revision (Spaced Pacing)
+            </h4>
+
+            <div className="space-y-3">
+              {RECOMMENDED_REVISION.map(rev => (
+                <div
+                  key={rev.id}
+                  className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-amber-500/40 transition-all flex flex-col justify-between gap-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-white leading-tight font-sans">
+                        {rev.subject}
+                      </div>
+                      <div className="text-[11px] text-slate-300 mt-1 font-mono">
+                        {rev.unit}
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border flex-shrink-0 ${rev.badgeClass}`}>
+                      {rev.urgency}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[11px] font-mono">
+                    <span className="text-slate-400">{rev.reason}</span>
+                    <a
+                      href={rev.actionUrl}
+                      className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <span>Review Topic</span>
+                      <span>&rarr;</span>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

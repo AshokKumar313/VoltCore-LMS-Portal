@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { getSubjectMetadata } from '../data/subjectRegistry';
+import { getSubjectMetadata, ECE_SUBJECT_REGISTRY } from '../data/subjectRegistry';
 import { PRIORITY_COURSES, getCourseByCode, getAllCourses, getCourseThemeTokens, TIER3_SPECIALIZATION_TRACKS } from '../data/course_config_schema';
 import CourseLessonReader from './CourseLessonReader';
 import CourseQuizEngine from './CourseQuizEngine';
 import CourseLabSimulator from './CourseLabSimulator';
 import CourseProjectsHub from './CourseProjectsHub';
 import InstitutionalProfileTab from './InstitutionalProfileTab';
-import { getCoverSvgForCourse } from './CourseCoverArtwork';
+import CourseCoverArtwork, { getCoverSvgForCourse } from './CourseCoverArtwork';
+import SubjectEmblem from './SubjectEmblem';
 import EceGlossaryFormulaDrawer from './EceGlossaryFormulaDrawer';
 import CanvaVisualShowcase from './CanvaVisualShowcase';
 
@@ -29,6 +30,34 @@ import CanvaVisualShowcase from './CanvaVisualShowcase';
 
 // Roman numeral lookup for 5 syllabus units
 const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V"];
+
+const DOMAIN_MAP = {
+  'EC23C01': 'Analog & Devices',
+  'EC23C03': 'Analog & Devices',
+  'EC23C06': 'Analog & Devices',
+  'EC23C04': 'Digital & VLSI',
+  'HDL6001': 'Digital & VLSI',
+  'VLSI7001': 'Digital & VLSI',
+  'EC23S01': 'Signals & DSP',
+  'EC23C05': 'Signals & DSP',
+  'EC23C08': 'Communications & RF',
+  'EC23E04': 'Communications & RF',
+  'EC8702': 'Embedded & IoT',
+  'STM32-ACADEMY': 'Embedded & IoT',
+  'IOT8701': 'Embedded & IoT',
+  'EC23C02': 'Control & Electromagnetics',
+  'EC23C07': 'Control & Electromagnetics'
+};
+
+const DOMAIN_PILLS = [
+  'All Subjects',
+  'Analog & Devices',
+  'Digital & VLSI',
+  'Signals & DSP',
+  'Communications & RF',
+  'Embedded & IoT',
+  'Control & Electromagnetics'
+];
 
 // -----------------------------------------------------------------------------
 // DEPARTMENTAL BADGE ICON SUITE (VECTOR SVGS FOR ANNA UNIVERSITY REG 2023 ECE)
@@ -192,6 +221,10 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
   // Active Navigation Tab
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Catalogue vs Studio View Mode (Phase 14)
+  const [viewMode, setViewMode] = useState('studio'); // 'studio' | 'catalogue'
+  const [catalogueDomainFilter, setCatalogueDomainFilter] = useState('All Subjects');
+
   // Syllabus Unit Selector (Units 0 to 4 -> Roman I to V)
   const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
 
@@ -313,14 +346,15 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                   onClick={() => {
                     setSelectedCourseId(c.code);
                     setSelectedUnitIndex(0);
+                    setViewMode('studio');
                   }}
                   className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-2 font-bold ${
-                    isSelected
+                    isSelected && viewMode === 'studio'
                       ? `scale-105 shadow-lg border ${c.visualTheme.badgeClass}`
                       : "bg-[#020813]/60 text-slate-400 hover:text-white border border-slate-800"
                   }`}
                   style={{
-                    borderColor: isSelected ? c.visualTheme.primaryColor : undefined
+                    borderColor: isSelected && viewMode === 'studio' ? c.visualTheme.primaryColor : undefined
                   }}
                 >
                   <DepartmentalBadgeIcon code={c.code} className="w-4 h-4" primaryColor={c.visualTheme.primaryColor} />
@@ -328,9 +362,150 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
                 </button>
               );
             })}
+
+            {/* Toggle Full Catalogue Grid Button */}
+            <button
+              onClick={() => setViewMode(viewMode === 'catalogue' ? 'studio' : 'catalogue')}
+              className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 ml-auto ${
+                viewMode === 'catalogue'
+                  ? 'bg-sky-500 text-slate-950 shadow-md font-bold'
+                  : 'bg-sky-500/10 text-sky-400 border border-sky-500/30 hover:bg-sky-500/20'
+              }`}
+            >
+              <span>{viewMode === 'catalogue' ? '📺 Back to Studio' : '📚 Full Catalogue (15 Subjects)'}</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* FULL CURRICULUM COURSE CATALOGUE (15 REGULATION 2023 SUBJECTS)        */}
+      {/* --------------------------------------------------------------------- */}
+      {viewMode === 'catalogue' ? (
+        <div className="space-y-6">
+          <div className="p-6 sm:p-8 rounded-3xl bg-[#041026] border border-slate-800 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 mb-2 font-mono">
+                  <span>🏛️</span>
+                  <span>Regulation 2023 ECE Curriculum</span>
+                </div>
+                <h2 className="text-2xl font-extrabold text-white tracking-tight font-sans">
+                  Official Course Catalogue &amp; Learning Studios
+                </h2>
+                <p className="text-xs text-slate-400 mt-1 font-sans">
+                  Explore foundational and specialized disciplines. Select any studio to enter its 5-unit curriculum, derivations, KaTeX formulas, and hardware labs.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setViewMode('studio')}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-sky-400 border border-sky-500/40 text-xs font-mono font-bold transition-all flex items-center gap-2 self-start md:self-auto"
+              >
+                <span>&larr; Return to Active Studio</span>
+              </button>
+            </div>
+
+            {/* Domain Filter Pills */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+              {DOMAIN_PILLS.map((domain) => (
+                <button
+                  key={domain}
+                  onClick={() => setCatalogueDomainFilter(domain)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono transition-all ${
+                    catalogueDomainFilter === domain
+                      ? 'bg-sky-500 text-white font-bold shadow-md shadow-sky-500/20'
+                      : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-white'
+                  }`}
+                >
+                  {domain}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Grid of 15 Subjects */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.values(ECE_SUBJECT_REGISTRY)
+              .filter((subj) => {
+                if (catalogueDomainFilter === 'All Subjects') return true;
+                return DOMAIN_MAP[subj.code] === catalogueDomainFilter;
+              })
+              .map((subj) => {
+                const isCurrent = selectedCourseId === subj.code;
+                return (
+                  <div
+                    key={subj.code}
+                    className={`rounded-2xl border bg-slate-900/60 overflow-hidden flex flex-col justify-between transition-all hover:border-sky-500/50 hover:shadow-xl hover:shadow-sky-500/5 ${
+                      isCurrent ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'
+                    }`}
+                  >
+                    <div>
+                      {/* Compact Cover Artwork Header */}
+                      <div className="relative h-28 w-full bg-slate-950 overflow-hidden border-b border-slate-800">
+                        <CourseCoverArtwork courseCode={subj.code} aspectRatio="3/1" className="h-full w-full object-cover opacity-85" />
+                        <div className="absolute top-2.5 right-2.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900/90 text-sky-400 border border-slate-700 backdrop-blur-sm">
+                            {subj.code === 'STM32-ACADEMY' ? '21 Chapters' : '5 Units'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="p-5 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <SubjectEmblem courseCode={subj.code} size="md" />
+                          <div>
+                            <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: subj.primaryColor }}>
+                              {DOMAIN_MAP[subj.code] || 'Core Engineering'}
+                            </div>
+                            <h3 className="font-bold text-white text-base leading-snug font-sans">
+                              {subj.disciplineName}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-slate-400 leading-relaxed font-sans line-clamp-2">
+                          {subj.professionalTitle}. Specialized in {subj.subfield.toLowerCase()} and {subj.industryDomain.toLowerCase()}.
+                        </p>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1 pt-1 font-mono text-[10px]">
+                          <div className="flex justify-between text-slate-400">
+                            <span>Curriculum Progress</span>
+                            <span className="text-emerald-400 font-bold">{subj.code === 'EC23S01' ? '65%' : subj.code === 'STM32-ACADEMY' ? '80%' : '40%'}</span>
+                          </div>
+                          <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                            <div
+                              className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400"
+                              style={{ width: subj.code === 'EC23S01' ? '65%' : subj.code === 'STM32-ACADEMY' ? '80%' : '40%' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CTA Footer */}
+                    <div className="p-4 pt-0">
+                      <button
+                        onClick={() => {
+                          setSelectedCourseId(subj.code);
+                          setViewMode('studio');
+                          setActiveTab('overview');
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 border border-sky-500/40 text-sky-300 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2"
+                      >
+                        <span>Enter Course Studio</span>
+                        <span>&rarr;</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      ) : (
+        <>
 
       {/* --------------------------------------------------------------------- */}
       {/* 3. DYNAMIC PER-COURSE HERO HEADER (HARDWARE-ACCELERATED GLOW BORDERS) */}
@@ -1276,6 +1451,8 @@ export default function CourseShellHub({ initialCourseId = "EC23S01", allowCours
         <div role="tabpanel" id="panel-glossary" aria-labelledby="tab-glossary" className="space-y-6">
           <EceGlossaryFormulaDrawer embedded={true} />
         </div>
+      )}
+        </>
       )}
     </div>
   );

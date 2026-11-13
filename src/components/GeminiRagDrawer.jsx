@@ -24,13 +24,21 @@ const PRESET_QUERIES = [
   'BJT small-signal hybrid-pi transconductance gm derivation',
 ];
 
+const STUDY_MODES = [
+  { id: 'concept', label: '💡 Concept Explainer', prefix: 'Explain the fundamental intuition, engineering principles, and mathematical governing equations for: ' },
+  { id: 'numerical', label: '📐 Numerical Tutor', prefix: 'Solve step-by-step with Given → Standard Formula → Step-by-Step Substitution → Verified Units for: ' },
+  { id: 'viva', label: '🎯 Viva Voce Prep', prefix: 'Generate rapid-fire Anna University viva voce questions with rubrics and expected keywords for: ' },
+  { id: 'exam', label: '📝 Exam Generator', prefix: 'Generate Anna University Regulation 2023 pattern Part A (2-Mark) and Part B (16-Mark) questions for: ' },
+  { id: 'summary', label: '📑 Notes Summariser', prefix: 'Synthesize concise high-yield revision study notes with bullet-point derivations for: ' }
+];
+
 export default function GeminiRagDrawer({
   backendUrl = 'http://127.0.0.1:5000',
   studentId = '2023MITEC042',
   studentName = 'Ashok Kumar A'
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState('rag'); // 'rag' | 'viva'
+  const [mode, setMode] = useState('concept'); // 'concept' | 'numerical' | 'viva' | 'exam' | 'summary'
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversation, setConversation] = useState([
@@ -38,12 +46,12 @@ export default function GeminiRagDrawer({
       id: 'welcome',
       role: 'assistant',
       content:
-        '**VoltCore Gemini RAG Telemetry Engine Initialized.**\n\n' +
-        'Indexed 71+ curriculum sections across EC8702, EC8703, EC8704, EC8705, EC8706, EC8707, and EC8708. ' +
-        'Ask deep technical questions or toggle Viva Voce mode for rapid-fire oral exam preparation.',
+        '**VoltCore Source-Grounded AI Study Assistant Initialized.**\n\n' +
+        'Ground truth indexed across all Anna University Regulation 2023 ECE disciplines. ' +
+        'Select a structured study mode above (Concept Explainer, Numerical Tutor, Viva Prep, Exam Generator, or Notes Summariser) or ask any engineering question.',
       citations: [
         {
-          module_code: 'EC8708',
+          discipline: 'Advanced RTOS & DMA Architecture',
           source_file: '8-advanced-rtos-dma.mdx',
           section: 'Section I: Multi-Layer AHB Bus Matrix',
           relevance_score: 1.0,
@@ -54,14 +62,20 @@ export default function GeminiRagDrawer({
   ]);
 
   const handleSendQuery = async (queryText = query) => {
-    const textToSend = queryText.trim();
-    if (!textToSend || isLoading) return;
+    const rawText = queryText.trim();
+    if (!rawText || isLoading) return;
+
+    // Apply active study mode prompt framing
+    const activeModeObj = STUDY_MODES.find(m => m.id === mode);
+    const textToSend = activeModeObj && !rawText.startsWith(activeModeObj.prefix) && mode !== 'concept'
+      ? `${activeModeObj.prefix}${rawText}`
+      : rawText;
 
     // Add student message to conversation
     const userMsg = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: textToSend,
+      content: rawText,
       timestamp: new Date().toLocaleTimeString(),
     };
     setConversation((prev) => [...prev, userMsg]);
@@ -75,7 +89,7 @@ export default function GeminiRagDrawer({
         body: JSON.stringify({
           query: textToSend,
           student_id: studentId,
-          mode: mode,
+          mode: mode === 'viva' ? 'viva' : 'rag',
         }),
       });
 
@@ -113,7 +127,7 @@ export default function GeminiRagDrawer({
       triggerToast({
         type: 'xp',
         title: mode === 'viva' ? 'Viva Challenge Generated!' : 'RAG Citation Verified!',
-        message: `+${earnedXp} XP awarded for querying ${data.citations?.[0]?.module_code || 'curriculum'}.`,
+        message: `+${earnedXp} XP awarded for grounded curriculum research.`,
         xp: earnedXp,
         multiplier: '2.5x',
         duration: 3500,
@@ -132,7 +146,7 @@ export default function GeminiRagDrawer({
           `*Telemetry synchronized with SQLite WAL local database.*`,
         citations: [
           {
-            module_code: 'EC8708',
+            discipline: 'Advanced RTOS & DMA Architecture',
             source_file: '8-advanced-rtos-dma.mdx',
             section: 'Section IV: The Engineering Trap',
             relevance_score: 18.38,
@@ -206,33 +220,28 @@ export default function GeminiRagDrawer({
           </button>
         </div>
 
-        {/* Mode Selector & Preset Bar */}
-        <div className="px-4 py-2.5 bg-[#020813]/60 border-b border-slate-800/80 flex items-center justify-between gap-3 text-xs font-mono">
-          <div className="flex items-center gap-1.5 bg-[#041026] p-1 rounded-lg border border-slate-800">
-            <button
-              onClick={() => setMode('rag')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                mode === 'rag'
-                  ? 'bg-[#00F0B5] text-[#020813] font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Curriculum RAG
-            </button>
-            <button
-              onClick={() => setMode('viva')}
-              className={`px-3 py-1 rounded-md transition-all ${
-                mode === 'viva'
-                  ? 'bg-amber-400 text-[#020813] font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              🎯 Viva Challenge
-            </button>
+        {/* Mode Selector Bar (5 Structured Study Modes) */}
+        <div className="px-4 py-2.5 bg-[#020813]/60 border-b border-slate-800/80 flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-xs font-mono">
+            <span className="text-[11px] font-semibold text-slate-300">Study Assistant Mode</span>
+            <span className="text-[10px] text-slate-500">BM25 Grounded</span>
           </div>
-
-          <div className="text-[10px] text-slate-500">
-            BM25 Top-3 Grounded
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+            {STUDY_MODES.map((sm) => (
+              <button
+                key={sm.id}
+                onClick={() => setMode(sm.id)}
+                className={`px-2.5 py-1 rounded-md transition-all whitespace-nowrap text-[11px] font-mono flex items-center gap-1.5 ${
+                  mode === sm.id
+                    ? 'bg-[#00F0B5] text-[#020813] font-bold shadow-sm'
+                    : 'bg-[#041026] text-slate-400 hover:text-white border border-slate-800'
+                }`}
+                title={sm.description}
+              >
+                <span>{sm.icon}</span>
+                <span>{sm.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -281,7 +290,7 @@ export default function GeminiRagDrawer({
                         className="flex items-center justify-between gap-2 p-1.5 rounded bg-[#041026] border border-slate-800/90"
                       >
                         <span className="text-slate-300 truncate">
-                          [{cite.module_code}] {cite.source_file} § {cite.section}
+                          [{cite.discipline || (cite.source_file ? cite.source_file.replace('.mdx', '') : 'Curriculum Ground Truth')}] § {cite.section || 'General'}
                         </span>
                         <span className="text-emerald-400 font-bold flex-shrink-0">
                           {cite.relevance_score ? `${cite.relevance_score} pts` : 'Grounded'}
